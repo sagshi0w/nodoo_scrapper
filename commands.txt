@@ -1,0 +1,11 @@
+| Command                                       | Description                      |
+| --------------------------------------------- | -------------------------------- |
+| `pm2 start scheduler.js --name job-scheduler` | Start your job scheduler         |
+| `pm2 stop job-scheduler`                      | Stop it                          |
+| `pm2 restart job-scheduler`                   | Restart it                       |
+| `pm2 delete job-scheduler`                    | Delete it                        |
+| `pm2 logs job-scheduler`                      | View logs                        |
+| `pm2 save && pm2 startup`                     | Make it restart on system reboot |
+| `pm2 list`                                    | To chekc if it working or not    |
+  -> To keep backend up and running.
+pm2 save
