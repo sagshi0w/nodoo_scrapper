@@ -1,11 +1,12 @@
-const puppeteer = require('puppeteer');
-const fs = require('fs');
+import puppeteer from 'puppeteer';
+import fs from 'fs';
+import extractData from '../../utils/extractData.js';
 
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 
-async function scrapeSiemensJobs() {
+const runSiemensScraper = async () => {
   const browser = await puppeteer.launch({
-    headless: false,
+    headless: true,
     args: ['--no-sandbox', '--disable-setuid-sandbox'],
     defaultViewport: null
   });
@@ -15,7 +16,7 @@ async function scrapeSiemensJobs() {
 
   await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36');
 
-  console.log("🚀 Starting Siemens job scraping...");
+  console.log("\uD83D\uDE80 Starting Siemens job scraping...");
   const allJobs = new Set();
   const maxPages = 50;
  
@@ -29,7 +30,7 @@ async function scrapeSiemensJobs() {
 
   try {
     // Step 1: Navigate to careers page
-    console.log("🌐 Loading careers page...");
+    console.log("\uD83C\uDF10 Loading careers page...");
     await page.goto("https://jobs.siemens.com/careers?query=Developer&location=India&pid=563156125003043&domain=siemens.com&sort_by=relevance&location_distance_km=25&triggerGoButton=false&utm_source=j_c_in", {
       waitUntil: "networkidle2",
       timeout: 1200000
@@ -37,19 +38,19 @@ async function scrapeSiemensJobs() {
     await delay(3000);
 
     // Step 2: Click search button
-    console.log("🔍 Clicking search button...");
+    console.log("\uD83D\uDD0D Clicking search button...");
     await page.waitForSelector(SELECTORS.searchButton, { visible: true, timeout: 15000 });
     await page.click(SELECTORS.searchButton);
     await delay(5000);
 
     // Step 3: Pagination loop
     for (let currentPage = 1; currentPage <= maxPages; currentPage++) {
-      console.log(`📖 Processing page ${currentPage}/${maxPages}...`);
+      console.log(`\uD83D\uDCD6 Processing page ${currentPage}/${maxPages}...`);
 
       // Wait for job cards
       await page.waitForSelector(SELECTORS.jobCard, { timeout: 30000 });
       jobCards = await page.$$(SELECTORS.jobCard);
-      console.log(`🃏 Found ${jobCards.length} job cards`);
+      console.log(`\uD83C\uDCCF Found ${jobCards.length} job cards`);
 
       // Pagination
       if (currentPage < maxPages) {
@@ -58,16 +59,16 @@ async function scrapeSiemensJobs() {
           if (nextButton) {
             const isDisabled = await page.evaluate(btn => btn.disabled, nextButton);
             if (!isDisabled) {
-              console.log("⏭️ Clicking next page...");
+              console.log("\u23ED\uFE0F Clicking next page...");
               await nextButton.click();
               await page.waitForSelector(SELECTORS.jobCard, { timeout: 30000 });
               await delay(3000);
             } else {
-              console.log("⏹️ No more pages available");
+              console.log("\u23F9\uFE0F No more pages available");
             }
           }
         } catch (e) {
-          console.log("⏹️ Pagination failed:", e.message);
+          console.log("\u23F9\uFE0F Pagination failed:", e.message);
         }
       }
     }
@@ -77,12 +78,12 @@ async function scrapeSiemensJobs() {
       const card = jobCards[i];
       try {
       // Click the job card button to reveal details
-      console.log(`🖱️ Clicking job card ${i + 1}/${jobCards.length}`);
+      console.log(`\uD83D\uDDB1\uFE0F Clicking job card ${i + 1}/${jobCards.length}`);
       await card.click();
       await delay(2000); // Wait for details to appear
 
           // Extract all the detailed fields you want
-          const jobInfo = await page.evaluate((detailsSelector) => {
+          let jobInfo = await page.evaluate((detailsSelector) => {
             const fields = {};
             const elements = document.querySelectorAll(detailsSelector);
             
@@ -101,16 +102,15 @@ async function scrapeSiemensJobs() {
             return {
               title: document.querySelector('.position-title')?.textContent.trim(),
               location: document.querySelector('.position-location')?.textContent.trim(),
-              jobDescription: document.querySelector('h4, .position-job-description-column')?.textContent.trim(),
-              applyUrl: window.location.href,
+              description: document.querySelector('h4, .position-job-description-column')?.textContent.trim(),
+              url: window.location.href,
+              company: 'Siemens',
               ...fields
             };
           }, SELECTORS.jobDetails);
 
-          if (jobInfo.title) {
-            allJobs.add(jobInfo);
-            console.log(`✅ Collected: ${jobInfo.title}`);
-          }
+          const enrichedJob = extractData(jobInfo);
+          allJobs.add(enrichedJob);
 
           // Close the job details (if needed)
           const closeButton = await page.$('[data-ph-at-id="close-button"]');
@@ -120,33 +120,32 @@ async function scrapeSiemensJobs() {
           }
 
         } catch (e) {
-          console.error(`⚠️ Error processing job card ${i + 1}:`, e.message);
+          console.error(`\u26A0\uFE0F Error processing job card ${i + 1}:`, e.message);
         }
     }
 
     if (allJobs.size === 0) throw new Error("No jobs found");
 
-    // Remove duplicate jobs.
-    //const uniqueJobs = allJobs.filter((job, index, self) =>
-        //index === self.findIndex(j => (
-            //j.title === job.title
-        //))
-    //);
-
-    //console.log(`🔄 Removed ${allJobs.length - uniqueJobs.length} duplicate jobs`);
-    console.log(`✅ Found ${allJobs.size} jobs with complete details`);
+    console.log(`\u2705 Found ${allJobs.size} jobs with complete details`);
 
     const processedJobIdsArray = [...allJobs];
 
     fs.writeFileSync("siemens_jobs_devloper.json", JSON.stringify(processedJobIdsArray, null, 2));
-    console.log("💾 Saved results to siemens_jobs_devloper.json");
+    console.log("\uD83D\uDCBE Saved results to siemens_jobs_devloper.json");
 
   } catch (error) {
-    console.error("❌ Scraping failed:", error.message);
+    console.error("\u274C Scraping failed:", error.message);
     await page.screenshot({ path: 'error.png' });
   } finally {
     await browser.close();
   }
-}
+  return [...allJobs];
+};
 
-scrapeSiemensJobs();
+export default runSiemensScraper;
+
+if (import.meta.url === `file://${process.argv[1]}`) {
+  (async () => {
+    await runSiemensScraper();
+  })();
+}

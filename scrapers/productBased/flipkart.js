@@ -1,5 +1,5 @@
-const puppeteer = require('puppeteer');
-const fs = require('fs');
+import puppeteer from 'puppeteer';
+import fs from 'fs';
 
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
@@ -12,7 +12,7 @@ class FlipkartJobsScraper {
 
     async initialize() {
         this.browser = await puppeteer.launch({
-            headless: false,
+            headless: true,
             args: ['--no-sandbox', '--start-maximized'],
             defaultViewport: null
         });
@@ -85,6 +85,7 @@ class FlipkartJobsScraper {
 
                 return {
                     title: getText(sel.title),
+                    company: 'Flipkart',
                     location: getText(sel.location),
                     description: getText(sel.description)
                 };
@@ -127,7 +128,7 @@ class FlipkartJobsScraper {
                 this.allJobs.push({
                     ...jobDetails,
                     url: newPage.url(),
-                    scrapedAt: new Date().toISOString()
+                    //scrapedAt: new Date().toISOString()
                 });
 
                 await newPage.close();
@@ -164,7 +165,16 @@ class FlipkartJobsScraper {
     }
 }
 
-(async () => {
+const runFlipkartScraper = async () => {
     const scraper = new FlipkartJobsScraper();
     await scraper.run();
-})();
+    return scraper.allJobs;
+};
+
+export default runFlipkartScraper;
+
+if (import.meta.url === `file://${process.argv[1]}`) {
+    (async () => {
+        await runFlipkartScraper();
+    })();
+}

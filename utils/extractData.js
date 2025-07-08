@@ -844,6 +844,22 @@ export default function extractSkillsAndExperience(job) {
         return match ? `${match[1]}-${match[2] || parseInt(match[1]) + 2} years` : 'Not specified';
     };
 
+    // Preprocess job description: remove 'description' at start, trim spaces, remove blank lines
+    function cleanDescription(desc) {
+        if (!desc) return '';
+        let cleaned = desc.trim();
+        // Remove 'description' at the start (case-insensitive)
+        cleaned = cleaned.replace(/^(description\s*[:\-]?\s*)/i, '');
+        // Remove any special characters from the beginning
+        cleaned = cleaned.replace(/^[^a-zA-Z0-9]+/, '');
+        // Remove extra blank lines and trim each line
+        cleaned = cleaned.split('\n')
+            .map(line => line.trim())
+            .filter(line => line.length > 0)
+            .join('\n');
+        return cleaned;
+    }
+
     // Enhanced skill extraction with context awareness
     const extractSkills = (desc) => {
         if (!desc) return [];
@@ -911,10 +927,11 @@ export default function extractSkillsAndExperience(job) {
 
     return {
         ...job,
-        description: job.description,
-        skills: extractSkills(job.description),
-        experience: extractExperience(job.description),
-        jobType: extractJobType(job.description),
+        // Clean the description before extracting info
+        description: cleanDescription(job.description),
+        skills: extractSkills(cleanDescription(job.description)),
+        experience: extractExperience(cleanDescription(job.description)),
+        jobType: extractJobType(cleanDescription(job.description)),
         location: extractCity(job.location),
         postedAt: new Date().toISOString().split('T')[0]
     };

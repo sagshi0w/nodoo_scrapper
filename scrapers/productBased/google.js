@@ -1,11 +1,12 @@
-const puppeteer = require('puppeteer');
-const fs = require('fs');
+import puppeteer from 'puppeteer';
+import fs from 'fs';
+import extractData from '../../utils/extractData.js';
 
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 
-async function scrapeGoogleJobs() {
+async function runGoogleScraper() {
   const browser = await puppeteer.launch({
-    headless: false,
+    headless: true,
     args: ['--no-sandbox', '--disable-setuid-sandbox'],
     defaultViewport: null
   });
@@ -62,19 +63,35 @@ async function scrapeGoogleJobs() {
 
           const job = await page.evaluate(() => {
             const getText = sel => document.querySelector(sel)?.textContent.trim() || '';
+            
+            const jobDescription = getText('div.aG5W3');
+            const jobQualification = getText('div.KwJkGe');
+            const jobResponsibilities = getText('div.BDNOWe');
+          
+            // Combine into a single job description with clear sections
+            const fullJobDescription = `
+              ${jobDescription}
+              
+              **Qualifications:**
+              ${jobQualification}
+              
+              **Responsibilities:**
+              ${jobResponsibilities}
+            `.trim();
+          
             return {
               title: getText('h2.p1N2lc'),
+              company: 'Google',
               location: getText('span.r0wTof'),
-              jobDescription: getText('div.aG5W3'),
-              jobQualification: getText('div.KwJkGe'),
-              jobResponsibilities: getText('div.BDNOWe'),
-              applyUrl: window.location.href
+              description: fullJobDescription,
+              url: window.location.href
             };
           });
 
           if (job.title) {
-            allJobs.add(JSON.stringify(job)); // Keep unique stringified jobs
-            console.log(`✅ Collected: ${job.title}`);
+            const enrichedJob = extractData(job);
+            allJobs.add(JSON.stringify(enrichedJob)); // Keep unique stringified jobs
+            console.log(`\u2705 Collected: ${job.title}`);
           }
         } catch (err) {
           console.error(`❌ Failed on job ${i + 1}: ${err.message}`);
@@ -110,4 +127,10 @@ async function scrapeGoogleJobs() {
   }
 }
 
-scrapeGoogleJobs();
+export default runGoogleScraper;
+
+if (import.meta.url === `file://${process.argv[1]}`) {
+  (async () => {
+    await runGoogleScraper();
+  })();
+}

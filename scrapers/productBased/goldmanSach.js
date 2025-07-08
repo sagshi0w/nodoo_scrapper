@@ -1,5 +1,5 @@
-const puppeteer = require('puppeteer');
-const fs = require('fs');
+import puppeteer from 'puppeteer';
+import fs from 'fs';
 
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
@@ -27,7 +27,7 @@ class GoldmanSachsScraper {
 
     async initialize() {
         this.browser = await puppeteer.launch({
-            headless: false,
+            headless: true,
             args: ['--no-sandbox'],
             defaultViewport: null
         });
@@ -155,10 +155,11 @@ class GoldmanSachsScraper {
                 };
 
                 return {
-                    jobTitle: getText('#__next > main > div > div:nth-child(1) > div > div > div > div.gs-uitk-c-172iff2--col-root.text-left.gs-layout-col > div > span.gs-uitk-c-lzsmqw--text-root.gs-uitk-mb-2.gs-text'),
-                    jobLocation: getText('#opportunity-overview > div:nth-child(2) > div:nth-child(2) > div:nth-child(2) > span.gs-uitk-c-vh52gn--text-root.gs-text'),
-                    jobDescription: getText('div.job-description'),
-                    applyUrl: window.location.href
+                    title: getText('#__next > main > div > div:nth-child(1) > div > div > div > div.gs-uitk-c-172iff2--col-root.text-left.gs-layout-col > div > span.gs-uitk-c-lzsmqw--text-root.gs-uitk-mb-2.gs-text'),
+                    location: getText('#opportunity-overview > div:nth-child(2) > div:nth-child(2) > div:nth-child(2) > span.gs-uitk-c-vh52gn--text-root.gs-text'),
+                    description: getText('div.job-description'),
+                    url: window.location.href,
+                    company: 'Goldman Sachs'
                 };
             });
         } catch (error) {
@@ -194,8 +195,16 @@ class GoldmanSachsScraper {
     }
 }
 
-// Run the scraper
-(async () => {
+const runGoldmanScraper = async () => {
     const scraper = new GoldmanSachsScraper();
     await scraper.run();
-})();
+    return scraper.allJobs;
+};
+
+export default runGoldmanScraper;
+
+if (import.meta.url === `file://${process.argv[1]}`) {
+    (async () => {
+        await runGoldmanScraper();
+    })();
+}

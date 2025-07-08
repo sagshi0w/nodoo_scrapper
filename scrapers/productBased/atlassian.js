@@ -1,5 +1,5 @@
-const puppeteer = require('puppeteer');
-const fs = require('fs');
+import puppeteer from 'puppeteer';
+import fs from 'fs';
 
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
@@ -14,7 +14,7 @@ class AtlassianJobsScraper {
 
     async initialize() {
         this.browser = await puppeteer.launch({
-            headless: false,
+            headless: true,
             args: ['--no-sandbox', '--start-maximized'],
             defaultViewport: null
         });
@@ -87,10 +87,9 @@ class AtlassianJobsScraper {
 
                 return {
                     title: getText('h1'),
-                    team,
+                    company: 'Atlassian',
                     location,
-                    remoteType: remote,
-                    employmentType: jobType || 'N/A',
+                    jobType: remote,
                     description: getText('div.column colspan-10 text-left push push-1') || document.body.innerText.slice(0, 500) // fallback
                 };
             });
@@ -137,7 +136,21 @@ class AtlassianJobsScraper {
     }
 }
 
-(async () => {
+const runAtlassianScraper = async () => {
     const scraper = new AtlassianJobsScraper();
-    await scraper.run();
-})();
+    await scraper.initialize();
+    await scraper.navigateToJobsPage();
+    await scraper.collectAllJobCardLinks();
+    await scraper.processAllJobs();
+    await scraper.saveResults();
+    await scraper.close();
+    return scraper.allJobs;
+};
+
+export default runAtlassianScraper;
+
+if (import.meta.url === `file://${process.argv[1]}`) {
+    (async () => {
+        await runAtlassianScraper();
+    })();
+}

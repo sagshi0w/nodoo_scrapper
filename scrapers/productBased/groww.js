@@ -13,7 +13,7 @@ class GrowwJobsScraper {
 
     async initialize() {
         this.browser = await launch({
-            headless: false,
+            headless: true,
             args: ['--no-sandbox', '--start-maximized'],
             defaultViewport: null
         });
@@ -96,6 +96,7 @@ class GrowwJobsScraper {
 
                 return {
                     title,
+                    company: 'Groww',
                     location,
                     description,
                     url: window.location.href
@@ -152,7 +153,16 @@ class GrowwJobsScraper {
     }
 }
 
-(async () => {
+const runGrowwScraper = async () => {
     const scraper = new GrowwJobsScraper();
     await scraper.run();
-})();
+    return scraper.allJobs;
+};
+
+export default runGrowwScraper;
+
+if (import.meta.url === `file://${process.argv[1]}`) {
+    (async () => {
+        await runGrowwScraper();
+    })();
+}

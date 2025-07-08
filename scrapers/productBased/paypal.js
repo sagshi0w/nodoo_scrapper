@@ -1,6 +1,5 @@
-const puppeteer = require('puppeteer');
-const cheerio = require('cheerio');
-const fs = require('fs');
+import puppeteer from 'puppeteer';
+import fs from 'fs';
 
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
@@ -13,7 +12,7 @@ class PaypalJobsScraper {
 
   async initialize() {
     this.browser = await puppeteer.launch({
-      headless: false,
+      headless: true,
       args: ['--no-sandbox', '--start-maximized'],
       defaultViewport: null
     });
@@ -118,8 +117,9 @@ class PaypalJobsScraper {
 
             return {
             title: rawData.title,
+            company: 'Paypal',
             location: rawData.location,
-            summary: cleanedSummary,
+            description: cleanedSummary,
             url: rawData.url,
             };
 
@@ -165,7 +165,16 @@ class PaypalJobsScraper {
   }
 }
 
-(async () => {
+const runPaypalScraper = async () => {
   const scraper = new PaypalJobsScraper();
   await scraper.run();
-})();
+  return scraper.allJobs;
+};
+
+export default runPaypalScraper;
+
+if (import.meta.url === `file://${process.argv[1]}`) {
+  (async () => {
+    await runPaypalScraper();
+  })();
+}

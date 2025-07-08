@@ -13,7 +13,7 @@ class CleartaxJobsScraper {
 
     async initialize() {
         this.browser = await launch({
-            headless: false,
+            headless: true,
             args: ['--no-sandbox', '--start-maximized'],
             defaultViewport: null
         });
@@ -91,14 +91,21 @@ class CleartaxJobsScraper {
 
                 const title = getText('h4.display-2.custom-theme-color');
                 const location = getText('p.mb-4.tooltip-custom');
-                //const experience = getText('body > app-root > div > app-user-views > div.module-container > app-jobs-wrapper > app-job-details > div > div.box.job-main-details.p-24.clearfix.mb-12 > div.job-details-list > div.job-details > div.job-details-item.experience-range > pbody > app-root > div > app-user-views > div.module-container > app-jobs-wrapper > app-job-details > div > div.box.job-main-details.p-24.clearfix.mb-12 > div.job-details-list > div.job-details > div.job-details-item.experience-range');
-                const description = getText('div.job-summary');
+                const experience = getText('body > app-root > div > app-user-views > div.module-container > app-jobs-wrapper > app-job-details > div > div.box.job-main-details.p-24.clearfix.mb-12 > div.job-details-list > div.job-details > div.job-details-item.experience-range > pbody > app-root > div > app-user-views > div.module-container > app-jobs-wrapper > app-job-details > div > div.box.job-main-details.p-24.clearfix.mb-12 > div.job-details-list > div.job-details > div.job-details-item.experience-range');
+                const descrips = getText('div.job-summary');
+
+                const fullJobDescription = `
+                ${descrips}
+                
+                **experience:**
+                ${experience}
+              `.trim();
 
                 return {
                     title,
                     location,
-                    //experience,
-                    description,
+                    company: 'ClearTax',
+                    description: fullJobDescription,
                     url: window.location.href
                 };
             });
@@ -153,7 +160,17 @@ class CleartaxJobsScraper {
     }
 }
 
-(async () => {
+const runClearTaxScraper = async () => {
     const scraper = new CleartaxJobsScraper();
     await scraper.run();
-})();
+    return scraper.allJobs;
+};
+
+export default runClearTaxScraper;
+
+if (import.meta.url === `file://${process.argv[1]}`) {
+    (async () => {
+        const scraper = new CleartaxJobsScraper();
+        await scraper.run();
+    })();
+}

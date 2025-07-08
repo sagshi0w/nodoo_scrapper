@@ -13,7 +13,7 @@ class AdobeJobsScraper {
 
     async initialize() {
         this.browser = await launch({
-            headless: false,
+            headless: ture,
             args: ['--no-sandbox', '--start-maximized'],
             defaultViewport: null
         });
@@ -69,7 +69,7 @@ class AdobeJobsScraper {
         try {
             await jobPage.goto(url, { waitUntil: 'networkidle2' });
 
-            await jobPage.waitForSelector('h1', { timeout: 10000 });
+            await jobPage.waitForSelector('body > main > div.body-wrapper.ph-page-container', { timeout: 10000 });
 
             const jobDetails = await jobPage.evaluate(() => {
                 const getText = sel => {
@@ -78,9 +78,10 @@ class AdobeJobsScraper {
                 };
 
                 return {
-                    title: getText('h1'),
-                    location: getText('.job-other-info'),
-                    description: getText('section.job-description'),
+                    title: getText('h1.job-title'),
+                    company: 'Adobe',
+                    location: getText('.job-info[data-ph-at-job-location-text]'),
+                    description: getText('body > main > div.body-wrapper.ph-page-container > div > div.job-page-external > div > div > div.col-lg-8.col-md-8.col-sm-12 > section:nth-child(2) > div > section.job-description.au-target.phw-widget-ctr-nd'),
                 };
             });
 

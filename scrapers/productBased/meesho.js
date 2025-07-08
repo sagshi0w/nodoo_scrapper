@@ -1,5 +1,5 @@
-const puppeteer = require('puppeteer');
-const fs = require('fs');
+import puppeteer from 'puppeteer';
+import fs from 'fs';
 
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
@@ -85,6 +85,7 @@ class MeeshoJobsScraper {
 
                 return {
                     title,
+                    company: 'Meesho',
                     location,
                     description,
                     url: window.location.href
@@ -137,7 +138,16 @@ class MeeshoJobsScraper {
     }
 }
 
-(async () => {
+const runMeeshoScraper = async () => {
     const scraper = new MeeshoJobsScraper();
     await scraper.run();
-})();
+    return scraper.allJobs;
+};
+
+export default runMeeshoScraper;
+
+if (import.meta.url === `file://${process.argv[1]}`) {
+    (async () => {
+        await runMeeshoScraper();
+    })();
+}
