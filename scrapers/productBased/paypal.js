@@ -1,5 +1,5 @@
 import puppeteer from 'puppeteer';
-import fs from 'fs';
+import { writeFileSync } from 'fs';
 
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
@@ -31,119 +31,148 @@ class PaypalJobsScraper {
     await delay(5000);
   }
 
-  async loadAllJobCardsViaNextButton() {
-    console.log('⏭️ Clicking "Next" until all job cards are loaded...');
-    const nextBtnSelector =
-      '#pcs-body-container > div:nth-child(2) > div.search-results-main-container > div > div.inline-block.position-cards-container > div > div.iframe-button-wrapper > button';
-    let attempt = 0;
+async loadAndScrapeAllPages() {
+    let start = 0;
+    let pageCount = 1;
 
-    while (true) {
-      try {
-        await this.page.waitForSelector(nextBtnSelector, { timeout: 5000 });
-        const isDisabled = await this.page.$eval(nextBtnSelector, btn => btn.disabled);
-        if (isDisabled) {
-          console.log('🚫 Next button is disabled. Stopping.');
-          break;
-        }
+    // List of major Indian cities
+    const indianCities = [
+      "Bangalore", "Bengaluru", "Mumbai", "Delhi", "Hyderabad", "Chennai", "Pune", "Gurgaon", "Noida",
+      "Kolkata", "Ahmedabad", "Jaipur", "Chandigarh", "Indore", "Lucknow", "Coimbatore", "Nagpur",
+      "Surat", "Visakhapatnam", "Bhopal", "Patna", "Vadodara", "Ghaziabad", "Ludhiana", "Agra",
+      "Nashik", "Faridabad", "Meerut", "Rajkot", "Kalyan", "Vasai", "Varanasi", "Srinagar", "Aurangabad",
+      "Dhanbad", "Amritsar", "Navi Mumbai", "Allahabad", "Ranchi", "Howrah", "Jabalpur", "Gwalior",
+      "Vijayawada", "Jodhpur", "Madurai", "Raipur", "Kota", "Guwahati", "Chandrapur", "Solapur",
+      "Remote", "Gurugram", "Kanpur", "Trichy", "Tiruchirappalli", "Mysore", "Thrissur", "Jamshedpur", "Udaipur",
+      "Dehradun", "Hubli", "Dharwad", "Nellore", "Thane", "Panaji", "Shimla", "Mangalore",
+      "Bareilly", "Salem", "Aligarh", "Bhavnagar", "Kolhapur", "Ajmer", "Belgaum", "Tirupati",
+      "Rourkela", "Bilaspur", "Anantapur", "Silchar", "Kochi", "Thiruvananthapuram"
+    ];
 
-        console.log(`👉 Clicking "Next" (Attempt ${++attempt})...`);
-        await this.page.click(nextBtnSelector);
-        await delay(3000);
-      } catch (err) {
-        console.log('✅ No more "Next" button or failed to find. Assuming all jobs are loaded.');
+    while (start < 10) {
+      const url = `https://paypal.eightfold.ai/careers?domain=paypal.com&triggerGoButton=false&location=India&pid=274907005780&sort_by=timestamp&filter_include_remote=1&start=${start}`;
+
+      console.log(`🌐 Navigating to Page ${pageCount} -> ${url}`);
+      await this.page.goto(url, { waitUntil: 'networkidle2', timeout: 60000 });
+      await delay(5000);
+
+      // Wait and collect job cards
+      await this.page.waitForSelector('div[data-test-id="job-listing"]', { timeout: 10000 });
+      const cards = await this.page.$$('div[data-test-id="job-listing"]');
+      const cardsCount = cards.length;
+
+      if (cardsCount === 0) {
+        console.log('✅ No more job cards found. Stopping pagination.');
         break;
       }
-    }
 
-    console.log('✅ Finished loading all job cards.');
-  }
+      for (let i = 0; i < cardsCount; i++) {
+        const freshCards = await this.page.$$('div[data-test-id="job-listing"]');
+        const card = freshCards[i];
 
-  async collectAllJobCards() {
-    await this.page.waitForSelector('.position-card', { timeout: 10000 });
-    return await this.page.$$('.position-card');
-  }
+        console.log(`📝 Processing job ${i + 1}/${cardsCount} on Page ${pageCount}`);
 
-    cleanJobSummary(rawText) {
-        // Stop processing after "Our Benefits"
-        const benefitsIndex = rawText.indexOf("Our Benefits:");
-        if (benefitsIndex !== -1) {
-            rawText = rawText.substring(0, benefitsIndex);
-        }
-
-        // Remove unwanted characters and normalize spacing
-        const cleaned = rawText
-            .replace(/[\n\r\t]+/g, '\n')
-            .replace(/[^\x20-\x7E\n]+/g, '')
-            .replace(/\n{2,}/g, '\n\n')
-            .trim();
-
-        return cleaned;
-    }
-
-    async extractJobDetailsFromCard(cardHandle) {
         try {
-            await cardHandle.evaluate(el => el.scrollIntoView({ behavior: 'smooth', block: 'center' }));
-            await delay(500);
-            await cardHandle.click();
-            await this.page.waitForSelector('.position-details', { timeout: 15000 });
-            await delay(2000);
-
-            // Click "Read more" if present
-            const readMoreBtn = await this.page.$(
-            '#main-container > div > div > div.position-details > div.row > div.col-md-8.position-job-description-column > div > div:nth-child(3) > div > div > span > button'
-            );
-            if (readMoreBtn) {
-            console.log('📖 Clicking "Read more"...');
-            await readMoreBtn.click();
-            await delay(1000);
+          const jobData = await this.extractJobDetailsFromCard(card);
+          if(jobData.title && jobData.description && jobData.location && jobData.url){
+            // Only add if location matches an Indian city
+            const jobLocation = jobData.location.toLowerCase();
+            const isIndianCity = indianCities.some(city => jobLocation.includes(city.toLowerCase()));
+            if (isIndianCity) {
+              this.allJobs.push(jobData);
             }
-
-            // Extract text and HTML from browser context
-            const rawData = await this.page.evaluate(() => {
-            const getText = sel => document.querySelector(sel)?.innerText.trim() || '';
-            const getHTML = sel => document.querySelector(sel)?.innerHTML;
-
-            const summaryText = getText('.position-job-description');
-
-            return {
-                title: getText('h1.position-title'),
-                location: getText('p.position-location'),
-                summaryText,
-                url: window.location.href
-            };
-            });
-
-            const cleanedSummary = this.cleanJobSummary(rawData.summaryText);
-
-            return {
-            title: rawData.title,
-            company: 'Paypal',
-            location: rawData.location,
-            description: cleanedSummary,
-            url: rawData.url,
-            };
-
+          }
         } catch (err) {
-            console.warn('⚠️ Failed to extract job details:', err.message);
-            return null;
+          console.warn(`⚠️ Failed to extract job ${i + 1}:`, err.message);
         }
+
+        await delay(1000);
+      }
+
+      // Move to next page using dynamic step
+      start += 10;
+      pageCount++;
     }
 
-  async processAllJobs() {
-    const cards = await this.collectAllJobCards();
-    for (let i = 0; i < cards.length; i++) {
-      console.log(`📝 Processing job ${i + 1}/${cards.length}`);
-      const jobData = await this.extractJobDetailsFromCard(cards[i]);
-      if (jobData) {
-        this.allJobs.push(jobData);
+    console.log('✅ Completed scraping all pages.');
+  }
+
+  cleanJobSummary(rawText) {
+    let cleaned = rawText;
+
+    // Remove everything up to and including 'Job Summary:' (case-insensitive)
+    const jobSummaryPattern = /job summary\s*:?/i;
+    const jobSummaryMatch = cleaned.match(jobSummaryPattern);
+    if (jobSummaryMatch) {
+      const idx = cleaned.toLowerCase().indexOf(jobSummaryMatch[0].toLowerCase());
+      if (idx !== -1) {
+        cleaned = cleaned.substring(idx + jobSummaryMatch[0].length);
       }
-      await delay(1000);
+    } else {
+      // Fallback: Remove everything after 'About Company', 'About Us', 'Company Overview', or 'The Company' if present
+      const sectionPatterns = [
+        /about company\s*:?/i,
+        /about us\s*:?/i,
+        /company overview\s*:?/i,
+        /the company\s*:?/i
+      ];
+      let cutIndex = cleaned.length;
+      for (const pattern of sectionPatterns) {
+        const match = cleaned.match(pattern);
+        if (match && match.index < cutIndex) {
+          cutIndex = match.index;
+        }
+      }
+      cleaned = cleaned.substring(0, cutIndex);
     }
+
+    // Remove 'Meet Your Team' line (case-insensitive)
+    cleaned = cleaned.replace(/^.*meet your team.*$/gim, '');
+
+    // Trim after "Our Benefits" section if present
+    const benefitsIndex = cleaned.indexOf("Our Benefits:");
+    if (benefitsIndex !== -1) {
+      cleaned = cleaned.substring(0, benefitsIndex);
+    }
+
+    // Cleanup formatting and unwanted characters
+    return cleaned
+      .replace(/[\n\r\t]+/g, '\n')               // Normalize newlines
+      .replace(/[^\x20-\x7E\n]+/g, '')           // Remove non-printable ASCII
+      .replace(/\n{2,}/g, '\n\n')                // Collapse excessive line breaks
+      .trim();
+  }
+
+  async extractJobDetailsFromCard(cardHandle) {
+    await cardHandle.evaluate(el => el.scrollIntoView({ behavior: 'smooth', block: 'center' }));
+    await delay(500);
+    await cardHandle.click();
+    await delay(2000); // Wait for content to load
+
+    const rawData = await this.page.evaluate(() => {
+      const getText = sel => document.querySelector(sel)?.innerText.trim() || '';
+      return {
+        title: getText('.position-title-3TPtN'),
+        location: getText('.position-location-12ZUO'),
+        summaryText: getText('#job-description-container'),
+        url: window.location.href
+      };
+    });
+
+    const cleanedSummary = this.cleanJobSummary(rawData.summaryText);
+
+    return {
+      title: rawData.title,
+      company: 'PayPal',
+      location: rawData.location,
+      description: cleanedSummary,
+      url: rawData.url
+    };
   }
 
   async saveResults() {
-    fs.writeFileSync('paypalJobs.json', JSON.stringify(this.allJobs, null, 2));
-    console.log(`💾 Saved ${this.allJobs.length} jobs to paypalJobs.json`);
+    //writeFileSync('./scrappedJobs/paypalJobs.json', JSON.stringify(this.allJobs, null, 2));
+    console.log(`💾 Saved ${this.allJobs.length} jobs to scrappedJobs/paypalJobs.json`);
   }
 
   async close() {
@@ -154,8 +183,7 @@ class PaypalJobsScraper {
     try {
       await this.initialize();
       await this.navigateToJobsPage();
-      await this.loadAllJobCardsViaNextButton();
-      await this.processAllJobs();
+      await this.loadAndScrapeAllPages();
       await this.saveResults();
     } catch (err) {
       console.error('❌ Scraper failed:', err);

@@ -107,7 +107,8 @@ class MeeshoJobsScraper {
             const jobData = await this.extractJobDetailsFromLink(this.jobLinks[i]);
 
             if(jobData.title){
-                this.allJobs.push(jobData);
+                const enrichedJob = extractMeeshoData(jobData);
+                this.allJobs.push(enrichedJob);
 
                 console.log(`✅ ${jobData.title}`);
             }
@@ -115,7 +116,7 @@ class MeeshoJobsScraper {
     }
 
     async saveResults() {
-        fs.writeFileSync('meeshoJobs.json', JSON.stringify(this.allJobs, null, 2));
+        //fs.writeFileSync('./scrappedJobs/meeshoJobs.json', JSON.stringify(this.allJobs, null, 2));
         console.log(`💾 Saved ${this.allJobs.length} jobs to meeshoJobs.json`);
     }
 
@@ -137,6 +138,58 @@ class MeeshoJobsScraper {
         }
     }
 }
+
+// Custom data extraction function for Meesho jobs
+const extractMeeshoData = (job) => {
+    if (!job) return job;
+  
+    let cleanedDescription = job.description || '';
+  
+    if (cleanedDescription) {
+      // Step 1: Truncate content if unwanted sections are detected
+      const patterns = [
+        /about\s+us/i,
+        /our\s+mission/i
+      ];
+  
+      let minIdx = cleanedDescription.length;
+      for (const pattern of patterns) {
+        const match = cleanedDescription.match(pattern);
+        if (match && match.index < minIdx) {
+          minIdx = match.index;
+        }
+      }
+  
+      if (minIdx !== cleanedDescription.length) {
+        cleanedDescription = cleanedDescription.substring(0, minIdx).trim();
+      }
+  
+      // Step 2: Remove specific phrases (case-insensitive)
+      cleanedDescription = cleanedDescription
+        .replace(/what you will do:?/gi, '')
+        .replace(/about\s+the\s+team\s*[:\-]?/gi, '')
+        .replace(/about\s+the\s+role\s*[:\-]?/gi, '');
+  
+      // Step 3: Remove trailing spaces and excessive newlines
+      cleanedDescription = cleanedDescription
+        .replace(/[ \t]+$/gm, '')     // Trailing spaces
+        .replace(/\n{2,}/g, '\n')     // Excessive blank lines
+        .trim();
+    }
+  
+    const cleanedTitle = job.title?.trim() || '';
+    const cleanedLocation = job.location?.trim() || '';
+  
+    return {
+      ...job,
+      title: cleanedTitle,
+      location: cleanedLocation,
+      description: cleanedDescription,
+      company: 'Meesho',
+      scrapedAt: new Date().toISOString()
+    };
+  };
+  
 
 const runMeeshoScraper = async () => {
     const scraper = new MeeshoJobsScraper();

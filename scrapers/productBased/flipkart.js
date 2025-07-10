@@ -3,6 +3,69 @@ import fs from 'fs';
 
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
+// Custom data extraction function for Flipkart jobs
+const extractFlipkartData = (job) => {
+    if (!job) return job;
+    
+    // Clean description
+    let cleanedDescription = job.description || '';
+    if (cleanedDescription) {
+        cleanedDescription = cleanDescription(cleanedDescription);
+    }
+    
+    // Clean title
+    let cleanedTitle = job.title || '';
+    if (cleanedTitle) {
+        cleanedTitle = cleanedTitle.trim();
+    }
+    
+    // Clean location
+    let cleanedLocation = job.location || '';
+    if (cleanedLocation) {
+        cleanedLocation = cleanedLocation.trim();
+    }
+    
+    return {
+        ...job,
+        title: cleanedTitle,
+        location: cleanedLocation,
+        description: cleanedDescription,
+        company: 'Flipkart',
+        scrapedAt: new Date().toISOString()
+    };
+};
+
+function cleanDescription(raw) {
+  // List of field labels and section headers to remove
+  const fieldLabels = [
+    "Posted On", "Open Positions", "Skills Required", "Location",
+    "Education/Qualification", "Years Of Exp"
+  ];
+  const sectionHeaders = [
+    "About the Role", "Job Description", "Responsibilities", // etc.
+  ];
+
+  // Split into lines for easier processing
+  let lines = raw.split('\n');
+
+  // Remove lines that are just field labels or section headers (with or without colon)
+  lines = lines.filter(line => {
+    // Remove if line starts with any field label or section header
+    return !fieldLabels.concat(sectionHeaders).some(label =>
+      line.trim().startsWith(label + ":") || line.trim() === label
+    );
+  });
+
+  // Remove duplicate lines
+  lines = [...new Set(lines)];
+
+  // Remove empty lines and trim
+  lines = lines.map(line => line.trim()).filter(line => line);
+
+  // Join back into a cleaned string
+  return lines.join('\n');
+}
+
 class FlipkartJobsScraper {
     constructor() {
         this.browser = null;
@@ -12,7 +75,7 @@ class FlipkartJobsScraper {
 
     async initialize() {
         this.browser = await puppeteer.launch({
-            headless: true,
+            headless: false, // For fplikart it is must to have.
             args: ['--no-sandbox', '--start-maximized'],
             defaultViewport: null
         });
@@ -125,11 +188,11 @@ class FlipkartJobsScraper {
 
                 const jobDetails = await this.extractJobDetails(newPage);
 
-                this.allJobs.push({
+                const enrichedJob = extractFlipkartData({
                     ...jobDetails,
                     url: newPage.url(),
-                    //scrapedAt: new Date().toISOString()
                 });
+                this.allJobs.push(enrichedJob);
 
                 await newPage.close();
             } catch (err) {
@@ -140,7 +203,7 @@ class FlipkartJobsScraper {
     }
 
     async saveResults() {
-        fs.writeFileSync('flipkartJobs.json', JSON.stringify(this.allJobs, null, 2));
+        //fs.writeFileSync('./scrappedJobs/flipkartJobs.json', JSON.stringify(this.allJobs, null, 2));
         console.log(`💾 Saved ${this.allJobs.length} jobs to flipkartJobs.json`);
     }
 

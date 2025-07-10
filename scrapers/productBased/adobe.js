@@ -13,7 +13,7 @@ class AdobeJobsScraper {
 
     async initialize() {
         this.browser = await launch({
-            headless: ture,
+            headless: true,
             args: ['--no-sandbox', '--start-maximized'],
             defaultViewport: null
         });
@@ -36,7 +36,7 @@ class AdobeJobsScraper {
         console.log('📋 Collecting job links from all pages...');
         let pageCount = 1;
 
-        while (pageCount < 20) {
+        while (true) {
             console.log(`🔎 Scraping page ${pageCount}...`);
 
             const cards = await this.page.$$eval('a[data-ph-at-id="job-link"]', anchors =>
@@ -104,7 +104,7 @@ class AdobeJobsScraper {
     }
 
     async saveResults() {
-        writeFileSync('adobeJobs.json', JSON.stringify(this.allJobs, null, 2));
+        //writeFileSync('./scrappedJobs/adobeJobs.json', JSON.stringify(this.allJobs, null, 2));
         console.log(`💾 Saved ${this.allJobs.length} jobs to adobeJobs.json`);
     }
 

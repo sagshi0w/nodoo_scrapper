@@ -3,8 +3,15 @@ import moment from "moment-timezone";
 import pLimit from "p-limit";
 import axios from "axios";
 import { createRequire } from 'module';
+import extractData from "./utils/extractData.js";
+import sendToBackend from "./utils/sendToBackend.js";
+
 const require = createRequire(import.meta.url);
 const nodemailer = require('nodemailer');
+
+require('dotenv').config();
+
+console.log(process.env.EMAIL_USER);
 
 // Import all scrapers
 // A:
@@ -54,7 +61,7 @@ const config = {
       service: "Gmail",
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASS,
-      recipients: ["admin@example.com"]
+      recipients: ["sagar.shinde0113@gmail.com"]
     },
     slack: {
       webhookUrl: process.env.SLACK_WEBHOOK
@@ -155,13 +162,17 @@ const runAllScrapers = async () => {
   try {
     console.log(`⏰ [${stats.startTime}] Starting all scrapers...`);
 
-    // List of all scraper functions
+    //List of all scraper functions
     const scrapers = [
       runAckoScraper, runAmazonScraper, runAdobeScraper, runAtlassianScraper, runClearTaxScraper,
       runFlipkartScraper, runFreshworksScraper, runGoldmanScraper, runGoogleScraper, runGrowwScraper,
       runMeeshoScraper, runMicrosoftScraper, runPaypalScraper, runPhonepeScraper, runRazorpayScraper,
       runSiemensScraper, runUberScraper, runZohoScraper
     ];
+
+    // const scrapers = [
+    //   runPaypalScraper
+    // ]
 
     // Run scrapers with concurrency control
     const limit = pLimit(config.concurrency);
@@ -173,8 +184,12 @@ const runAllScrapers = async () => {
     const allJobs = [];
     results.forEach((result, i) => {
       if (result.status === "fulfilled") {
-        stats.successCount++;
-        allJobs.push(...result.value);
+        if (Array.isArray(result.value)) {
+          stats.successCount++;
+          allJobs.push(...result.value);
+        } else {
+          console.warn("⚠️ Scraper fulfilled but result is not an array:", result.value);
+        }
       } else {
         stats.failCount++;
         stats.errors.push({

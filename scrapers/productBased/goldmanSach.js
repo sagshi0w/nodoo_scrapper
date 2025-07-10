@@ -27,7 +27,7 @@ class GoldmanSachsScraper {
 
     async initialize() {
         this.browser = await puppeteer.launch({
-            headless: true,
+            headless: false, // Must be false for goldmanSach.
             args: ['--no-sandbox'],
             defaultViewport: null
         });
@@ -128,10 +128,10 @@ class GoldmanSachsScraper {
                 //fs.writeFileSync(`debug_job_${i+1}.html`, content);
 
                 const job = await this.extractJobData(jobPage);
-                
-                if (job.jobTitle) {
-                    this.allJobs.push(job);
-                    console.log(`✅ [${i+1}/${jobArray.length}] ${job.jobTitle} - ${job.jobLocation}`);
+                const enrichedJob = extractGoldmanData(job, job);
+                if (enrichedJob.title) {
+                    this.allJobs.push(enrichedJob);
+                    console.log(`✅ [${i+1}/${jobArray.length}] ${enrichedJob.title} - ${enrichedJob.location}`);
                 } else {
                     console.log(`⚠️ [${i+1}/${jobArray.length}] No job title found at ${jobUrl}`);
                     fs.appendFileSync('failed_jobs.txt', `${jobUrl}\n`);
@@ -153,11 +153,13 @@ class GoldmanSachsScraper {
                     const el = document.querySelector(sel);
                     return el ? el.textContent.trim() : '';
                 };
-
                 return {
                     title: getText('#__next > main > div > div:nth-child(1) > div > div > div > div.gs-uitk-c-172iff2--col-root.text-left.gs-layout-col > div > span.gs-uitk-c-lzsmqw--text-root.gs-uitk-mb-2.gs-text'),
                     location: getText('#opportunity-overview > div:nth-child(2) > div:nth-child(2) > div:nth-child(2) > span.gs-uitk-c-vh52gn--text-root.gs-text'),
                     description: getText('div.job-description'),
+                    responsibilities: getText('ul.gs-uitk-c-1w6t8kz--list-root'),
+                    skills: getText('ul.gs-uitk-c-1w6t8kz--list-root.skills'),
+                    qualifications: getText('ul.gs-uitk-c-1w6t8kz--list-root.qualifications'),
                     url: window.location.href,
                     company: 'Goldman Sachs'
                 };
@@ -168,7 +170,7 @@ class GoldmanSachsScraper {
     }
 
     async saveResults() {
-        fs.writeFileSync('goldmanSachsJobs.json', JSON.stringify(this.allJobs, null, 2));
+        //fs.writeFileSync('./scrappedJobs/goldmanSachsJobs.json', JSON.stringify(this.allJobs, null, 2));
         console.log(`💾 Saved ${this.allJobs.length} jobs to goldmanSachsJobs.json`);
         
         if (fs.existsSync('failed_jobs.txt')) {
@@ -194,6 +196,37 @@ class GoldmanSachsScraper {
         }
     }
 }
+
+// Custom data extraction function for Goldman Sachs jobs
+const extractGoldmanData = (job, jobPage) => {
+    if (!job) return job;
+    // Compose a new description from the relevant sections
+    let summary = job.description || '';
+    // Remove introductory phrases at the very beginning
+    if (summary) {
+        summary = summary.replace(/^(\s)*(What we are|What we do|Who we are|Who we do|Who we be|Who we work with|Who we serve|Who we help|Who we support|Who we represent|Who we|What we|About us|About Goldman Sachs)\s*[:\-–]?\s*/i, '');
+    }
+    let responsibilities = '';
+    let skills = '';
+    let qualifications = '';
+    if (jobPage) {
+        responsibilities = jobPage.responsibilities || '';
+        skills = jobPage.skills || '';
+        qualifications = jobPage.qualifications || '';
+    }
+    let combinedDescription = '';
+    if (summary) combinedDescription += `\n${summary}\n\n`;
+    if (responsibilities) combinedDescription += `Responsibilities:\n${responsibilities}\n\n`;
+    if (skills) combinedDescription += `Skills:\n${skills}\n\n`;
+    if (qualifications) combinedDescription += `Qualifications:\n${qualifications}`;
+    combinedDescription = combinedDescription.trim();
+    return {
+        ...job,
+        description: combinedDescription,
+        company: 'Goldman Sachs',
+        //scrapedAt: new Date().toISOString()
+    };
+};
 
 const runGoldmanScraper = async () => {
     const scraper = new GoldmanSachsScraper();

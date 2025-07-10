@@ -3,6 +3,43 @@ import { writeFileSync } from 'fs';
 
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
+// Custom data extraction function for Amazon jobs
+const extractAmazonData = (job) => {
+    if (!job) return job;
+    
+    // Clean description
+    let cleanedDescription = job.description || '';
+    if (cleanedDescription) {
+        // Remove common unwanted patterns
+        cleanedDescription = cleanedDescription
+            .replace(/^(description|job\s+descriptions?)\s*[:\-]?\s*/i, '')
+            .replace(/^[^a-zA-Z0-9\n\r]+/, '')
+            .replace(/\n{3,}/g, '\n\n') // Remove excessive newlines
+            .trim();
+    }
+    
+    // Clean title
+    let cleanedTitle = job.title || '';
+    if (cleanedTitle) {
+        cleanedTitle = cleanedTitle.trim();
+    }
+    
+    // Clean location
+    let cleanedLocation = job.location || '';
+    if (cleanedLocation) {
+        cleanedLocation = cleanedLocation.trim();
+    }
+    
+    return {
+        ...job,
+        title: cleanedTitle,
+        location: cleanedLocation,
+        description: cleanedDescription,
+        company: 'Amazon',
+        scrapedAt: new Date().toISOString()
+    };
+};
+
 const runAmazonScraper = async () => {
   const browser = await launch({
     headless: true,
@@ -54,7 +91,8 @@ const runAmazonScraper = async () => {
           };
         });
         if (job.title) {
-          allJobs.push(job);
+          const enrichedJob = extractAmazonData(job);
+          allJobs.push(enrichedJob);
           console.log(`✅ [Page ${pageCount}] ${job.title}`);
         }
       } catch (err) {
@@ -96,8 +134,8 @@ const runAmazonScraper = async () => {
     }
   }
 
-  writeFileSync('amazon_jobs.json', JSON.stringify(allJobs, null, 2));
-  console.log(`💾 Saved ${allJobs.length} jobs to amazon_jobs.json`);
+  //writeFileSync('./scrappedJobs/amazonJobs.json', JSON.stringify(allJobs, null, 2));
+  console.log(`💾 Saved ${allJobs.length} jobs to amazonJobs.json`);
 
   await browser.close();
   return allJobs;

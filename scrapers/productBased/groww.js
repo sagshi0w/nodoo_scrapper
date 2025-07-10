@@ -122,7 +122,8 @@ class GrowwJobsScraper {
             if(jobData.title && !seen.has(jobData.title)){
                 seen.add(jobData.title);
 
-                this.allJobs.push(jobData);
+                const enrichedJob = extractGrowwData(jobData);
+                this.allJobs.push(enrichedJob);
 
                 console.log(`✅ ${jobData.title}`);
             }
@@ -130,7 +131,7 @@ class GrowwJobsScraper {
     }
 
     async saveResults() {
-        writeFileSync('growwJobs.json', JSON.stringify(this.allJobs, null, 2));
+        //writeFileSync('./scrappedJobs/growwJobs.json', JSON.stringify(this.allJobs, null, 2));
         console.log(`💾 Saved ${this.allJobs.length} jobs to growwJobs.json`);
     }
 
@@ -166,3 +167,36 @@ if (import.meta.url === `file://${process.argv[1]}`) {
         await runGrowwScraper();
     })();
 }
+
+// Custom data extraction function for Groww jobs
+const extractGrowwData = (job) => {
+    if (!job) return job;
+    let cleanedDescription = job.description || '';
+    if (cleanedDescription) {
+        // Remove specified phrases (case-insensitive, with or without a colon) anywhere in the text
+        cleanedDescription = cleanedDescription
+            .replace(/about\s+groww\s*:?/gi, '')
+            .replace(/about\s+us\s*:?/gi, '')
+            .replace(/groww\s+mutual\s+fund\s*:?/gi, '')
+            .replace(/who\s+we\s+are\s*:?/gi, '')
+            .trim();
+        // Remove extra blank lines and trailing spaces
+        cleanedDescription = cleanedDescription
+            .replace(/[ \t]+$/gm, '')
+            .replace(/\n{2,}/g, '\n')
+            .trim();
+        // Ensure the description starts with a capital letter
+        if (cleanedDescription.length > 0) {
+            cleanedDescription = cleanedDescription.charAt(0).toUpperCase() + cleanedDescription.slice(1);
+        }
+    }
+    let cleanedTitle = job.title ? job.title.trim() : '';
+    let cleanedLocation = job.location ? job.location.trim() : '';
+    return {
+        ...job,
+        title: cleanedTitle,
+        location: cleanedLocation,
+        description: cleanedDescription,
+        company: 'Groww'
+    };
+};

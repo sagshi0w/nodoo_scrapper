@@ -3,6 +3,48 @@ import fs from 'fs';
 
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
+// Custom data extraction function for Microsoft jobs
+const extractMicrosoftData = (job) => {
+    if (!job) return job;
+    
+    // Clean description
+    let cleanedDescription = job.description || '';
+    if (cleanedDescription) {
+        // Remove 'Overview' (case-insensitive, at start or anywhere as a heading)
+        cleanedDescription = cleanedDescription.replace(/^overview\s*[:\-]?/i, '');
+        cleanedDescription = cleanedDescription.replace(/\n+overview\s*[:\-]?/gi, '\n');
+        // Add extra newlines between logical sections
+        cleanedDescription = cleanedDescription
+            .replace(/(Qualifications:|Responsibilities:|Requirements:|Skills:)/gi, '\n$1\n')
+            // Remove common unwanted patterns
+            .replace(/^(description|job\s+descriptions?)\s*[:\-]?\s*/i, '')
+            .replace(/^[^a-zA-Z0-9\n\r]+/, '')
+            .replace(/\n{3,}/g, '\n\n') // Remove excessive newlines
+            .trim();
+    }
+    
+    // Clean title
+    let cleanedTitle = job.title || '';
+    if (cleanedTitle) {
+        cleanedTitle = cleanedTitle.trim();
+    }
+    
+    // Clean location
+    let cleanedLocation = job.location || '';
+    if (cleanedLocation) {
+        cleanedLocation = cleanedLocation.trim();
+    }
+    
+    return {
+        ...job,
+        title: cleanedTitle,
+        location: cleanedLocation,
+        description: cleanedDescription,
+        company: 'Microsoft',
+        scrapedAt: new Date().toISOString()
+    };
+};
+
 class MicrosoftJobsScraper {
   constructor() {
     this.browser = null;
@@ -32,31 +74,29 @@ class MicrosoftJobsScraper {
       await this.page.waitForSelector('div.ms-List-page', { timeout: 60000 });
       let jobCards = await this.page.$$('div.ms-List-cell');
       console.log(`🃏 Found ${jobCards.length} jobs`);
+
       for (let i = 0; i < jobCards.length; i++) {
         try {
           jobCards = await this.page.$$('div.ms-List-cell');
           await jobCards[i].click();
           await this.page.waitForSelector('h1', { timeout: 60000 });
           await delay(2000);
+
           const job = await this.page.evaluate(() => {
             const tx = s => document.querySelector(s)?.innerText.trim() || '';
-            const title = tx('h1');
-            const location = tx('p');
-            const qualifications = tx('div.WzU5fAyjS4KUVs1QJGcQ');
-            const responsibilities = tx('div.fcUffXZZoGt8CJQd8GUl');
-            const jobDescription = `\n${qualifications ? `## Qualifications\n${qualifications}\n\n` : ''}${responsibilities ? `## Responsibilities\n${responsibilities}` : ''}`.trim();
             return {
-              title,
-              location,
+              title: tx('h1'),
               company: 'Microsoft',
-              description: jobDescription,
+              location: tx('p'),
+              description: tx('div.fcUffXZZoGt8CJQd8GUl'),
               url: window.location.href
             };
           });
 
           if (job.title) {
-            this.allJobs.add(JSON.stringify(job));
-            console.log(`✅ ${job.title}`);
+            const enrichedJob = extractMicrosoftData(job);
+            this.allJobs.add(JSON.stringify(enrichedJob));
+            console.log(`✅ ${enrichedJob.title}`);
           }
           await this.page.goBack({ waitUntil: 'networkidle2' });
           await delay(1000);
@@ -92,8 +132,8 @@ class MicrosoftJobsScraper {
   }
 
   async saveResults() {
-    fs.writeFileSync('microsoft_jobs.json', JSON.stringify([...this.allJobs].map(j => JSON.parse(j)), null, 2));
-    console.log(`💾 Saved ${this.allJobs.size} jobs to microsoft_jobs.json`);
+    //fs.writeFileSync('./scrappedJobs/microsoftJobs.json', JSON.stringify([...this.allJobs].map(j => JSON.parse(j)), null, 2));
+    console.log(`💾 Saved ${this.allJobs.size} jobs to microsoftJobs.json`);
   }
 
   async close() {

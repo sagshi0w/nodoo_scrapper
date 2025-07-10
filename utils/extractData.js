@@ -838,20 +838,84 @@ export default function extractSkillsAndExperience(job) {
       ];
 
     // Function to extract experience range
-    const extractExperience = (desc) => {
-        if (!desc) return 'Not specified';
-        const match = desc.match(/(\d+)\+?\s*(?:to|-)?\s*(\d+)?\s*years?/i);
-        return match ? `${match[1]}-${match[2] || parseInt(match[1]) + 2} years` : 'Not specified';
+ /**
+ * Extracts and formats experience requirements with focus on "years of experience" patterns
+ * @param {string} desc - Job description text
+ * @returns {string} Formatted experience range or default text
+ */
+ const extractExperience = (desc) => {
+    if (!desc) return 'Not specified';
+
+    // Map number words to digits
+    const numberWords = {
+        one: 1, two: 2, three: 3, four: 4, five: 5,
+        six: 6, seven: 7, eight: 8, nine: 9, ten: 10,
+        eleven: 11, twelve: 12, thirteen: 13, fourteen: 14, fifteen: 15,
+        sixteen: 16, seventeen: 17, eighteen: 18, nineteen: 19, twenty: 20
     };
+
+    // Try digit-based patterns first (existing logic)
+    const patterns = [
+        // Explicit range patterns with years/experience
+        /(\d+)\s*-\s*(\d+)\s*years\s*of\s*experience/i,
+        /(\d+)\s*to\s*(\d+)\s*years\s*of\s*experience/i,
+        /(\d+)\s*\+\s*years\s*of\s*experience/i,
+        /(\d+)\s*years\s*of\s*experience/i,
+        /(\d+)\s*-\s*(\d+)\s*yrs\.?\s*of\s*exp\.?/i,
+        /(\d+)\s*to\s*(\d+)\s*yrs\.?\s*of\s*exp\.?/i,
+        /(\d+)\s*\+\s*yrs\.?\s*of\s*exp\.?/i,
+        /(\d+)\s*yrs\.?\s*of\s*exp\.?/i,
+        // General range patterns
+        /(\d+)\s*-\s*(\d+)\s*years?/i,
+        /(\d+)\s*to\s*(\d+)\s*years?/i,
+        /(\d+)\s*\+\s*years?/i,
+        /(\d+)\s*years?/i,
+        /(?:experience|exp)\s*:\s*(\d+)\s*(?:-|\+)?\s*(\d+)?/i,
+        /(?:minimum|min)\.?\s*(\d+)\s*years?/i
+    ];
+
+    for (const pattern of patterns) {
+        const match = desc.match(pattern);
+        if (match) {
+            const minYears = parseInt(match[1]);
+            const maxYears = match[2] ? parseInt(match[2]) : null;
+            const isPlusRange = match[0].includes('+') || 
+                              match[0].includes('least') || 
+                              match[0].includes('minimum');
+
+            // Format the output based on what we found
+            if (maxYears) {
+                return `${minYears}-${maxYears} yrs`;
+            } else if (isPlusRange) {
+                // For plus ranges, estimate max as min+2 (5+ → 5-7)
+                return `${minYears}-${minYears + 2} yrs`;
+            } else {
+                // For single values, create range (14 → 12-14)
+                return `${Math.max(1, minYears - 2)}-${minYears} yrs`;
+            }
+        }
+    }
+
+    // Now try word-based patterns (e.g., 'six years of experience')
+    const wordPattern = new RegExp(`(${Object.keys(numberWords).join('|')})[+\-\s]*years?\s*of\s*experience`, 'i');
+    const wordMatch = desc.match(wordPattern);
+    if (wordMatch) {
+        const minYears = numberWords[wordMatch[1].toLowerCase()];
+        // For single word, create a range as above
+        return `${Math.max(1, minYears - 2)}-${minYears} yrs`;
+    }
+
+    return 'Not specified';
+};
 
     // Preprocess job description: remove 'description' at start, trim spaces, remove blank lines
     function cleanDescription(desc) {
         if (!desc) return '';
         let cleaned = desc.trim();
-        // Remove 'description' at the start (case-insensitive)
-        cleaned = cleaned.replace(/^(description\s*[:\-]?\s*)/i, '');
-        // Remove any special characters from the beginning
-        cleaned = cleaned.replace(/^[^a-zA-Z0-9]+/, '');
+        // Remove 'description' or 'Job description(s)' at the start (case-insensitive)
+        cleaned = cleaned.replace(/^(job\s+)?descriptions?\s*[:\-]?\s*/i, '');
+        // Remove any special characters and newlines from the beginning
+        cleaned = cleaned.replace(/^[^a-zA-Z0-9\n\r]+/, '');
         // Remove extra blank lines and trim each line
         cleaned = cleaned.split('\n')
             .map(line => line.trim())

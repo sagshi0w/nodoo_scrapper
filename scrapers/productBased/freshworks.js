@@ -3,6 +3,49 @@ import fs from 'fs';
 
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
+// Custom data extraction function for Freshworks jobs
+const extractFreshworksData = (job) => {
+    if (!job) return job;
+    
+    // Clean description
+    let cleanedDescription = job.description || '';
+    if (cleanedDescription) {
+        // Remove common unwanted patterns
+        cleanedDescription = cleanedDescription
+            .replace(/^(description|job\s+descriptions?)\s*[:\-]?\s*/i, '')
+            .replace(/^[^a-zA-Z0-9\n\r]+/, '')
+            .replace(/\n{3,}/g, '\n\n') // Remove excessive newlines
+            .replace(/[ \t]+$/gm, '') // Remove trailing spaces on each line
+            .replace(/\n{2,}/g, '\n') // Remove extra blank lines
+            .trim();
+        // Remove 'Company Description' section and anything after
+        const companyDescIdx = cleanedDescription.toLowerCase().indexOf('company description');
+        if (companyDescIdx !== -1) {
+          cleanedDescription = cleanedDescription.replace(/company description\s*/i, '').trim();
+        }
+    }
+    
+    // Clean title
+    let cleanedTitle = job.title || '';
+    if (cleanedTitle) {
+        cleanedTitle = cleanedTitle.trim();
+    }
+    
+    // Clean location
+    let cleanedLocation = job.location || '';
+    if (cleanedLocation) {
+        cleanedLocation = cleanedLocation.trim();
+    }
+    
+    return {
+        ...job,
+        title: cleanedTitle,
+        location: cleanedLocation,
+        description: cleanedDescription,
+        company: 'Freshworks',
+    };
+};
+
 class FreshworksJobsScraper {
   constructor() {
     this.browser = null;
@@ -61,7 +104,8 @@ class FreshworksJobsScraper {
       if(location && location.includes('India')){
         jobData.location = location;
         jobData.url = url;
-        this.allJobs.push(jobData);
+        const enrichedJob = extractFreshworksData(jobData);
+        this.allJobs.push(enrichedJob);
         console.log(`✅ Done: ${jobData.title}`);
       }
       await jobPage.close();
@@ -81,8 +125,8 @@ class FreshworksJobsScraper {
   }
 
   async saveResults() {
-    fs.writeFileSync('freshworks_jobs.json', JSON.stringify(this.allJobs, null, 2));
-    console.log(`💾 Saved ${this.allJobs.length} jobs to freshworks_jobs.json`);
+    //fs.writeFileSync('./scrappedJobs/freshworksJobs.json', JSON.stringify(this.allJobs, null, 2));
+    console.log(`💾 Saved ${this.allJobs.length} jobs to freshworksJobs.json`);
   }
 
   async close() {

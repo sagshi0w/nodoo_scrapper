@@ -3,6 +3,47 @@ import fs from 'fs';
 
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
+// Custom data extraction function for Uber jobs
+const extractUberData = (job) => {
+    if (!job) return job;
+    
+    // Clean description
+    let cleanedDescription = job.description || '';
+    if (cleanedDescription) {
+        // Remove 'about the role', 'about the program', 'about the team', or any 'about the ...' at the start
+        cleanedDescription = cleanedDescription.replace(/^about the [a-zA-Z]+\s*[:\-]?/i, '');
+        // Add extra newlines before common section headers for readability
+        cleanedDescription = cleanedDescription
+            .replace(/(Responsibilities:|Requirements:|Skills:|Qualifications:)/gi, '\n$1\n')
+            // Remove common unwanted patterns
+            .replace(/^(description|job\s+descriptions?)\s*[:\-]?\s*/i, '')
+            .replace(/^[^a-zA-Z0-9\n\r]+/, '')
+            .replace(/\n{3,}/g, '\n\n') // Remove excessive newlines
+            .trim();
+    }
+    
+    // Clean title
+    let cleanedTitle = job.title || '';
+    if (cleanedTitle) {
+        cleanedTitle = cleanedTitle.trim();
+    }
+    
+    // Clean location
+    let cleanedLocation = job.location || '';
+    if (cleanedLocation) {
+        cleanedLocation = cleanedLocation.trim();
+    }
+    
+    return {
+        ...job,
+        title: cleanedTitle,
+        location: cleanedLocation,
+        description: cleanedDescription,
+        company: 'Uber',
+        scrapedAt: new Date().toISOString()
+    };
+};
+
 class UberJobsScraper {
   constructor() {
     this.browser = null;
@@ -113,7 +154,8 @@ class UberJobsScraper {
       console.log(`📝 [${i+1}/${jobArray.length}] Processing: ${jobUrl}`);
       const jobData = await this.extractJobDetailsFromLink(jobUrl);
       if (jobData && jobData.title) {
-        this.allJobs.push(jobData);
+        const enrichedJob = extractUberData(jobData);
+        this.allJobs.push(enrichedJob);
         console.log(`✅ ${jobData.title} - ${jobData.location}`);
       }
       await delay(1000);
@@ -121,8 +163,8 @@ class UberJobsScraper {
   }
 
   async saveResults() {
-    fs.writeFileSync('uber_jobs.json', JSON.stringify(this.allJobs, null, 2));
-    console.log(`💾 Saved ${this.allJobs.length} jobs to uber_jobs.json`);
+    //fs.writeFileSync('./scrappedJobs/uberJobs.json', JSON.stringify(this.allJobs, null, 2));
+    console.log(`💾 Saved ${this.allJobs.length} jobs to uberJobs.json`);
   }
 
   async close() {

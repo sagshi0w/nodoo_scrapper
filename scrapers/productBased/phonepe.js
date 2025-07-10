@@ -67,7 +67,8 @@ class PhonePeJobsScraper {
       console.log(`📝 [${i+1}/${this.allJobLinks.length}] Processing: ${url}`);
       const jobData = await this.extractJobDetailsFromLink(url);
       if (jobData && jobData.title) {
-        this.allJobs.push(jobData);
+        const enrichedJob = extractPhonePeData(jobData);
+        this.allJobs.push(enrichedJob);
         console.log(`✅ ${jobData.title}`);
       }
       await delay(1000);
@@ -75,7 +76,7 @@ class PhonePeJobsScraper {
   }
 
   async saveResults() {
-    fs.writeFileSync('phonepeJobs.json', JSON.stringify(this.allJobs, null, 2));
+    //fs.writeFileSync('./scrappedJobs/phonepeJobs.json', JSON.stringify(this.allJobs, null, 2));
     console.log(`💾 Saved ${this.allJobs.length} jobs to phonepeJobs.json`);
   }
 
@@ -97,6 +98,43 @@ class PhonePeJobsScraper {
     }
   }
 }
+
+// Custom data extraction function for PhonePe jobs
+const extractPhonePeData = (job) => {
+    if (!job) return job;
+    let cleanedDescription = job.description || '';
+    if (cleanedDescription) {
+        // Remove specific phrases but keep the content after them
+        cleanedDescription = cleanedDescription
+            .replace(/about\s+phonepe\s+group\s*:/gi, '')
+            .replace(/about\s+phonepe\s*:/gi, '')
+            .replace(/culture/gi, '');
+        
+        // Remove the phrase 'Job Summary:' (case-insensitive, anywhere)
+        cleanedDescription = cleanedDescription.replace(/job summary:?/gi, '').trim();
+        
+        // Add extra line breaks after common section headers for better readability
+        cleanedDescription = cleanedDescription
+            .replace(/(\n\s*)(responsibilities|requirements|qualifications|skills|experience|education|benefits|what\s+we\s+offer|key\s+responsibilities|job\s+description|role\s+and\s+responsibilities|about\s+the\s+role|what\s+you'll\s+do|what\s+you\s+will\s+do)(\s*:?\s*\n)/gi, '\n\n$1$2$3\n\n')
+            .replace(/(\n\s*)(\d+\.\s*)(.*?)(\n)/gi, '\n\n$1$2$3$4\n')
+            .replace(/(\n\s*)(•\s*)(.*?)(\n)/gi, '\n\n$1$2$3$4\n');
+        
+        // Remove extra blank lines and trailing spaces
+        cleanedDescription = cleanedDescription
+            .replace(/[ \t]+$/gm, '')
+            .replace(/\n{3,}/g, '\n\n')
+            .trim();
+    }
+    let cleanedTitle = job.title ? job.title.trim() : '';
+    let cleanedLocation = job.location ? job.location.trim() : '';
+    return {
+        ...job,
+        title: cleanedTitle,
+        location: cleanedLocation,
+        description: cleanedDescription,
+        company: 'PhonePe',
+    };
+};
 
 const runPhonePeScraper = async () => {
   const scraper = new PhonePeJobsScraper();

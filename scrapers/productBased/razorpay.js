@@ -84,7 +84,7 @@ class RazorpayJobsScraper {
       console.log(`📝 [${i+1}/${this.allJobLinks.length}] Processing: ${url}`);
       const jobData = await this.extractJobDetailsFromLink(url);
       if (jobData && jobData.title) {
-        this.allJobs.push(jobData);
+        this.allJobs.push(extractRazorpayData(jobData));
         console.log(`✅ ${jobData.title}`);
       }
       await delay(1000);
@@ -92,7 +92,7 @@ class RazorpayJobsScraper {
   }
 
   async saveResults() {
-    fs.writeFileSync('razorpayJobs.json', JSON.stringify(this.allJobs, null, 2));
+    //fs.writeFileSync('./scrappedJobs/razorpayJobs.json', JSON.stringify(this.allJobs, null, 2));
     console.log(`💾 Saved ${this.allJobs.length} jobs to razorpayJobs.json`);
   }
 
@@ -114,6 +114,34 @@ class RazorpayJobsScraper {
     }
   }
 }
+
+// Custom data extraction function for Razorpay jobs
+const extractRazorpayData = (job) => {
+    if (!job) return job;
+    let cleanedDescription = job.description || '';
+    if (cleanedDescription) {
+        // Remove everything up to and including 'Roles and Responsibilities:'
+        const rrPattern = /[\s\S]*?roles and responsibilities\s*:/i;
+        cleanedDescription = cleanedDescription.replace(rrPattern, '');
+        // Remove the phrase 'Roles and Responsibilities:' if present again
+        cleanedDescription = cleanedDescription.replace(/roles and responsibilities\s*:/i, '');
+        // Remove extra blank lines and trailing spaces
+        cleanedDescription = cleanedDescription
+            .replace(/[ \t]+$/gm, '')
+            .replace(/\n{2,}/g, '\n')
+            .trim();
+    }
+    let cleanedTitle = job.title ? job.title.trim() : '';
+    let cleanedLocation = job.location ? job.location.trim() : '';
+    return {
+        ...job,
+        title: cleanedTitle,
+        location: cleanedLocation,
+        description: cleanedDescription,
+        company: 'Razorpay',
+        scrapedAt: new Date().toISOString()
+    };
+};
 
 const runRazorpayScraper = async () => {
   const scraper = new RazorpayJobsScraper();

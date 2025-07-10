@@ -1,12 +1,41 @@
 import puppeteer from 'puppeteer';
 import fs from 'fs';
-import extractData from '../../utils/extractData.js';
 
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 
+// Custom data extraction function for Siemens jobs
+const extractSiemensData = (job) => {
+    if (!job) return job;
+    let cleanedDescription = job.description || '';
+    if (cleanedDescription) {
+        // Remove 'job summary', 'job description' (case-insensitive, at start or as headings)
+        cleanedDescription = cleanedDescription
+            .replace(/^job summary\s*[:\-]?/i, '')
+            .replace(/\n+job summary\s*[:\-]?/gi, '\n')
+            .replace(/^job description\s*[:\-]?/i, '')
+            .replace(/\n+job description\s*[:\-]?/gi, '\n');
+        // Add extra newlines before common section headers for readability
+        cleanedDescription = cleanedDescription
+            .replace(/(Responsibilities:|Requirements:|Skills:|Qualifications:)/gi, '\n$1\n')
+            .replace(/[ \t]+$/gm, '')
+            .replace(/\n{2,}/g, '\n')
+            .trim();
+    }
+    let cleanedTitle = job.title ? job.title.trim() : '';
+    let cleanedLocation = job.location ? job.location.trim() : '';
+    return {
+        ...job,
+        title: cleanedTitle,
+        location: cleanedLocation,
+        description: cleanedDescription,
+        company: 'Siemens',
+        scrapedAt: new Date().toISOString()
+    };
+};
+
 const runSiemensScraper = async () => {
   const browser = await puppeteer.launch({
-    headless: true,
+    headless: false, // Must be false for siemens.
     args: ['--no-sandbox', '--disable-setuid-sandbox'],
     defaultViewport: null
   });
@@ -18,7 +47,7 @@ const runSiemensScraper = async () => {
 
   console.log("\uD83D\uDE80 Starting Siemens job scraping...");
   const allJobs = new Set();
-  const maxPages = 50;
+  const maxPages = 1000;
  
   // Configure selectors
   const SELECTORS = {
@@ -102,15 +131,18 @@ const runSiemensScraper = async () => {
             return {
               title: document.querySelector('.position-title')?.textContent.trim(),
               location: document.querySelector('.position-location')?.textContent.trim(),
-              description: document.querySelector('h4, .position-job-description-column')?.textContent.trim(),
+              //description: document.querySelector('h4, .position-job-description-column')?.textContent.trim(),
+              description: document.querySelector('div.position-job-description')?.textContent.trim(),
               url: window.location.href,
               company: 'Siemens',
               ...fields
             };
           }, SELECTORS.jobDetails);
 
-          const enrichedJob = extractData(jobInfo);
-          allJobs.add(enrichedJob);
+          if(jobInfo.title){
+            const enrichedJob = extractSiemensData(jobInfo);
+            allJobs.add(enrichedJob);
+          }
 
           // Close the job details (if needed)
           const closeButton = await page.$('[data-ph-at-id="close-button"]');
@@ -130,8 +162,8 @@ const runSiemensScraper = async () => {
 
     const processedJobIdsArray = [...allJobs];
 
-    fs.writeFileSync("siemens_jobs_devloper.json", JSON.stringify(processedJobIdsArray, null, 2));
-    console.log("\uD83D\uDCBE Saved results to siemens_jobs_devloper.json");
+    fs.writeFileSync("./scrappedJobs/siemensJobs.json", JSON.stringify(processedJobIdsArray, null, 2));
+    console.log("\uD83D\uDCBE Saved results to siemensJobs.json");
 
   } catch (error) {
     console.error("\u274C Scraping failed:", error.message);

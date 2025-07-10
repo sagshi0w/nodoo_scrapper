@@ -129,7 +129,8 @@ class AckoJobsScraper {
             if(jobData.title && !seen.has(jobData.title)){
                 seen.add(jobData.title);
 
-                this.allJobs.push(jobData);
+                const enrichedJob = extractAckoData(jobData);
+                this.allJobs.push(enrichedJob);
 
                 console.log(`✅ ${jobData.title}`);
             }
@@ -137,7 +138,7 @@ class AckoJobsScraper {
     }
 
     async saveResults() {
-        writeFileSync('ackoJobs.json', JSON.stringify(this.allJobs, null, 2));
+        //writeFileSync('./scrappedJobs/ackoJobs.json', JSON.stringify(this.allJobs, null, 2));
         console.log(`💾 Saved ${this.allJobs.length} jobs to ackoJobs.json`);
     }
 
@@ -159,6 +160,37 @@ class AckoJobsScraper {
         }
     }
 }
+
+// Custom data extraction function for Acko jobs
+const extractAckoData = (job) => {
+    if (!job) return job;
+    let cleanedDescription = job.description || '';
+    if (cleanedDescription) {
+        // Remove specific section headers (case-insensitive, with or without punctuation)
+        cleanedDescription = cleanedDescription
+            .replace(/about the role\s*[:\-]?/gi, '')
+            .replace(/role overview\s*[:\-]?/gi, '')
+            .replace(/responsibilities\s*[:\-]?/gi, '')
+            .replace(/job title\s*[:\-]?/gi, '')
+            .replace(/location\s*[:\-]?/gi, '')
+            .replace(/the role\s*[:\-]?/gi, '')
+            // Add extra newlines before common section headers for readability
+            .replace(/(Responsibilities:|Requirements:|Skills:|Qualifications:)/gi, '\n$1\n')
+            .replace(/[ \t]+$/gm, '')
+            .replace(/\n{2,}/g, '\n')
+            .trim();
+    }
+    let cleanedTitle = job.title ? job.title.trim() : '';
+    let cleanedLocation = job.location ? job.location.trim() : '';
+    return {
+        ...job,
+        title: cleanedTitle,
+        location: cleanedLocation,
+        description: cleanedDescription,
+        company: 'Acko',
+        scrapedAt: new Date().toISOString()
+    };
+};
 
 // Export the run function for use in other modules
 const runAckoScraper = async () => {

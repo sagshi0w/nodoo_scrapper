@@ -1,8 +1,46 @@
 import puppeteer from 'puppeteer';
 import fs from 'fs';
-import extractData from '../../utils/extractData.js';
 
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+// Custom data extraction function for Google jobs
+const extractGoogleData = (job) => {
+    if (!job) return job;
+    
+    // Clean description
+    let cleanedDescription = job.description || '';
+    if (cleanedDescription) {
+        // Remove 'about the job', 'about the role', or similar phrases at the start
+        cleanedDescription = cleanedDescription
+            .replace(/^(about(\s+(this|the))?\s+(job|role)\s*[:\-]?)\s*/i, '')
+            // Remove common unwanted patterns
+            .replace(/^(description|job\s+descriptions?)\s*[:\-]?\s*/i, '')
+            .replace(/^[^a-zA-Z0-9\n\r]+/, '')
+            .replace(/\n{3,}/g, '\n\n') // Remove excessive newlines
+            .trim();
+    }
+    
+    // Clean title
+    let cleanedTitle = job.title || '';
+    if (cleanedTitle) {
+        cleanedTitle = cleanedTitle.trim();
+    }
+    
+    // Clean location
+    let cleanedLocation = job.location || '';
+    if (cleanedLocation) {
+        cleanedLocation = cleanedLocation.trim();
+    }
+    
+    return {
+        ...job,
+        title: cleanedTitle,
+        location: cleanedLocation,
+        description: cleanedDescription,
+        company: 'Google',
+        //scrapedAt: new Date().toISOString()
+    };
+};
 
 async function runGoogleScraper() {
   const browser = await puppeteer.launch({
@@ -89,7 +127,7 @@ async function runGoogleScraper() {
           });
 
           if (job.title) {
-            const enrichedJob = extractData(job);
+            const enrichedJob = extractGoogleData(job);
             allJobs.add(JSON.stringify(enrichedJob)); // Keep unique stringified jobs
             console.log(`\u2705 Collected: ${job.title}`);
           }
@@ -116,9 +154,9 @@ async function runGoogleScraper() {
     }
 
     const processedJobArray = [...allJobs].map(j => JSON.parse(j));
-    fs.writeFileSync('google_jobs.json', JSON.stringify(processedJobArray, null, 2));
-    console.log(`\n💾 Saved ${processedJobArray.length} jobs to google_jobs.json`);
-
+    //fs.writeFileSync('./scrappedJobs/googleJobs.json', JSON.stringify(processedJobArray, null, 2));
+    console.log(`\n💾 Saved ${processedJobArray.length} jobs to googleJobs.json`);
+    return processedJobArray;
   } catch (error) {
     console.error("❌ Scraping failed:", error);
     await page.screenshot({ path: 'error_final.png' });
