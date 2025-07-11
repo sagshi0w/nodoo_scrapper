@@ -63,9 +63,6 @@ const config = {
       pass: process.env.EMAIL_PASS,
       recipients: ["sagar.shinde0113@gmail.com"]
     },
-    slack: {
-      webhookUrl: process.env.SLACK_WEBHOOK
-    }
   }
 };
 
@@ -79,18 +76,18 @@ const transporter = nodemailer.createTransport({
 });
 
 // Notification functions
+// Notification functions (Email only)
 const notify = {
   success: async (stats) => {
     const subject = `✅ Job Scraping Success (${stats.successCount} jobs)`;
     const text = `
-      Scraping completed at ${stats.endTime}
-      Duration: ${stats.duration} minutes
-      Successful scrapers: ${stats.successCount}
-      Failed scrapers: ${stats.failCount}
-      Total jobs found: ${stats.totalJobs}
-    `;
+Scraping completed at ${stats.endTime}
+Duration: ${stats.duration} minutes
+Successful scrapers: ${stats.successCount}
+Failed scrapers: ${stats.failCount}
+Total jobs found: ${stats.totalJobs}
+`;
 
-    // Send email
     await transporter.sendMail({
       from: `"Job Scraper" <${config.notification.email.user}>`,
       to: config.notification.email.recipients,
@@ -98,31 +95,18 @@ const notify = {
       text
     });
 
-    // Send Slack notification
-    if (config.notification.slack.webhookUrl) {
-      await axios.post(config.notification.slack.webhookUrl, {
-        text: subject,
-        attachments: [{
-          color: "good",
-          fields: Object.entries(stats).map(([key, value]) => ({
-            title: key,
-            value: String(value),
-            short: true
-          }))
-        }]
-      });
-    }
+    console.log("📧 Success notification email sent.");
   },
 
   error: async (error, context = {}) => {
     const subject = "❌ Job Scraping Failed";
     const text = `
-      Error: ${error.message}
-      Time: ${moment().tz("Asia/Kolkata").format("YYYY-MM-DD HH:mm:ss")}
-      Context: ${JSON.stringify(context, null, 2)}
-      Stack Trace:
-      ${error.stack}
-    `;
+Error: ${error.message}
+Time: ${moment().tz("Asia/Kolkata").format("YYYY-MM-DD HH:mm:ss")}
+Context: ${JSON.stringify(context, null, 2)}
+Stack Trace:
+${error.stack}
+`;
 
     await transporter.sendMail({
       from: `"Job Scraper" <${config.notification.email.user}>`,
@@ -131,22 +115,10 @@ const notify = {
       text
     });
 
-    if (config.notification.slack.webhookUrl) {
-      await axios.post(config.notification.slack.webhookUrl, {
-        text: subject,
-        attachments: [{
-          color: "danger",
-          text: error.message,
-          fields: Object.entries(context).map(([key, value]) => ({
-            title: key,
-            value: String(value),
-            short: true
-          }))
-        }]
-      });
-    }
+    console.log("📧 Error notification email sent.");
   }
 };
+
 
 // Enhanced scraper runner with parallel execution
 const runAllScrapers = async () => {
