@@ -135,16 +135,16 @@ const runAllScrapers = async () => {
     console.log(`⏰ [${stats.startTime}] Starting all scrapers...`);
 
     //List of all scraper functions
-    //const scrapers = [
-      //runAckoScraper, runAmazonScraper, runAdobeScraper, runAtlassianScraper, runClearTaxScraper,
-      //runFlipkartScraper, runFreshworksScraper, runGoldmanScraper, runGoogleScraper, runGrowwScraper,
-      //runMeeshoScraper, runMicrosoftScraper, runPaypalScraper, runPhonepeScraper, runRazorpayScraper,
-      //runSiemensScraper, runUberScraper, runZohoScraper
-    //];
+    const scrapers = [
+      runAckoScraper, runAmazonScraper, runAdobeScraper, runAtlassianScraper, runClearTaxScraper,
+      runFlipkartScraper, runFreshworksScraper, runGoldmanScraper, runGoogleScraper, runGrowwScraper,
+      runMeeshoScraper, runMicrosoftScraper, runPaypalScraper, runPhonepeScraper, runRazorpayScraper,
+      runSiemensScraper, runUberScraper, runZohoScraper
+    ];
 
-     const scrapers = [
-       runPaypalScraper
-     ]
+    // const scrapers = [
+    //   runPaypalScraper
+    // ]
 
     // Run scrapers with concurrency control
     const limit = pLimit(config.concurrency);
@@ -218,6 +218,6 @@ cron.schedule("0 2 * * *", async () => {
 });
 
 // Immediate run for testing (comment out in production)
- await runAllScrapers();
+// await runAllScrapers();
 
 console.log("🔄 Job scheduler initialized (runs daily at 8:00 AM IST)");
