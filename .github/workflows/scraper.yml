@@ -21,8 +21,8 @@ jobs:
       - name: Install Dependencies
         run: npm install
 
-      - name: Run Scraper
-        run: node scraper.js
+      - name: Run schedule
+        run: node schedule.js
 
       - name: Send Success Email
         if: success()
@@ -33,11 +33,11 @@ jobs:
           secure: true
           username: ${{ secrets.MAIL_USERNAME }}
           password: ${{ secrets.MAIL_PASSWORD }}
-          subject: "✅ Scraper Success: $(date)"
+          subject: "✅ schedule Success: $(date)"
           to: ${{ secrets.MAIL_RECIPIENT }}
           from: "GitHub Action <${{ secrets.MAIL_USERNAME }}>"
           body: |
-            Your scraper ran successfully at 8:00 AM IST.
+            Your schedule ran successfully at 8:00 AM IST.
             ✅ Status: Success
             📅 Timestamp: ${{ github.event.head_commit.timestamp }}
 
@@ -50,10 +50,10 @@ jobs:
           secure: true
           username: ${{ secrets.MAIL_USERNAME }}
           password: ${{ secrets.MAIL_PASSWORD }}
-          subject: "❌ Scraper Failed: $(date)"
+          subject: "❌ schedule Failed: $(date)"
           to: ${{ secrets.MAIL_RECIPIENT }}
           from: "GitHub Action <${{ secrets.MAIL_USERNAME }}>"
           body: |
-            Your scraper failed to complete successfully.
+            Your schedule failed to complete successfully.
             ❌ Status: Failed
             📅 Timestamp: ${{ github.event.head_commit.timestamp }}
