@@ -23,6 +23,10 @@ jobs:
 
       - name: Run scheduler
         run: node scheduler.js
+        env:
+          EMAIL_USER: ${{ secrets.MAIL_USERNAME }}
+          EMAIL_PASS: ${{ secrets.MAIL_PASSWORD }}
+          BACKEND_URL: ${{ secrets.BACKEND_URL }}
 
       - name: Send Success Email
         if: success()
