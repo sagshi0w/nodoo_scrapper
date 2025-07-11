@@ -138,7 +138,7 @@ class AckoJobsScraper {
     }
 
     async saveResults() {
-        //writeFileSync('./scrappedJobs/ackoJobs.json', JSON.stringify(this.allJobs, null, 2));
+        writeFileSync('./scrappedJobs/ackoJobs.json', JSON.stringify(this.allJobs, null, 2));
         console.log(`💾 Saved ${this.allJobs.length} jobs to ackoJobs.json`);
     }
 

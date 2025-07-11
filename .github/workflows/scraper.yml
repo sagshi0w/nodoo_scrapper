@@ -1,0 +1,59 @@
+name: Daily Scraper at 8 AM
+
+on:
+  schedule:
+    - cron: '30 2 * * *'  # 8:00 AM IST
+  workflow_dispatch:      # Allow manual trigger
+
+jobs:
+  run-scraper:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Run Scraper
+        run: node scraper.js
+
+      - name: Send Success Email
+        if: success()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          subject: "✅ Scraper Success: $(date)"
+          to: ${{ secrets.MAIL_RECIPIENT }}
+          from: "GitHub Action <${{ secrets.MAIL_USERNAME }}>"
+          body: |
+            Your scraper ran successfully at 8:00 AM IST.
+            ✅ Status: Success
+            📅 Timestamp: ${{ github.event.head_commit.timestamp }}
+
+      - name: Send Failure Email
+        if: failure()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          subject: "❌ Scraper Failed: $(date)"
+          to: ${{ secrets.MAIL_RECIPIENT }}
+          from: "GitHub Action <${{ secrets.MAIL_USERNAME }}>"
+          body: |
+            Your scraper failed to complete successfully.
+            ❌ Status: Failed
+            📅 Timestamp: ${{ github.event.head_commit.timestamp }}
