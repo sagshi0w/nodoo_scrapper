@@ -1,6 +1,9 @@
+require('dotenv').config();
 import axios from "axios";
 
-const API_URL = "http://localhost:5000/api/jobs/bulk-replace";
+const BACKEND_URL = process.env.BACKEND_URL;
+
+const API_URL = `${BACKEND_URL}/api/jobs/bulk-replace`;
 const MAX_RETRIES = 3;
 const INITIAL_RETRY_DELAY = 1000; // 1 second
 
