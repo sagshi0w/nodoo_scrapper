@@ -21,8 +21,8 @@ jobs:
       - name: Install Dependencies
         run: npm install
 
-      - name: Run schedule
-        run: node schedule.js
+      - name: Run scheduler
+        run: node scheduler.js
 
       - name: Send Success Email
         if: success()
@@ -33,11 +33,11 @@ jobs:
           secure: true
           username: ${{ secrets.MAIL_USERNAME }}
           password: ${{ secrets.MAIL_PASSWORD }}
-          subject: "✅ schedule Success: $(date)"
+          subject: "✅ scheduler Success: $(date)"
           to: ${{ secrets.MAIL_RECIPIENT }}
           from: "GitHub Action <${{ secrets.MAIL_USERNAME }}>"
           body: |
-            Your schedule ran successfully at 8:00 AM IST.
+            Your scheduler ran successfully at 8:00 AM IST.
             ✅ Status: Success
             📅 Timestamp: ${{ github.event.head_commit.timestamp }}
 
