@@ -1,4 +1,3 @@
-import cron from "node-cron";
 import moment from "moment-timezone";
 import pLimit from "p-limit";
 import axios from "axios";
@@ -11,62 +10,40 @@ const nodemailer = require('nodemailer');
 
 require('dotenv').config();
 
-console.log(process.env.EMAIL_USER);
-
-// Import all scrapers
-// A:
+// Scrapers
 import runAckoScraper from "./scrapers/productBased/acko.js";
 import runAmazonScraper from "./scrapers/productBased/amazon.js";
 import runAdobeScraper from "./scrapers/productBased/adobe.js";
 import runAtlassianScraper from "./scrapers/productBased/atlassian.js";
-
-// C:
 import runClearTaxScraper from "./scrapers/productBased/clearTax.js";
-
-// F:
 import runFlipkartScraper from "./scrapers/productBased/flipkart.js";
 import runFreshworksScraper from "./scrapers/productBased/freshworks.js";
-
-// G:
 import runGoldmanScraper from "./scrapers/productBased/goldmanSach.js";
 import runGoogleScraper from "./scrapers/productBased/google.js";
 import runGrowwScraper from "./scrapers/productBased/groww.js";
-
-// M:
 import runMeeshoScraper from "./scrapers/productBased/meesho.js";
 import runMicrosoftScraper from "./scrapers/productBased/microsoft.js";
-
-// P:
 import runPaypalScraper from "./scrapers/productBased/paypal.js";
 import runPhonepeScraper from "./scrapers/productBased/phonepe.js";
-
-// R:
 import runRazorpayScraper from "./scrapers/productBased/razorpay.js";
-
-// S:
 import runSiemensScraper from "./scrapers/productBased/siemens.js";
-
-// U:
 import runUberScraper from "./scrapers/productBased/uber.js";
-
-// Z:
 import runZohoScraper from "./scrapers/productBased/zoho.js";
-
 
 // Configuration
 const config = {
-  concurrency: 5, // Number of scrapers to run in parallel
+  concurrency: 5,
   notification: {
     email: {
       service: "Gmail",
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASS,
       recipients: ["sagar.shinde0113@gmail.com"]
-    },
+    }
   }
 };
 
-// Initialize email transporter
+// Email Transporter
 const transporter = nodemailer.createTransport({
   service: config.notification.email.service,
   auth: {
@@ -75,8 +52,7 @@ const transporter = nodemailer.createTransport({
   }
 });
 
-// Notification functions
-// Notification functions (Email only)
+// Notification Functions
 const notify = {
   success: async (stats) => {
     const subject = `✅ Job Scraping Success (${stats.successCount} jobs)`;
@@ -119,8 +95,7 @@ ${error.stack}
   }
 };
 
-
-// Enhanced scraper runner with parallel execution
+// Main Runner
 const runAllScrapers = async () => {
   const startTime = moment().tz("Asia/Kolkata");
   const stats = {
@@ -134,7 +109,6 @@ const runAllScrapers = async () => {
   try {
     console.log(`⏰ [${stats.startTime}] Starting all scrapers...`);
 
-    //List of all scraper functions
     const scrapers = [
       runAckoScraper, runAmazonScraper, runAdobeScraper, runAtlassianScraper, runClearTaxScraper,
       runFlipkartScraper, runFreshworksScraper, runGoldmanScraper, runGoogleScraper, runGrowwScraper,
@@ -142,17 +116,11 @@ const runAllScrapers = async () => {
       runSiemensScraper, runUberScraper, runZohoScraper
     ];
 
-    // const scrapers = [
-    //   runPaypalScraper
-    // ]
-
-    // Run scrapers with concurrency control
     const limit = pLimit(config.concurrency);
     const results = await Promise.allSettled(
       scrapers.map(scraper => limit(() => scraper()))
     );
 
-    // Process results
     const allJobs = [];
     results.forEach((result, i) => {
       if (result.status === "fulfilled") {
@@ -174,14 +142,12 @@ const runAllScrapers = async () => {
 
     stats.totalJobs = allJobs.length;
 
-    // Process and send jobs
     if (allJobs.length > 0) {
       const enrichedJobs = allJobs.map(job => extractData(job));
       await sendToBackend(enrichedJobs);
       console.log(`📤 Sent ${enrichedJobs.length} jobs to backend`);
     }
 
-    // Final stats
     const endTime = moment().tz("Asia/Kolkata");
     stats.endTime = endTime.format("YYYY-MM-DD HH:mm:ss");
     stats.duration = moment.duration(endTime.diff(startTime)).asMinutes().toFixed(2);
@@ -204,20 +170,13 @@ const runAllScrapers = async () => {
   }
 };
 
-// Scheduled job with error handling
-cron.schedule("0 2 * * *", async () => {
-  console.log("🔄 Starting scheduled job run...");
-  try {
-    await runAllScrapers();
-  } catch (error) {
-    console.error("Scheduled job failed completely:", error);
-  }
-}, {
-  scheduled: true,
-  timezone: "Asia/Kolkata"
-});
-
-// Immediate run for testing (comment out in production)
-// await runAllScrapers();
-
-console.log("🔄 Job scheduler initialized (runs daily at 8:00 AM IST)");
+// Execute immediately (suitable for GitHub Actions)
+runAllScrapers()
+  .then(() => {
+    console.log("✅ Scraping completed.");
+    process.exit(0);
+  })
+  .catch((err) => {
+    console.error("❌ Scraping failed:", err);
+    process.exit(1);
+  });
