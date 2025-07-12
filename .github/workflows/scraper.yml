@@ -1,4 +1,4 @@
-name: Daily Scraper at 8 AM
+name: Daily Scraper Job
 
 on:
   schedule:
