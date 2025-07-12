@@ -109,11 +109,15 @@ const runAllScrapers = async () => {
   try {
     console.log(`⏰ [${stats.startTime}] Starting all scrapers...`);
 
+    //const scrapers = [
+      //runAckoScraper, runAmazonScraper, runAdobeScraper, runAtlassianScraper, runClearTaxScraper,
+      //runFlipkartScraper, runFreshworksScraper, runGoldmanScraper, runGoogleScraper, runGrowwScraper,
+      //runMeeshoScraper, runMicrosoftScraper, runPaypalScraper, runPhonepeScraper, runRazorpayScraper,
+      //runSiemensScraper, runUberScraper, runZohoScraper
+    //];
+
     const scrapers = [
-      runAckoScraper, runAmazonScraper, runAdobeScraper, runAtlassianScraper, runClearTaxScraper,
-      runFlipkartScraper, runFreshworksScraper, runGoldmanScraper, runGoogleScraper, runGrowwScraper,
-      runMeeshoScraper, runMicrosoftScraper, runPaypalScraper, runPhonepeScraper, runRazorpayScraper,
-      runSiemensScraper, runUberScraper, runZohoScraper
+        runClearTaxScraper
     ];
 
     const limit = pLimit(config.concurrency);
