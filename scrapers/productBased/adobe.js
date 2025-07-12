@@ -4,7 +4,8 @@ import { writeFileSync } from 'fs';
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
 class AdobeJobsScraper {
-    constructor() {
+    constructor(headless = true) {
+        this.headless = headless;
         this.browser = null;
         this.page = null;
         this.allJobs = [];
@@ -13,10 +14,11 @@ class AdobeJobsScraper {
 
     async initialize() {
         this.browser = await launch({
-            headless: true,
-            args: ['--no-sandbox', '--start-maximized'],
-            defaultViewport: null
+            headless: this.headless ? true : false,
+            args: ['--no-sandbox', ...(this.headless ? [] : ['--start-maximized'])],
+            defaultViewport: this.headless ? { width: 1920, height: 1080 } : null
         });
+
         this.page = await this.browser.newPage();
         await this.page.setUserAgent(
             'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
@@ -45,9 +47,8 @@ class AdobeJobsScraper {
 
             this.jobCardSelectors.push(...cards);
 
-            // Click next
             const nextBtn = await this.page.$('a[data-ph-at-id="pagination-next-link"]');
-            if (!nextBtn){
+            if (!nextBtn) {
                 console.log('🚫 No more pages. Pagination ended.');
                 break;
             }
@@ -127,19 +128,19 @@ class AdobeJobsScraper {
     }
 }
 
-// Export the run function for use in other modules
-const runAdobeScraper = async () => {
-    const scraper = new AdobeJobsScraper();
+const runAdobeScraper = async ({ headless = true } = {}) => {
+    const scraper = new AdobeJobsScraper(headless);
     await scraper.run();
     return scraper.allJobs;
 };
 
 export default runAdobeScraper;
 
-// If this file is run directly, execute the scraper
+// CLI support
 if (import.meta.url === `file://${process.argv[1]}`) {
+    const headlessArg = process.argv.includes('--headless=false') ? false : true;
     (async () => {
-        const scraper = new AdobeJobsScraper();
+        const scraper = new AdobeJobsScraper(headlessArg);
         await scraper.run();
     })();
 }

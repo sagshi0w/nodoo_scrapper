@@ -4,7 +4,8 @@ import { writeFileSync } from 'fs';
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
 class AckoJobsScraper {
-    constructor() {
+    constructor(headless = true) {
+        this.headless = headless;
         this.browser = null;
         this.page = null;
         this.allJobs = [];
@@ -13,10 +14,11 @@ class AckoJobsScraper {
 
     async initialize() {
         this.browser = await launch({
-            headless: true,
-            args: ['--no-sandbox', '--start-maximized'],
-            defaultViewport: null
+            headless: this.headless ? true : false,
+            args: ['--no-sandbox', ...(this.headless ? [] : ['--start-maximized'])],
+            defaultViewport: this.headless ? { width: 1920, height: 1080 } : null
         });
+
         this.page = await this.browser.newPage();
         await this.page.setUserAgent(
             'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
@@ -36,29 +38,21 @@ class AckoJobsScraper {
         console.log('📋 Collecting job links...');
 
         while (true) {
-            // Collect job URLs
-
             await delay(2000);
             const newJobUrls = await this.page.evaluate(() => {
                 return Array.from(document.querySelectorAll('a[href]'))
                     .map(a => a.getAttribute('href'))
-                    .filter(href => /^\d+$/.test(href)) // keep only numeric hrefs
+                    .filter(href => /^\d+$/.test(href))
                     .map(id => `https://www.acko.com/careers/jobs/${id}`);
             });
 
             for (const url of newJobUrls) {
-                // if (!seen.has(url)) {
-                //     seen.add(url);
-                //     this.jobLinks.push(url);
-                // }
-
                 this.jobLinks.push(url);
             }
 
             console.log(`🔗 Found ${this.jobLinks.length} unique job links so far...`);
 
             const loadMoreSelector = 'button.iconNext';
-
             const loadMoreBtn = await this.page.$(loadMoreSelector);
             if (!loadMoreBtn) {
                 console.log('❌ No more "Load more" button — all jobs loaded.');
@@ -67,12 +61,9 @@ class AckoJobsScraper {
 
             try {
                 console.log('🔄 Clicking "Load more"...');
-
                 await this.page.evaluate(selector => {
                     const btn = document.querySelector(selector);
-                    if (btn) {
-                        btn.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    }
+                    if (btn) btn.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }, loadMoreSelector);
 
                 await this.page.waitForSelector(loadMoreSelector, { visible: true, timeout: 5000 });
@@ -87,7 +78,6 @@ class AckoJobsScraper {
         console.log(`✅ Total unique jobs collected: ${this.jobLinks.length}`);
     }
 
-
     async extractJobDetailsFromLink(url) {
         const jobPage = await this.browser.newPage();
         try {
@@ -95,7 +85,6 @@ class AckoJobsScraper {
 
             const jobData = await jobPage.evaluate(() => {
                 const getText = (sel) => document.querySelector(sel)?.innerText.trim() || '';
-
                 const title = getText('h1');
                 const locationFull = getText('div.jobsInfo_subHeadings__vFC5M');
                 const location = locationFull.split(/\s+/).pop();
@@ -111,7 +100,7 @@ class AckoJobsScraper {
             });
 
             await jobPage.close();
-            return { ...jobData};
+            return { ...jobData };
         } catch (err) {
             await jobPage.close();
             console.warn(`⚠️ Failed to extract from ${url}:`, err.message);
@@ -126,12 +115,10 @@ class AckoJobsScraper {
             console.log(`📝 Processing job ${i + 1}/${this.jobLinks.length}`);
             const jobData = await this.extractJobDetailsFromLink(this.jobLinks[i]);
 
-            if(jobData.title && !seen.has(jobData.title)){
+            if (jobData.title && !seen.has(jobData.title)) {
                 seen.add(jobData.title);
-
                 const enrichedJob = extractAckoData(jobData);
                 this.allJobs.push(enrichedJob);
-
                 console.log(`✅ ${jobData.title}`);
             }
         }
@@ -161,12 +148,10 @@ class AckoJobsScraper {
     }
 }
 
-// Custom data extraction function for Acko jobs
 const extractAckoData = (job) => {
     if (!job) return job;
     let cleanedDescription = job.description || '';
     if (cleanedDescription) {
-        // Remove specific section headers (case-insensitive, with or without punctuation)
         cleanedDescription = cleanedDescription
             .replace(/about the role\s*[:\-]?/gi, '')
             .replace(/role overview\s*[:\-]?/gi, '')
@@ -174,7 +159,6 @@ const extractAckoData = (job) => {
             .replace(/job title\s*[:\-]?/gi, '')
             .replace(/location\s*[:\-]?/gi, '')
             .replace(/the role\s*[:\-]?/gi, '')
-            // Add extra newlines before common section headers for readability
             .replace(/(Responsibilities:|Requirements:|Skills:|Qualifications:)/gi, '\n$1\n')
             .replace(/[ \t]+$/gm, '')
             .replace(/\n{2,}/g, '\n')
@@ -192,19 +176,19 @@ const extractAckoData = (job) => {
     };
 };
 
-// Export the run function for use in other modules
-const runAckoScraper = async () => {
-    const scraper = new AckoJobsScraper();
+const runAckoScraper = async ({ headless = true } = {}) => {
+    const scraper = new AckoJobsScraper(headless);
     await scraper.run();
     return scraper.allJobs;
 };
 
 export default runAckoScraper;
 
-// If this file is run directly, execute the scraper
+// CLI execution support
 if (import.meta.url === `file://${process.argv[1]}`) {
+    const headlessArg = process.argv.includes('--headless=false') ? false : true;
     (async () => {
-        const scraper = new AckoJobsScraper();
+        const scraper = new AckoJobsScraper(headlessArg);
         await scraper.run();
     })();
 }

@@ -1,174 +1,153 @@
 import puppeteer from 'puppeteer';
-import fs from 'fs';
+import dotenv from 'dotenv';
+dotenv.config();
 
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 
-// Custom data extraction function for Google jobs
 const extractGoogleData = (job) => {
-    if (!job) return job;
-    
-    // Clean description
-    let cleanedDescription = job.description || '';
-    if (cleanedDescription) {
-        // Remove 'about the job', 'about the role', or similar phrases at the start
-        cleanedDescription = cleanedDescription
-            .replace(/^(about(\s+(this|the))?\s+(job|role)\s*[:\-]?)\s*/i, '')
-            // Remove common unwanted patterns
-            .replace(/^(description|job\s+descriptions?)\s*[:\-]?\s*/i, '')
-            .replace(/^[^a-zA-Z0-9\n\r]+/, '')
-            .replace(/\n{3,}/g, '\n\n') // Remove excessive newlines
-            .trim();
-    }
-    
-    // Clean title
-    let cleanedTitle = job.title || '';
-    if (cleanedTitle) {
-        cleanedTitle = cleanedTitle.trim();
-    }
-    
-    // Clean location
-    let cleanedLocation = job.location || '';
-    if (cleanedLocation) {
-        cleanedLocation = cleanedLocation.trim();
-    }
-    
-    return {
-        ...job,
-        title: cleanedTitle,
-        location: cleanedLocation,
-        description: cleanedDescription,
-        company: 'Google',
-        //scrapedAt: new Date().toISOString()
-    };
+  if (!job) return job;
+
+  let cleanedDescription = job.description || '';
+  cleanedDescription = cleanedDescription
+    .replace(/^(about(\s+(this|the))?\s+(job|role)\s*[:\-]?)\s*/i, '')
+    .replace(/^(description|job\s+descriptions?)\s*[:\-]?\s*/i, '')
+    .replace(/^[^a-zA-Z0-9\n\r]+/, '')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+
+  return {
+    ...job,
+    title: (job.title || '').trim(),
+    location: (job.location || '').trim(),
+    description: cleanedDescription,
+    company: 'Google',
+    scrapedAt: new Date().toISOString()
+  };
 };
 
-async function runGoogleScraper() {
-  const browser = await puppeteer.launch({
-    headless: true,
-    args: ['--no-sandbox', '--disable-setuid-sandbox'],
-    defaultViewport: null
-  });
+class GoogleJobsScraper {
+  constructor(headless = true) {
+    this.headless = headless;
+    this.browser = null;
+    this.page = null;
+    this.jobs = new Set();
+  }
 
-  const page = await browser.newPage();
-  await page.setUserAgent(
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-  );
-
-  const allJobs = new Set();
-
-  const SELECTORS = {
-    jobCards: 'li.lLd3Je, div[role="listitem"], [jsname="jqKNec"]',
-    learnMore: 'a[aria-label^="Learn more about"]',
-    jobTitle: 'h3.QJPWVe',
-    company: 'span.RP7SMd',
-    jobLocation: 'div[itemprop="jobLocation"], div.r0wTof, [jsname="K4r5Ff"]',
-    jobDescription: 'div[itemprop="description"], div.aG5W3, [jsname="Yr7Kod"]',
-    qualifications: 'div[aria-label*="qualifications"] + div, div.KwJkGe, [jsname="Rq5Gcb"]',
-    responsibilities: 'div[aria-label*="responsibilities"] + div, div.BDNOWe, [jsname="t5nFfc"]',
-    backButton: 'a.WpHeLc VfPpkd-mRLv6',
-    nextButton: 'a.WpHeLc.VfPpkd-mRLv6[jsname="hSRGPd"][aria-label="Go to next page"][href*="/jobs/results/"]'
-  };
-
-  try {
-    let pageCount = 1;
-    let hasNextPage = true;
-
-    console.log("🌐 Navigating to Google Careers...");
-    await page.goto('https://www.google.com/about/careers/applications/jobs/results?location=India', {
-      waitUntil: 'networkidle2',
-      timeout: 60000
+  async initialize() {
+    this.browser = await puppeteer.launch({
+      headless: this.headless,
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        ...(this.headless ? [] : ['--start-maximized'])
+      ],
+      defaultViewport: this.headless ? { width: 1920, height: 1080 } : null
     });
 
-    while (hasNextPage) {
-      console.log(`\n📄 Scraping Page ${pageCount}`);
+    this.page = await this.browser.newPage();
+    await this.page.setUserAgent(
+      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+    );
+  }
 
-      await page.waitForSelector(SELECTORS.jobCards, { timeout: 30000 });
-      const jobCards = await page.$$(SELECTORS.jobCards);
-      console.log(`🃏 Found ${jobCards.length} job cards on page ${pageCount}`);
+  async scrapeJobs() {
+    let pageCount = 1;
+    let hasMore = true;
 
-      const learnMoreLinks = await page.$$eval(
-        SELECTORS.learnMore,
-        anchors => anchors.map(a => a.href)
+    while (hasMore) {
+      const url = `https://www.google.com/about/careers/applications/jobs/results?location=India&page=${pageCount}`;
+      console.log(`🌐 Navigating to Page ${pageCount}...`);
+      await this.page.goto(url, { waitUntil: 'networkidle2', timeout: 60000 });
+      await delay(2000);
+
+      const jobLinks = await this.page.$$eval('a[aria-label^="Learn more about"]', anchors =>
+        anchors.map(a => a.href)
       );
 
-      console.log(`🔗 Collected ${learnMoreLinks.length} job links`);
+      if (!jobLinks.length) {
+        console.log('🚫 No more jobs found.');
+        hasMore = false;
+        break;
+      }
 
-      for (let i = 0; i < learnMoreLinks.length; i++) {
-        const jobUrl = learnMoreLinks[i];
+      console.log(`🔗 Found ${jobLinks.length} job links on page ${pageCount}`);
+
+      for (let i = 0; i < jobLinks.length; i++) {
+        const jobUrl = jobLinks[i];
         try {
-          await page.goto(jobUrl, { waitUntil: 'networkidle2' });
-          await delay(3000);
+          await this.page.goto(jobUrl, { waitUntil: 'networkidle2', timeout: 60000 });
+          await delay(1500);
 
-          const job = await page.evaluate(() => {
+          const job = await this.page.evaluate(() => {
             const getText = sel => document.querySelector(sel)?.textContent.trim() || '';
-            
+
             const jobDescription = getText('div.aG5W3');
-            const jobQualification = getText('div.KwJkGe');
-            const jobResponsibilities = getText('div.BDNOWe');
-          
-            // Combine into a single job description with clear sections
-            const fullJobDescription = `
-              ${jobDescription}
-              
-              **Qualifications:**
-              ${jobQualification}
-              
-              **Responsibilities:**
-              ${jobResponsibilities}
+            const qualifications = getText('div.KwJkGe');
+            const responsibilities = getText('div.BDNOWe');
+
+            const fullDescription = `
+${jobDescription}
+
+**Qualifications:**
+${qualifications}
+
+**Responsibilities:**
+${responsibilities}
             `.trim();
-          
+
             return {
               title: getText('h2.p1N2lc'),
-              company: 'Google',
               location: getText('span.r0wTof'),
-              description: fullJobDescription,
+              description: fullDescription,
               url: window.location.href
             };
           });
 
-          if (job.title) {
+          if (job?.title) {
             const enrichedJob = extractGoogleData(job);
-            allJobs.add(JSON.stringify(enrichedJob)); // Keep unique stringified jobs
-            console.log(`\u2705 Collected: ${job.title}`);
+            this.jobs.add(JSON.stringify(enrichedJob));
+            console.log(`✅ Saved: ${enrichedJob.title}`);
           }
         } catch (err) {
-          console.error(`❌ Failed on job ${i + 1}: ${err.message}`);
+          console.warn(`⚠️ Failed to process job ${i + 1}:`, err.message);
         }
       }
 
-      // Try navigating to the next page manually via URL
       pageCount++;
-      const nextPageUrl = `https://www.google.com/about/careers/applications/jobs/results?location=India&page=${pageCount}`;
-      await page.goto(nextPageUrl, {
-        waitUntil: 'networkidle2',
-        timeout: 60000
-      });
+    }
+  }
 
-      await delay(2000);
+  async close() {
+    if (this.browser) await this.browser.close();
+  }
 
-      const nextButtonExists = await page.$(SELECTORS.jobCards);
-      if (!nextButtonExists) {
-        console.log("🚫 No more jobs/pages found. Ending.");
-        hasNextPage = false;
-      }
+  async run() {
+    try {
+      await this.initialize();
+      await this.scrapeJobs();
+    } catch (err) {
+      console.error('❌ Google scraper failed:', err);
+    } finally {
+      await this.close();
     }
 
-    const processedJobArray = [...allJobs].map(j => JSON.parse(j));
-    //fs.writeFileSync('./scrappedJobs/googleJobs.json', JSON.stringify(processedJobArray, null, 2));
-    console.log(`\n💾 Saved ${processedJobArray.length} jobs to googleJobs.json`);
-    return processedJobArray;
-  } catch (error) {
-    console.error("❌ Scraping failed:", error);
-    await page.screenshot({ path: 'error_final.png' });
-  } finally {
-    await browser.close();
+    const finalJobs = [...this.jobs].map(j => JSON.parse(j));
+    console.log(`\n💾 Scraped ${finalJobs.length} Google jobs`);
+    return finalJobs;
   }
 }
 
+const runGoogleScraper = async ({ headless = true } = {}) => {
+  const scraper = new GoogleJobsScraper(headless);
+  return await scraper.run();
+};
+
 export default runGoogleScraper;
 
+// CLI usage: node google.js --headless=false
 if (import.meta.url === `file://${process.argv[1]}`) {
+  const headlessArg = process.argv.includes('--headless=false') ? false : true;
   (async () => {
-    await runGoogleScraper();
+    await runGoogleScraper({ headless: headlessArg });
   })();
 }

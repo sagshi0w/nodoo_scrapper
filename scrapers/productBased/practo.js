@@ -4,19 +4,19 @@ const fs = require('fs');
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
 class PractoJobsScraper {
-    constructor() {
+    constructor(headless = true) {
+        this.headless = headless;
         this.browser = null;
         this.page = null;
         this.allJobs = [];
         this.jobLinks = [];
-        //this.baseURL = 'https://www.atlassian.com';
     }
 
     async initialize() {
         this.browser = await puppeteer.launch({
-            headless: false,
-            args: ['--no-sandbox', '--start-maximized'],
-            defaultViewport: null
+            headless: this.headless,
+            args: ['--no-sandbox', ...(this.headless ? [] : ['--start-maximized'])],
+            defaultViewport: this.headless ? { width: 1920, height: 1080 } : null
         });
         this.page = await this.browser.newPage();
         await this.page.setUserAgent(
@@ -38,11 +38,10 @@ class PractoJobsScraper {
 
         const jobUrls = await this.page.evaluate(() => {
             return Array.from(document.querySelectorAll('a[href^="/jobs/"]'))
-            .map(a => a.href);
+                .map(a => a.href.startsWith("http") ? a.href : `https://practo.app.param.ai${a.getAttribute("href")}`);
         });
 
         this.jobLinks.push(...jobUrls);
-
         console.log(`✅ Total jobs found: ${this.jobLinks.length}`);
     }
 
@@ -50,12 +49,11 @@ class PractoJobsScraper {
         const jobPage = await this.browser.newPage();
         try {
             await jobPage.goto(url, { waitUntil: 'networkidle2', timeout: 60000 });
-
             await jobPage.waitForSelector('div.text-3xl.font-bold.tracking-tight', { timeout: 10000 });
 
             const jobData = await jobPage.evaluate(() => {
-                const getText = (sel) => document.querySelector(sel)?.innerText.trim() || '';
-                const getRichText = (sel) => document.querySelector(sel)?.innerHTML.trim() || '';
+                const getText = sel => document.querySelector(sel)?.innerText.trim() || '';
+                const getRichText = sel => document.querySelector(sel)?.innerHTML.trim() || '';
 
                 const title = getText('div.text-3xl.sm\\:text-4xl.md\\:text-5xl.lg\\:text-6xl.font-bold');
                 const description = getRichText('div.ql-editor');
@@ -86,7 +84,7 @@ class PractoJobsScraper {
             });
 
             await jobPage.close();
-            return { ...jobData};
+            return jobData;
         } catch (err) {
             await jobPage.close();
             console.warn(`⚠️ Failed to extract from ${url}:`, err.message);
@@ -99,9 +97,8 @@ class PractoJobsScraper {
             console.log(`📝 Processing job ${i + 1}/${this.jobLinks.length}`);
             const jobData = await this.extractJobDetailsFromLink(this.jobLinks[i]);
 
-            if(jobData.title){
+            if (jobData.title) {
                 this.allJobs.push(jobData);
-
                 console.log(`✅ ${jobData.title}`);
             }
         }
@@ -131,7 +128,20 @@ class PractoJobsScraper {
     }
 }
 
-(async () => {
-    const scraper = new PractoJobsScraper();
+// ✅ Exportable runner function
+async function runPractoScraper({ headless = true } = {}) {
+    const scraper = new PractoJobsScraper(headless);
     await scraper.run();
-})();
+    return scraper.allJobs;
+}
+
+module.exports = runPractoScraper;
+
+// ✅ CLI support
+if (require.main === module) {
+    const args = process.argv.slice(2);
+    const headless = !args.includes('--headless=false');
+    (async () => {
+        await runPractoScraper({ headless });
+    })();
+}

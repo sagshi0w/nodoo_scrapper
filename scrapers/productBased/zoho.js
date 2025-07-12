@@ -4,7 +4,8 @@ import fs from 'fs';
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
 class ZohoJobsScraper {
-  constructor() {
+  constructor(headless = true) {
+    this.headless = headless;
     this.browser = null;
     this.page = null;
     this.allJobs = [];
@@ -12,20 +13,31 @@ class ZohoJobsScraper {
   }
 
   async initialize() {
-    this.browser = await puppeteer.launch({ headless: true, args: ['--start-maximized'] });
+    this.browser = await puppeteer.launch({
+      headless: this.headless,
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        ...(this.headless ? [] : ['--start-maximized'])
+      ],
+      defaultViewport: this.headless ? { width: 1440, height: 900 } : null
+    });
     this.page = await this.browser.newPage();
   }
 
   async navigateToJobsPage() {
-    await this.page.goto('https://www.zoho.com/careers/', { waitUntil: 'networkidle2' });
+    console.log('🌐 Navigating to Zoho Careers page...');
+    await this.page.goto('https://www.zoho.com/careers/', {
+      waitUntil: 'networkidle2',
+      timeout: 60000
+    });
     await delay(3000);
   }
 
   async collectAllJobCardLinks() {
-    this.jobUrls = await this.page.evaluate(() => {
-      return Array.from(document.querySelectorAll('li.rec-job-title a'))
-        .map(link => link.href);
-    });
+    this.jobUrls = await this.page.evaluate(() =>
+      Array.from(document.querySelectorAll('li.rec-job-title a')).map(a => a.href)
+    );
     console.log(`🔗 Found ${this.jobUrls.length} job URLs`);
   }
 
@@ -33,19 +45,19 @@ class ZohoJobsScraper {
     const jobPage = await this.browser.newPage();
     try {
       await jobPage.goto(url, { waitUntil: 'networkidle2', timeout: 60000 });
-      await delay(2000);
-      const jobData = await jobPage.evaluate(() => {
-        const getText = sel => document.querySelector(sel)?.innerText.trim() || '';
+      await delay(1000);
+      const job = await jobPage.evaluate(() => {
+        const tx = sel => document.querySelector(sel)?.innerText.trim() || '';
         return {
-          title: getText('#data_title'),
+          title: tx('#data_title'),
           company: 'Zoho',
-          location: getText('em#data_country'),
-          description: getText('div#jobdescription_data > span#spandesc'),
+          location: tx('em#data_country'),
+          description: tx('div#jobdescription_data > span#spandesc'),
           url: window.location.href
         };
       });
       await jobPage.close();
-      return jobData;
+      return job;
     } catch (err) {
       await jobPage.close();
       console.warn(`⚠️ Failed to process ${url}: ${err.message}`);
@@ -56,24 +68,23 @@ class ZohoJobsScraper {
   async processAllJobs() {
     for (let i = 0; i < this.jobUrls.length; i++) {
       const jobUrl = this.jobUrls[i];
-      if (!jobUrl) continue;
       console.log(`🔍 Processing job ${i + 1}/${this.jobUrls.length}: ${jobUrl}`);
-      const jobData = await this.extractJobDetailsFromLink(jobUrl);
-      if (jobData && jobData.title) {
-        this.allJobs.push(jobData);
-        console.log(`✅ Done: ${jobData.title}`);
+      const job = await this.extractJobDetailsFromLink(jobUrl);
+      if (job?.title) {
+        this.allJobs.push(job);
+        console.log(`✅ Collected: ${job.title}`);
       }
       await delay(1000);
     }
   }
 
   async saveResults() {
-    fs.writeFileSync('zohoJobs.json', JSON.stringify(this.allJobs, null, 2));
-    console.log(`💾 Saved ${this.allJobs.length} jobs to zohoJobs.json`);
+    fs.writeFileSync('./scrappedJobs/zohoJobs.json', JSON.stringify(this.allJobs, null, 2));
+    console.log(`💾 Saved ${this.allJobs.length} jobs to ./scrappedJobs/zohoJobs.json`);
   }
 
   async close() {
-    await this.browser.close();
+    if (this.browser) await this.browser.close();
   }
 
   async run() {
@@ -83,16 +94,16 @@ class ZohoJobsScraper {
       await this.collectAllJobCardLinks();
       await this.processAllJobs();
       await this.saveResults();
-    } catch (error) {
-      console.error('❌ Scraper failed:', error);
+    } catch (err) {
+      console.error('❌ Scraper failed:', err);
     } finally {
       await this.close();
     }
   }
 }
 
-const runZohoScraper = async () => {
-  const scraper = new ZohoJobsScraper();
+const runZohoScraper = async ({ headless = true } = {}) => {
+  const scraper = new ZohoJobsScraper(headless);
   await scraper.run();
   return scraper.allJobs;
 };
@@ -100,7 +111,8 @@ const runZohoScraper = async () => {
 export default runZohoScraper;
 
 if (import.meta.url === `file://${process.argv[1]}`) {
+  const headlessArg = !process.argv.includes('--headless=false');
   (async () => {
-    await runZohoScraper();
+    await runZohoScraper({ headless: headlessArg });
   })();
 }

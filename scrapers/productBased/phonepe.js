@@ -4,7 +4,8 @@ import fs from 'fs';
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
 class PhonePeJobsScraper {
-  constructor() {
+  constructor(headless = true) {
+    this.headless = headless;
     this.browser = null;
     this.page = null;
     this.allJobLinks = [];
@@ -12,12 +13,18 @@ class PhonePeJobsScraper {
   }
 
   async initialize() {
-    this.browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--start-maximized'], defaultViewport: null });
+    this.browser = await puppeteer.launch({
+      headless: this.headless,
+      args: ['--no-sandbox', ...(this.headless ? [] : ['--start-maximized'])],
+      defaultViewport: this.headless ? { width: 1920, height: 1080 } : null
+    });
     this.page = await this.browser.newPage();
   }
 
   async navigateToJobsPage() {
-    await this.page.goto('https://www.phonepe.com/careers/job-openings/', { waitUntil: 'networkidle2' });
+    await this.page.goto('https://www.phonepe.com/careers/job-openings/', {
+      waitUntil: 'networkidle2'
+    });
     await delay(2000);
   }
 
@@ -27,11 +34,13 @@ class PhonePeJobsScraper {
       console.error('🚫 No job cards found on the page!');
       return;
     }
+
     const pageJobLinks = await this.page.$$eval('a.card', anchors =>
       anchors
         .map(a => a.href)
         .filter(href => href.includes('/phonepe/jobs'))
     );
+
     this.allJobLinks = [...new Set(pageJobLinks)];
     console.log(`🔗 Found ${this.allJobLinks.length} job links`);
   }
@@ -42,6 +51,7 @@ class PhonePeJobsScraper {
       await jobPage.goto(url, { waitUntil: 'networkidle2' });
       await delay(3000);
       await jobPage.waitForSelector('div.job__description.body', { timeout: 10000 });
+
       const job = await jobPage.evaluate(() => {
         const getText = sel => document.querySelector(sel)?.innerText.trim() || '';
         return {
@@ -52,6 +62,7 @@ class PhonePeJobsScraper {
           url: window.location.href
         };
       });
+
       await jobPage.close();
       return job;
     } catch (err) {
@@ -64,7 +75,7 @@ class PhonePeJobsScraper {
   async processAllJobs() {
     for (let i = 0; i < this.allJobLinks.length; i++) {
       const url = this.allJobLinks[i];
-      console.log(`📝 [${i+1}/${this.allJobLinks.length}] Processing: ${url}`);
+      console.log(`📝 [${i + 1}/${this.allJobLinks.length}] Processing: ${url}`);
       const jobData = await this.extractJobDetailsFromLink(url);
       if (jobData && jobData.title) {
         const enrichedJob = extractPhonePeData(jobData);
@@ -76,7 +87,7 @@ class PhonePeJobsScraper {
   }
 
   async saveResults() {
-    //fs.writeFileSync('./scrappedJobs/phonepeJobs.json', JSON.stringify(this.allJobs, null, 2));
+    // fs.writeFileSync('./scrappedJobs/phonepeJobs.json', JSON.stringify(this.allJobs, null, 2));
     console.log(`💾 Saved ${this.allJobs.length} jobs to phonepeJobs.json`);
   }
 
@@ -99,53 +110,45 @@ class PhonePeJobsScraper {
   }
 }
 
-// Custom data extraction function for PhonePe jobs
 const extractPhonePeData = (job) => {
-    if (!job) return job;
-    let cleanedDescription = job.description || '';
-    if (cleanedDescription) {
-        // Remove specific phrases but keep the content after them
-        cleanedDescription = cleanedDescription
-            .replace(/about\s+phonepe\s+group\s*:/gi, '')
-            .replace(/about\s+phonepe\s*:/gi, '')
-            .replace(/culture/gi, '');
-        
-        // Remove the phrase 'Job Summary:' (case-insensitive, anywhere)
-        cleanedDescription = cleanedDescription.replace(/job summary:?/gi, '').trim();
-        
-        // Add extra line breaks after common section headers for better readability
-        cleanedDescription = cleanedDescription
-            .replace(/(\n\s*)(responsibilities|requirements|qualifications|skills|experience|education|benefits|what\s+we\s+offer|key\s+responsibilities|job\s+description|role\s+and\s+responsibilities|about\s+the\s+role|what\s+you'll\s+do|what\s+you\s+will\s+do)(\s*:?\s*\n)/gi, '\n\n$1$2$3\n\n')
-            .replace(/(\n\s*)(\d+\.\s*)(.*?)(\n)/gi, '\n\n$1$2$3$4\n')
-            .replace(/(\n\s*)(•\s*)(.*?)(\n)/gi, '\n\n$1$2$3$4\n');
-        
-        // Remove extra blank lines and trailing spaces
-        cleanedDescription = cleanedDescription
-            .replace(/[ \t]+$/gm, '')
-            .replace(/\n{3,}/g, '\n\n')
-            .trim();
-    }
-    let cleanedTitle = job.title ? job.title.trim() : '';
-    let cleanedLocation = job.location ? job.location.trim() : '';
-    return {
-        ...job,
-        title: cleanedTitle,
-        location: cleanedLocation,
-        description: cleanedDescription,
-        company: 'PhonePe',
-    };
+  if (!job) return job;
+  let cleanedDescription = job.description || '';
+  if (cleanedDescription) {
+    cleanedDescription = cleanedDescription
+      .replace(/about\s+phonepe\s+group\s*:/gi, '')
+      .replace(/about\s+phonepe\s*:/gi, '')
+      .replace(/culture/gi, '')
+      .replace(/job summary:?/gi, '')
+      .replace(/(\n\s*)(responsibilities|requirements|qualifications|skills|experience|education|benefits|what\s+we\s+offer|key\s+responsibilities|job\s+description|role\s+and\s+responsibilities|about\s+the\s+role|what\s+you'll\s+do|what\s+you\s+will\s+do)(\s*:?\s*\n)/gi, '\n\n$1$2$3\n\n')
+      .replace(/(\n\s*)(\d+\.\s*)(.*?)(\n)/gi, '\n\n$1$2$3$4\n')
+      .replace(/(\n\s*)(•\s*)(.*?)(\n)/gi, '\n\n$1$2$3$4\n')
+      .replace(/[ \t]+$/gm, '')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
+  }
+
+  return {
+    ...job,
+    title: job.title?.trim() || '',
+    location: job.location?.trim() || '',
+    description: cleanedDescription,
+    company: 'PhonePe'
+  };
 };
 
-const runPhonePeScraper = async () => {
-  const scraper = new PhonePeJobsScraper();
+// ✅ Exportable runner function
+const runPhonePeScraper = async ({ headless = true } = {}) => {
+  const scraper = new PhonePeJobsScraper(headless);
   await scraper.run();
   return scraper.allJobs;
 };
 
 export default runPhonePeScraper;
 
+// ✅ CLI support: node phonepe.js --headless=false
 if (import.meta.url === `file://${process.argv[1]}`) {
+  const headlessArg = process.argv.includes('--headless=false') ? false : true;
   (async () => {
-    await runPhonePeScraper();
+    await runPhonePeScraper({ headless: headlessArg });
   })();
 }

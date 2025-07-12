@@ -4,16 +4,17 @@ const fs = require('fs');
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
 class GlanceJobsScraper {
-  constructor() {
+  constructor(headless = true) {
     this.browser = null;
     this.page = null;
     this.allJobs = [];
     this.jobLinks = [];
+    this.headless = headless;
   }
 
   async initialize() {
     this.browser = await puppeteer.launch({
-      headless: false,
+      headless: this.headless,
       args: ['--no-sandbox', '--start-maximized'],
       defaultViewport: null
     });

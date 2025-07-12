@@ -18,16 +18,17 @@ class Selectors {
 }
 
 class GoldmanSachsScraper {
-    constructor() {
+    constructor(headless = false) {
         this.browser = null;
         this.page = null;
         this.allJobs = [];
         this.allJobLinks = new Set();
+        this.headless = headless;
     }
 
     async initialize() {
         this.browser = await puppeteer.launch({
-            headless: false, // Must be false for goldmanSach.
+            headless: this.headless, // Must be false for goldmanSach.
             args: ['--no-sandbox'],
             defaultViewport: null
         });
@@ -228,16 +229,19 @@ const extractGoldmanData = (job, jobPage) => {
     };
 };
 
-const runGoldmanScraper = async () => {
-    const scraper = new GoldmanSachsScraper();
+// ✅ Exportable scraper function
+const runGoldmanScraper = async ({ headless = true } = {}) => {
+    const scraper = new GoldmanSachsScraper(headless);
     await scraper.run();
     return scraper.allJobs;
 };
 
 export default runGoldmanScraper;
 
+// ✅ CLI support: `node goldman.js --headless=false`
 if (import.meta.url === `file://${process.argv[1]}`) {
+    const headlessArg = process.argv.includes('--headless=false') ? false : true;
     (async () => {
-        await runGoldmanScraper();
+        await runGoldmanScraper({ headless: headlessArg });
     })();
 }

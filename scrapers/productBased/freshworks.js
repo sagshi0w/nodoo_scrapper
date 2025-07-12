@@ -3,83 +3,84 @@ import fs from 'fs';
 
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
-// Custom data extraction function for Freshworks jobs
+// 🧼 Clean and format job details
 const extractFreshworksData = (job) => {
-    if (!job) return job;
-    
-    // Clean description
-    let cleanedDescription = job.description || '';
-    if (cleanedDescription) {
-        // Remove common unwanted patterns
-        cleanedDescription = cleanedDescription
-            .replace(/^(description|job\s+descriptions?)\s*[:\-]?\s*/i, '')
-            .replace(/^[^a-zA-Z0-9\n\r]+/, '')
-            .replace(/\n{3,}/g, '\n\n') // Remove excessive newlines
-            .replace(/[ \t]+$/gm, '') // Remove trailing spaces on each line
-            .replace(/\n{2,}/g, '\n') // Remove extra blank lines
-            .trim();
-        // Remove 'Company Description' section and anything after
-        const companyDescIdx = cleanedDescription.toLowerCase().indexOf('company description');
-        if (companyDescIdx !== -1) {
-          cleanedDescription = cleanedDescription.replace(/company description\s*/i, '').trim();
-        }
+  if (!job) return job;
+
+  let cleanedDescription = job.description || '';
+  if (cleanedDescription) {
+    cleanedDescription = cleanedDescription
+      .replace(/^(description|job\s+descriptions?)\s*[:\-]?\s*/i, '')
+      .replace(/^[^a-zA-Z0-9\n\r]+/, '')
+      .replace(/\n{3,}/g, '\n\n')
+      .replace(/[ \t]+$/gm, '')
+      .replace(/\n{2,}/g, '\n')
+      .trim();
+
+    const idx = cleanedDescription.toLowerCase().indexOf('company description');
+    if (idx !== -1) {
+      cleanedDescription = cleanedDescription.slice(0, idx).trim();
     }
-    
-    // Clean title
-    let cleanedTitle = job.title || '';
-    if (cleanedTitle) {
-        cleanedTitle = cleanedTitle.trim();
-    }
-    
-    // Clean location
-    let cleanedLocation = job.location || '';
-    if (cleanedLocation) {
-        cleanedLocation = cleanedLocation.trim();
-    }
-    
-    return {
-        ...job,
-        title: cleanedTitle,
-        location: cleanedLocation,
-        description: cleanedDescription,
-        company: 'Freshworks',
-    };
+  }
+
+  return {
+    ...job,
+    title: (job.title || '').trim(),
+    location: (job.location || '').trim(),
+    description: cleanedDescription,
+    company: 'Freshworks',
+    scrapedAt: new Date().toISOString()
+  };
 };
 
 class FreshworksJobsScraper {
-  constructor() {
+  constructor(headless = true) {
     this.browser = null;
     this.page = null;
     this.allJobs = [];
     this.jobUrls = [];
+    this.headless = headless;
   }
 
   async initialize() {
-    this.browser = await puppeteer.launch({ headless: true, args: ['--start-maximized'] });
+    this.browser = await puppeteer.launch({
+      headless: this.headless,
+      args: ['--start-maximized'],
+      defaultViewport: null
+    });
     this.page = await this.browser.newPage();
+    await this.page.setUserAgent(
+      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+    );
   }
 
   async navigateToJobsPage() {
-    await this.page.goto('https://careers.smartrecruiters.com/Freshworks', { waitUntil: 'networkidle2' });
+    console.log('🌐 Navigating to Freshworks Careers page...');
+    await this.page.goto('https://careers.smartrecruiters.com/Freshworks', {
+      waitUntil: 'networkidle2',
+      timeout: 60000
+    });
     await delay(3000);
   }
 
   async loadAllJobs() {
+    console.log('🔄 Loading all job listings...');
     while (true) {
       const showMoreButton = await this.page.$('a.js-more');
       if (!showMoreButton) break;
+
       await Promise.all([
         this.page.waitForResponse(res => res.url().includes('smartrecruiters.com') && res.status() === 200),
         showMoreButton.click()
       ]);
+
       await delay(2000);
     }
   }
 
   async collectAllJobCardLinks() {
     this.jobUrls = await this.page.evaluate(() => {
-      return Array.from(document.querySelectorAll('a.link--block.details'))
-        .map(link => link.href);
+      return Array.from(document.querySelectorAll('a.link--block.details')).map(a => a.href);
     });
     console.log(`🔗 Found ${this.jobUrls.length} job URLs`);
   }
@@ -89,44 +90,43 @@ class FreshworksJobsScraper {
     try {
       await jobPage.goto(url, { waitUntil: 'networkidle2', timeout: 60000 });
       await delay(2000);
+
       const jobData = await jobPage.evaluate(() => {
         const getText = (sel) => document.querySelector(sel)?.innerText.trim() || '';
-        const title = getText('h1.job-title');
-        const description = getText('div.job-sections');
         return {
-          title,
-          company: 'Freshworks',
-          description,
+          title: getText('h1.job-title'),
+          description: getText('div.job-sections'),
           url: window.location.href
         };
       });
-      const location = await jobPage.$eval('spl-job-location', el => el.getAttribute('formattedaddress'));
-      if(location && location.includes('India')){
+
+      const location = await jobPage.$eval('spl-job-location', el => el.getAttribute('formattedaddress')).catch(() => '');
+      if (location && location.includes('India')) {
         jobData.location = location;
-        jobData.url = url;
-        const enrichedJob = extractFreshworksData(jobData);
-        this.allJobs.push(enrichedJob);
+        const enriched = extractFreshworksData(jobData);
+        this.allJobs.push(enriched);
         console.log(`✅ Done: ${jobData.title}`);
       }
-      await jobPage.close();
+
     } catch (err) {
-      await jobPage.close();
       console.warn(`⚠️ Failed to process ${url}: ${err.message}`);
+    } finally {
+      await jobPage.close();
     }
   }
 
   async processAllJobs() {
     for (let i = 0; i < this.jobUrls.length; i++) {
-      const jobUrl = this.jobUrls[i];
-      console.log(`🔍 Processing job ${i + 1}/${this.jobUrls.length}: ${jobUrl}`);
-      await this.extractJobDetailsFromLink(jobUrl);
+      console.log(`🔍 Processing job ${i + 1}/${this.jobUrls.length}`);
+      await this.extractJobDetailsFromLink(this.jobUrls[i]);
       await delay(1000);
     }
   }
 
   async saveResults() {
-    //fs.writeFileSync('./scrappedJobs/freshworksJobs.json', JSON.stringify(this.allJobs, null, 2));
-    console.log(`💾 Saved ${this.allJobs.length} jobs to freshworksJobs.json`);
+    const path = './scrappedJobs/freshworksJobs.json';
+    fs.writeFileSync(path, JSON.stringify(this.allJobs, null, 2));
+    console.log(`💾 Saved ${this.allJobs.length} jobs to ${path}`);
   }
 
   async close() {
@@ -149,16 +149,19 @@ class FreshworksJobsScraper {
   }
 }
 
-const runFreshworksScraper = async () => {
-  const scraper = new FreshworksJobsScraper();
+// 🟢 Exported runner
+const runFreshworksScraper = async ({ headless = true } = {}) => {
+  const scraper = new FreshworksJobsScraper(headless);
   await scraper.run();
   return scraper.allJobs;
 };
 
 export default runFreshworksScraper;
 
+// CLI support
 if (import.meta.url === `file://${process.argv[1]}`) {
+  const headless = !process.argv.includes('--headless=false');
   (async () => {
-    await runFreshworksScraper();
+    await runFreshworksScraper({ headless });
   })();
 }

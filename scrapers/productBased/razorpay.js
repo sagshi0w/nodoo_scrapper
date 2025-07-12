@@ -4,38 +4,46 @@ import fs from 'fs';
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
 class RazorpayJobsScraper {
-  constructor() {
+  constructor(headless = true) {
     this.browser = null;
     this.page = null;
     this.allJobLinks = [];
     this.allJobs = [];
+    this.headless = headless;
   }
 
   async initialize() {
-    this.browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--start-maximized'], defaultViewport: null });
+    this.browser = await puppeteer.launch({
+      headless: this.headless,
+      args: ['--no-sandbox', '--start-maximized'],
+      defaultViewport: null
+    });
     this.page = await this.browser.newPage();
   }
 
   async navigateToJobsPage() {
     await this.page.goto('https://razorpay.com/jobs/jobs-all/', { waitUntil: 'networkidle2' });
+    await delay(3000);
   }
 
   async collectAllJobCardLinks() {
     let currentPage = 1;
     while (true) {
       await delay(2000);
-      const jobCards = await this.page.$$('#__next > main > div.container.pt-5.mt-5.styles_faqsearchContainer__vLzvk > div > div.col-md-12.mt-0');
+
+      const jobCards = await this.page.$$('a.styles_container__LrNWu');
       if (jobCards.length === 0) {
-        console.log('🚫 No job cards found. Stopping pagination.');
+        console.log('🚫 No job cards found. Stopping.');
         break;
       }
-      const pageJobLinks = await this.page.$$eval(
-        'a.styles_container__LrNWu',
-        anchors => anchors.map(a => a.href)
+
+      const pageJobLinks = await this.page.$$eval('a.styles_container__LrNWu', anchors =>
+        anchors.map(a => a.href)
       );
       this.allJobLinks.push(...pageJobLinks);
+
       const loadMoreBtn = await this.page.$('div.styles_arrow__RzLZC.styles_right__NhIcm');
-      if (loadMoreBtn && currentPage < 8) {
+      if (loadMoreBtn && currentPage < 10) {
         await loadMoreBtn.click();
         currentPage++;
         await delay(3000);
@@ -43,8 +51,9 @@ class RazorpayJobsScraper {
         break;
       }
     }
+
     this.allJobLinks = [...new Set(this.allJobLinks)];
-    console.log(`🔗 Found ${this.allJobLinks.length} job links`);
+    console.log(`🔗 Found ${this.allJobLinks.length} unique job links`);
   }
 
   async extractJobDetailsFromLink(url) {
@@ -52,13 +61,11 @@ class RazorpayJobsScraper {
     try {
       await jobPage.goto(url, { waitUntil: 'networkidle2' });
       await delay(3000);
-      const iframeHandle = await jobPage.waitForSelector('iframe', { timeout: 10000 });
+
+      const iframeHandle = await jobPage.waitForSelector('iframe', { timeout: 15000 });
       const frame = await iframeHandle.contentFrame();
-      if (!frame) {
-        console.warn(`⚠️ No iframe content loaded for ${url}`);
-        await jobPage.close();
-        return null;
-      }
+      if (!frame) throw new Error('iframe content not found');
+
       const job = await frame.evaluate(() => {
         const getText = sel => document.querySelector(sel)?.innerText.trim() || '';
         return {
@@ -69,6 +76,7 @@ class RazorpayJobsScraper {
           company: 'Razorpay'
         };
       });
+
       await jobPage.close();
       return job;
     } catch (err) {
@@ -81,7 +89,8 @@ class RazorpayJobsScraper {
   async processAllJobs() {
     for (let i = 0; i < this.allJobLinks.length; i++) {
       const url = this.allJobLinks[i];
-      console.log(`📝 [${i+1}/${this.allJobLinks.length}] Processing: ${url}`);
+      console.log(`📝 [${i + 1}/${this.allJobLinks.length}] Processing: ${url}`);
+
       const jobData = await this.extractJobDetailsFromLink(url);
       if (jobData && jobData.title) {
         this.allJobs.push(extractRazorpayData(jobData));
@@ -92,7 +101,7 @@ class RazorpayJobsScraper {
   }
 
   async saveResults() {
-    //fs.writeFileSync('./scrappedJobs/razorpayJobs.json', JSON.stringify(this.allJobs, null, 2));
+    fs.writeFileSync('./scrappedJobs/razorpayJobs.json', JSON.stringify(this.allJobs, null, 2));
     console.log(`💾 Saved ${this.allJobs.length} jobs to razorpayJobs.json`);
   }
 
@@ -115,36 +124,32 @@ class RazorpayJobsScraper {
   }
 }
 
-// Custom data extraction function for Razorpay jobs
+// ✅ Clean up job description
 const extractRazorpayData = (job) => {
-    if (!job) return job;
-    let cleanedDescription = job.description || '';
-    if (cleanedDescription) {
-        // Remove everything up to and including 'Roles and Responsibilities:'
-        const rrPattern = /[\s\S]*?roles and responsibilities\s*:/i;
-        cleanedDescription = cleanedDescription.replace(rrPattern, '');
-        // Remove the phrase 'Roles and Responsibilities:' if present again
-        cleanedDescription = cleanedDescription.replace(/roles and responsibilities\s*:/i, '');
-        // Remove extra blank lines and trailing spaces
-        cleanedDescription = cleanedDescription
-            .replace(/[ \t]+$/gm, '')
-            .replace(/\n{2,}/g, '\n')
-            .trim();
-    }
-    let cleanedTitle = job.title ? job.title.trim() : '';
-    let cleanedLocation = job.location ? job.location.trim() : '';
-    return {
-        ...job,
-        title: cleanedTitle,
-        location: cleanedLocation,
-        description: cleanedDescription,
-        company: 'Razorpay',
-        scrapedAt: new Date().toISOString()
-    };
+  if (!job) return job;
+
+  let cleanedDescription = job.description || '';
+  if (cleanedDescription) {
+    cleanedDescription = cleanedDescription
+      .replace(/[\s\S]*?roles and responsibilities\s*:/i, '')
+      .replace(/roles and responsibilities\s*:/i, '')
+      .replace(/[ \t]+$/gm, '')
+      .replace(/\n{2,}/g, '\n')
+      .trim();
+  }
+
+  return {
+    ...job,
+    title: job.title.trim(),
+    location: job.location.trim(),
+    description: cleanedDescription,
+    company: 'Razorpay',
+    scrapedAt: new Date().toISOString()
+  };
 };
 
-const runRazorpayScraper = async () => {
-  const scraper = new RazorpayJobsScraper();
+const runRazorpayScraper = async ({ headless = true } = {}) => {
+  const scraper = new RazorpayJobsScraper(headless);
   await scraper.run();
   return scraper.allJobs;
 };
@@ -152,7 +157,8 @@ const runRazorpayScraper = async () => {
 export default runRazorpayScraper;
 
 if (import.meta.url === `file://${process.argv[1]}`) {
+  const headless = !process.argv.includes('--headless=false');
   (async () => {
-    await runRazorpayScraper();
+    await runRazorpayScraper({ headless });
   })();
 }
