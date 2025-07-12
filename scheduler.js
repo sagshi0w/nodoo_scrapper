@@ -2,6 +2,7 @@ import moment from "moment-timezone";
 import pLimit from "p-limit";
 import axios from "axios";
 import { createRequire } from 'module';
+import fs from 'fs';
 import extractData from "./utils/extractData.js";
 import sendToBackend from "./utils/sendToBackend.js";
 
@@ -9,7 +10,7 @@ const require = createRequire(import.meta.url);
 const nodemailer = require('nodemailer');
 require('dotenv').config();
 
-// Scrapers
+// ✅ Scrapers
 import runAckoScraper from "./scrapers/productBased/acko.js";
 import runAmazonScraper from "./scrapers/productBased/amazon.js";
 import runAdobeScraper from "./scrapers/productBased/adobe.js";
@@ -51,26 +52,32 @@ const transporter = nodemailer.createTransport({
 
 const notify = {
   success: async (stats) => {
-    const subject = `✅ Job Scraping Success (${stats.successCount} jobs)`;
-    const text = `Scraping completed at ${stats.endTime}
-Duration: ${stats.duration} minutes
-Successful scrapers: ${stats.successCount}
-Failed scrapers: ${stats.failCount}
-Total jobs found: ${stats.totalJobs}`;
+    const summaryText = `✅ Scraping completed at ${stats.endTime}
+⏱ Duration: ${stats.duration} minutes
+🟢 Successful scrapers: ${stats.successCount}
+🔴 Failed scrapers: ${stats.failCount}
+📦 Total jobs found: ${stats.totalJobs}
+
+📊 Jobs per company:
+${stats.scraperBreakdown.map(s => `- ${s.name}: ${s.count} jobs`).join('\n')}
+`;
+
+    // Write to file for GitHub Actions (optional)
+    fs.writeFileSync('scrape_summary.txt', summaryText);
 
     await transporter.sendMail({
       from: `"Job Scraper" <${config.notification.email.user}>`,
       to: config.notification.email.recipients,
-      subject,
-      text
+      subject: `✅ Job Scraping Success (${stats.successCount} scrapers)`,
+      text: summaryText
     });
 
     console.log("📧 Success notification email sent.");
   },
 
   error: async (error, context = {}) => {
-    const subject = "❌ Job Scraping Failed";
-    const text = `Error: ${error.message}
+    const text = `❌ Job Scraping Failed
+Error: ${error.message}
 Time: ${moment().tz("Asia/Kolkata").format("YYYY-MM-DD HH:mm:ss")}
 Context: ${JSON.stringify(context, null, 2)}
 Stack Trace:
@@ -79,7 +86,7 @@ ${error.stack}`;
     await transporter.sendMail({
       from: `"Job Scraper" <${config.notification.email.user}>`,
       to: config.notification.email.recipients,
-      subject,
+      subject: "❌ Job Scraping Failed",
       text
     });
 
@@ -108,10 +115,6 @@ const scrapers = [
   { fn: runZohoScraper, headless: true },
 ];
 
-//const scrapers = [
-  //{ fn: runPaypalScraper, headless: true },
-//];
-
 const runAllScrapers = async () => {
   const startTime = moment().tz("Asia/Kolkata");
   const stats = {
@@ -119,7 +122,8 @@ const runAllScrapers = async () => {
     successCount: 0,
     failCount: 0,
     totalJobs: 0,
-    errors: []
+    errors: [],
+    scraperBreakdown: []
   };
 
   try {
@@ -133,21 +137,20 @@ const runAllScrapers = async () => {
     );
 
     const allJobs = [];
+
     results.forEach((result, i) => {
       const name = scrapers[i].fn.name;
       if (result.status === "fulfilled") {
         if (Array.isArray(result.value)) {
           stats.successCount++;
+          stats.scraperBreakdown.push({ name, count: result.value.length });
           allJobs.push(...result.value);
         } else {
-          console.warn("⚠️ Scraper fulfilled but result is not an array:", result.value);
+          console.warn("⚠️ Result from", name, "is not an array.");
         }
       } else {
         stats.failCount++;
-        stats.errors.push({
-          scraper: name,
-          error: result.reason.message
-        });
+        stats.errors.push({ scraper: name, error: result.reason.message });
         console.error(`❌ ${name} failed:`, result.reason);
       }
     });
@@ -164,16 +167,15 @@ const runAllScrapers = async () => {
     stats.endTime = endTime.format("YYYY-MM-DD HH:mm:ss");
     stats.duration = moment.duration(endTime.diff(startTime)).asMinutes().toFixed(2);
 
-    console.log(`
-      ✅ [${stats.endTime}] Completed with:
-      - ${stats.successCount} successful scrapers
-      - ${stats.failCount} failed scrapers
-      - ${stats.totalJobs} total jobs found
-      - Duration: ${stats.duration} minutes
-    `);
+    console.log(`✅ [${stats.endTime}] Scraping Summary:
+    - Success: ${stats.successCount}
+    - Fail: ${stats.failCount}
+    - Total jobs: ${stats.totalJobs}
+    - Duration: ${stats.duration} mins`);
 
     await notify.success(stats);
     return stats;
+
   } catch (error) {
     stats.endTime = moment().tz("Asia/Kolkata").format("YYYY-MM-DD HH:mm:ss");
     console.error("❌ Critical error:", error);
