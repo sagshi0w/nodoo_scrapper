@@ -2,7 +2,8 @@ name: Daily Scraper at 8 AM
 
 on:
   schedule:
-    - cron: '30 2 * * *'  # 8:00 AM IST
+    #- cron: '30 2 * * *'  # 8:00 AM IST
+    - cron: '0 6 * * *'  # ✅ New: 11:30 AM IST
   workflow_dispatch:      # Allow manual trigger
 
 jobs:
