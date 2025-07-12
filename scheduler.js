@@ -86,7 +86,7 @@ ${error.stack}`;
     console.log("📧 Error notification email sent.");
   }
 };
-/*
+
 const scrapers = [
   { fn: runAckoScraper, headless: true },
   { fn: runAmazonScraper, headless: true },
@@ -107,11 +107,10 @@ const scrapers = [
   { fn: runUberScraper, headless: true },
   { fn: runZohoScraper, headless: true },
 ];
-*/
 
-const scrapers = [
-  { fn: runPaypalScraper, headless: true },
-];
+//const scrapers = [
+  //{ fn: runPaypalScraper, headless: true },
+//];
 
 const runAllScrapers = async () => {
   const startTime = moment().tz("Asia/Kolkata");
