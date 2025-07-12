@@ -7,7 +7,6 @@ import sendToBackend from "./utils/sendToBackend.js";
 
 const require = createRequire(import.meta.url);
 const nodemailer = require('nodemailer');
-
 require('dotenv').config();
 
 // Scrapers
@@ -30,7 +29,6 @@ import runSiemensScraper from "./scrapers/productBased/siemens.js";
 import runUberScraper from "./scrapers/productBased/uber.js";
 import runZohoScraper from "./scrapers/productBased/zoho.js";
 
-// Configuration
 const config = {
   concurrency: 5,
   notification: {
@@ -43,7 +41,6 @@ const config = {
   }
 };
 
-// Email Transporter
 const transporter = nodemailer.createTransport({
   service: config.notification.email.service,
   auth: {
@@ -52,17 +49,14 @@ const transporter = nodemailer.createTransport({
   }
 });
 
-// Notification Functions
 const notify = {
   success: async (stats) => {
     const subject = `✅ Job Scraping Success (${stats.successCount} jobs)`;
-    const text = `
-Scraping completed at ${stats.endTime}
+    const text = `Scraping completed at ${stats.endTime}
 Duration: ${stats.duration} minutes
 Successful scrapers: ${stats.successCount}
 Failed scrapers: ${stats.failCount}
-Total jobs found: ${stats.totalJobs}
-`;
+Total jobs found: ${stats.totalJobs}`;
 
     await transporter.sendMail({
       from: `"Job Scraper" <${config.notification.email.user}>`,
@@ -76,13 +70,11 @@ Total jobs found: ${stats.totalJobs}
 
   error: async (error, context = {}) => {
     const subject = "❌ Job Scraping Failed";
-    const text = `
-Error: ${error.message}
+    const text = `Error: ${error.message}
 Time: ${moment().tz("Asia/Kolkata").format("YYYY-MM-DD HH:mm:ss")}
 Context: ${JSON.stringify(context, null, 2)}
 Stack Trace:
-${error.stack}
-`;
+${error.stack}`;
 
     await transporter.sendMail({
       from: `"Job Scraper" <${config.notification.email.user}>`,
@@ -95,7 +87,27 @@ ${error.stack}
   }
 };
 
-// Main Runner
+const scrapers = [
+  { fn: runAckoScraper, headless: true },
+  { fn: runAmazonScraper, headless: true },
+  { fn: runAdobeScraper, headless: true },
+  { fn: runAtlassianScraper, headless: true },
+  { fn: runClearTaxScraper, headless: false },
+  { fn: runFlipkartScraper, headless: true },
+  { fn: runFreshworksScraper, headless: true },
+  { fn: runGoldmanScraper, headless: true },
+  { fn: runGoogleScraper, headless: true },
+  { fn: runGrowwScraper, headless: true },
+  { fn: runMeeshoScraper, headless: true },
+  { fn: runMicrosoftScraper, headless: true },
+  { fn: runPaypalScraper, headless: false },
+  { fn: runPhonepeScraper, headless: true },
+  { fn: runRazorpayScraper, headless: true },
+  { fn: runSiemensScraper, headless: true },
+  { fn: runUberScraper, headless: true },
+  { fn: runZohoScraper, headless: true },
+];
+
 const runAllScrapers = async () => {
   const startTime = moment().tz("Asia/Kolkata");
   const stats = {
@@ -109,24 +121,16 @@ const runAllScrapers = async () => {
   try {
     console.log(`⏰ [${stats.startTime}] Starting all scrapers...`);
 
-    //const scrapers = [
-      //runAckoScraper, runAmazonScraper, runAdobeScraper, runAtlassianScraper, runClearTaxScraper,
-      //runFlipkartScraper, runFreshworksScraper, runGoldmanScraper, runGoogleScraper, runGrowwScraper,
-      //runMeeshoScraper, runMicrosoftScraper, runPaypalScraper, runPhonepeScraper, runRazorpayScraper,
-      //runSiemensScraper, runUberScraper, runZohoScraper
-    //];
-
-    const scrapers = [
-        runClearTaxScraper
-    ];
-
     const limit = pLimit(config.concurrency);
     const results = await Promise.allSettled(
-      scrapers.map(scraper => limit(() => scraper()))
+      scrapers.map(({ fn, headless }) =>
+        limit(() => fn({ headless }))
+      )
     );
 
     const allJobs = [];
     results.forEach((result, i) => {
+      const name = scrapers[i].fn.name;
       if (result.status === "fulfilled") {
         if (Array.isArray(result.value)) {
           stats.successCount++;
@@ -137,10 +141,10 @@ const runAllScrapers = async () => {
       } else {
         stats.failCount++;
         stats.errors.push({
-          scraper: scrapers[i].name,
+          scraper: name,
           error: result.reason.message
         });
-        console.error(`❌ ${scrapers[i].name} failed:`, result.reason);
+        console.error(`❌ ${name} failed:`, result.reason);
       }
     });
 
@@ -174,7 +178,6 @@ const runAllScrapers = async () => {
   }
 };
 
-// Execute immediately (suitable for GitHub Actions)
 runAllScrapers()
   .then(() => {
     console.log("✅ Scraping completed.");

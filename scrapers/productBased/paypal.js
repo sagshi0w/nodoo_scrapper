@@ -4,7 +4,8 @@ import { writeFileSync } from 'fs';
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
 class PaypalJobsScraper {
-  constructor() {
+  constructor(headless = true) {
+    this.headless = headless;
     this.browser = null;
     this.page = null;
     this.allJobs = [];
@@ -12,10 +13,15 @@ class PaypalJobsScraper {
 
   async initialize() {
     this.browser = await puppeteer.launch({
-      headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox'],
-      defaultViewport: null
+      headless: this.headless ? "new" : false,
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        ...(this.headless ? [] : ['--start-maximized'])
+      ],
+      defaultViewport: this.headless ? { width: 1920, height: 1080 } : null
     });
+
     this.page = await this.browser.newPage();
     await this.page.setUserAgent(
       'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
@@ -31,12 +37,11 @@ class PaypalJobsScraper {
     await delay(5000);
   }
 
-async loadAndScrapeAllPages() {
+  async loadAndScrapeAllPages() {
     let start = 0;
     let pageCount = 1;
 
-    // List of major Indian cities
-    const indianCities = [
+    const indianCities = [ /* Indian cities list as before */ 
       "Bangalore", "Bengaluru", "Mumbai", "Delhi", "Hyderabad", "Chennai", "Pune", "Gurgaon", "Noida",
       "Kolkata", "Ahmedabad", "Jaipur", "Chandigarh", "Indore", "Lucknow", "Coimbatore", "Nagpur",
       "Surat", "Visakhapatnam", "Bhopal", "Patna", "Vadodara", "Ghaziabad", "Ludhiana", "Agra",
@@ -56,7 +61,6 @@ async loadAndScrapeAllPages() {
       await this.page.goto(url, { waitUntil: 'networkidle2', timeout: 60000 });
       await delay(5000);
 
-      // Wait and collect job cards
       await this.page.waitForSelector('div[data-test-id="job-listing"]', { timeout: 10000 });
       const cards = await this.page.$$('div[data-test-id="job-listing"]');
       const cardsCount = cards.length;
@@ -74,8 +78,7 @@ async loadAndScrapeAllPages() {
 
         try {
           const jobData = await this.extractJobDetailsFromCard(card);
-          if(jobData.title && jobData.description && jobData.location && jobData.url){
-            // Only add if location matches an Indian city
+          if (jobData.title && jobData.description && jobData.location && jobData.url) {
             const jobLocation = jobData.location.toLowerCase();
             const isIndianCity = indianCities.some(city => jobLocation.includes(city.toLowerCase()));
             if (isIndianCity) {
@@ -89,7 +92,6 @@ async loadAndScrapeAllPages() {
         await delay(1000);
       }
 
-      // Move to next page using dynamic step
       start += 10;
       pageCount++;
     }
@@ -100,7 +102,6 @@ async loadAndScrapeAllPages() {
   cleanJobSummary(rawText) {
     let cleaned = rawText;
 
-    // Remove everything up to and including 'Job Summary:' (case-insensitive)
     const jobSummaryPattern = /job summary\s*:?/i;
     const jobSummaryMatch = cleaned.match(jobSummaryPattern);
     if (jobSummaryMatch) {
@@ -109,7 +110,6 @@ async loadAndScrapeAllPages() {
         cleaned = cleaned.substring(idx + jobSummaryMatch[0].length);
       }
     } else {
-      // Fallback: Remove everything after 'About Company', 'About Us', 'Company Overview', or 'The Company' if present
       const sectionPatterns = [
         /about company\s*:?/i,
         /about us\s*:?/i,
@@ -126,20 +126,17 @@ async loadAndScrapeAllPages() {
       cleaned = cleaned.substring(0, cutIndex);
     }
 
-    // Remove 'Meet Your Team' line (case-insensitive)
     cleaned = cleaned.replace(/^.*meet your team.*$/gim, '');
 
-    // Trim after "Our Benefits" section if present
     const benefitsIndex = cleaned.indexOf("Our Benefits:");
     if (benefitsIndex !== -1) {
       cleaned = cleaned.substring(0, benefitsIndex);
     }
 
-    // Cleanup formatting and unwanted characters
     return cleaned
-      .replace(/[\n\r\t]+/g, '\n')               // Normalize newlines
-      .replace(/[^\x20-\x7E\n]+/g, '')           // Remove non-printable ASCII
-      .replace(/\n{2,}/g, '\n\n')                // Collapse excessive line breaks
+      .replace(/[\n\r\t]+/g, '\n')
+      .replace(/[^\x20-\x7E\n]+/g, '')
+      .replace(/\n{2,}/g, '\n\n')
       .trim();
   }
 
@@ -147,7 +144,7 @@ async loadAndScrapeAllPages() {
     await cardHandle.evaluate(el => el.scrollIntoView({ behavior: 'smooth', block: 'center' }));
     await delay(500);
     await cardHandle.click();
-    await delay(2000); // Wait for content to load
+    await delay(2000);
 
     const rawData = await this.page.evaluate(() => {
       const getText = sel => document.querySelector(sel)?.innerText.trim() || '';
@@ -176,7 +173,7 @@ async loadAndScrapeAllPages() {
   }
 
   async close() {
-    await this.browser.close();
+    if (this.browser) await this.browser.close();
   }
 
   async run() {
@@ -193,16 +190,18 @@ async loadAndScrapeAllPages() {
   }
 }
 
-const runPaypalScraper = async () => {
-  const scraper = new PaypalJobsScraper();
+const runPaypalScraper = async ({ headless = true } = {}) => {
+  const scraper = new PaypalJobsScraper(headless);
   await scraper.run();
   return scraper.allJobs;
 };
 
 export default runPaypalScraper;
 
+// Allow direct CLI execution for testing
 if (import.meta.url === `file://${process.argv[1]}`) {
+  const headlessArg = process.argv.includes('--headless=false') ? false : true;
   (async () => {
-    await runPaypalScraper();
+    await runPaypalScraper({ headless: headlessArg });
   })();
 }
