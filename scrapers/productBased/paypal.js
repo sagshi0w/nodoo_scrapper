@@ -13,7 +13,7 @@ class PaypalJobsScraper {
   async initialize() {
     this.browser = await puppeteer.launch({
       headless: true,
-      args: ['--no-sandbox', '--start-maximized'],
+      args: ['--no-sandbox', '--disable-setuid-sandbox'],
       defaultViewport: null
     });
     this.page = await this.browser.newPage();
