@@ -139,7 +139,7 @@ class AckoJobsScraper {
             await this.navigateToJobsPage();
             await this.collectAllJobCardLinks();
             await this.processAllJobs();
-            await this.saveResults();
+            //await this.saveResults();
         } catch (error) {
             console.error('❌ Scraper failed:', error);
         } finally {
