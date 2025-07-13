@@ -94,25 +94,29 @@ ${error.stack}`;
   }
 };
 
+// const scrapers = [
+//   { fn: runAckoScraper, headless: true },
+//   { fn: runAmazonScraper, headless: true },
+//   { fn: runAdobeScraper, headless: true },
+//   { fn: runAtlassianScraper, headless: true },
+//   { fn: runClearTaxScraper, headless: true },
+//   { fn: runFlipkartScraper, headless: true },
+//   { fn: runFreshworksScraper, headless: true },
+//   { fn: runGoldmanScraper, headless: true },
+//   { fn: runGoogleScraper, headless: true },
+//   { fn: runGrowwScraper, headless: true },
+//   { fn: runMeeshoScraper, headless: true },
+//   { fn: runMicrosoftScraper, headless: true },
+//   { fn: runPaypalScraper, headless: true },
+//   { fn: runPhonepeScraper, headless: true },
+//   { fn: runRazorpayScraper, headless: true },
+//   { fn: runSiemensScraper, headless: true },
+//   { fn: runUberScraper, headless: true },
+//   { fn: runZohoScraper, headless: true },
+// ];
+
 const scrapers = [
-  { fn: runAckoScraper, headless: true },
-  { fn: runAmazonScraper, headless: true },
-  { fn: runAdobeScraper, headless: true },
-  { fn: runAtlassianScraper, headless: true },
-  { fn: runClearTaxScraper, headless: true },
-  { fn: runFlipkartScraper, headless: true },
-  { fn: runFreshworksScraper, headless: true },
-  { fn: runGoldmanScraper, headless: true },
-  { fn: runGoogleScraper, headless: true },
-  { fn: runGrowwScraper, headless: true },
-  { fn: runMeeshoScraper, headless: true },
-  { fn: runMicrosoftScraper, headless: true },
-  { fn: runPaypalScraper, headless: true },
-  { fn: runPhonepeScraper, headless: true },
-  { fn: runRazorpayScraper, headless: true },
-  { fn: runSiemensScraper, headless: true },
-  { fn: runUberScraper, headless: true },
-  { fn: runZohoScraper, headless: true },
+  { fn: runAckoScraper, headless: true }
 ];
 
 const runAllScrapers = async () => {
