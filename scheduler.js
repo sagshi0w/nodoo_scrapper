@@ -160,6 +160,7 @@ const runAllScrapers = async () => {
     });
 
     stats.totalJobs = allJobs.length;
+    console.log('Number of jobs found = ', allJobs.length)
 
     if (allJobs.length > 0) {
       const enrichedJobs = allJobs.map(job => extractData(job));
