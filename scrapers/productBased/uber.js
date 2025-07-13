@@ -46,6 +46,7 @@ class UberJobsScraper {
   }
 
   async navigateToJobsPage() {
+    console.log('🌐 Navigating to Uber Careers...');
     await this.page.goto(
       'https://www.uber.com/us/en/careers/list/?query=developer%2C%20cloud%2C%20engineering%2C%20technology%2C%20ML%2C%20success%2C%20frontend%2C%20backend%2C%20design%2C%20devops%2C%20fullstack%2C%20ui%2C%20ux%2C%20cyber%20security%2C%20blockchain%2C&location=IND-Karnataka-Bangalore&location=IND-Telangana-Hyderabad&location=IND-Haryana-Gurgaon&location=IND-West%20Bengal-Kolkata',
       { waitUntil: 'networkidle2', timeout: 60000 }

@@ -14,8 +14,8 @@ const delay = ms => new Promise(res => setTimeout(res, ms));
     const allJobs = [];
     const visitedLinks = new Set();
 
-    const baseUrl = 'https://careers.makemytrip.com/prod/jobs';
     console.log('🌐 Navigating to MakeMyTrip Careers...');
+    const baseUrl = 'https://careers.makemytrip.com/prod/jobs';
     await page.goto(baseUrl, { waitUntil: 'networkidle2' });
     await delay(3000);
 
@@ -68,18 +68,18 @@ const delay = ms => new Promise(res => setTimeout(res, ms));
             });
 
             if (job.title) {
-                 const structuredFields = extractJobSections(job.fullDescription);
+                const structuredFields = extractJobSections(job.fullDescription);
 
-                 allJobs.push({
-                     title: job.title,
-                //     role: structuredFields.role,
-                     location: structuredFields.location,
-                //     experience: structuredFields.experience,
-                //     aboutFunction: structuredFields.aboutFunction,
-                //     whatYouWillBeDoing: structuredFields.whatYouWillBeDoing,
-                //     qualificationAndExperience: structuredFields.qualificationAndExperience,
-                     applyUrl: job.applyUrl
-                 });
+                allJobs.push({
+                    title: job.title,
+                    //     role: structuredFields.role,
+                    location: structuredFields.location,
+                    //     experience: structuredFields.experience,
+                    //     aboutFunction: structuredFields.aboutFunction,
+                    //     whatYouWillBeDoing: structuredFields.whatYouWillBeDoing,
+                    //     qualificationAndExperience: structuredFields.qualificationAndExperience,
+                    applyUrl: job.applyUrl
+                });
 
                 //allJobs.push(job);
 

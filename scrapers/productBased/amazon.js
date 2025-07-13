@@ -39,6 +39,7 @@ const runAmazonScraper = async ({ headless = true } = {}) => {
     const page = await browser.newPage();
     const allJobs = [];
 
+    console.log('🌐 Navigating to Amazon Careers page...');
     await page.goto('https://www.amazon.jobs/content/en/job-categories/software-development?country%5B%5D=IN#search', {
         waitUntil: 'networkidle2'
     });

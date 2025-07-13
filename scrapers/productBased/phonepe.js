@@ -22,6 +22,7 @@ class PhonePeJobsScraper {
   }
 
   async navigateToJobsPage() {
+    console.log('🌐 Navigating to Phonepay Careers...');
     await this.page.goto('https://www.phonepe.com/careers/job-openings/', {
       waitUntil: 'networkidle2'
     });

@@ -24,7 +24,7 @@ class CredJobsScraper {
     }
 
     async navigateToJobsPage() {
-        console.log('🌐 Navigating to CRED Careers page...');
+        console.log('🌐 Navigating to Cred Careers page...');
         await this.page.goto('https://careers.cred.club/openings', {
             waitUntil: 'networkidle2',
             timeout: 60000

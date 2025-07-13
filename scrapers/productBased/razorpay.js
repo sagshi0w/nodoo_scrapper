@@ -22,6 +22,7 @@ class RazorpayJobsScraper {
   }
 
   async navigateToJobsPage() {
+    console.log('🌐 Navigating to Razorpay Careers...');
     await this.page.goto('https://razorpay.com/jobs/jobs-all/', { waitUntil: 'networkidle2' });
     await delay(3000);
   }

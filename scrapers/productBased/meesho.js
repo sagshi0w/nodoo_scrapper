@@ -42,18 +42,18 @@ class MeeshoJobsScraper {
             if (!loadMoreBtn) break;
 
             try {
-            console.log('🔄 Clicking "Load more"...');
-            await this.page.evaluate(selector => {
-                const btn = document.querySelector(selector);
-                if (btn) btn.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }, loadMoreSelector);
+                console.log('🔄 Clicking "Load more"...');
+                await this.page.evaluate(selector => {
+                    const btn = document.querySelector(selector);
+                    if (btn) btn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, loadMoreSelector);
 
-            await this.page.waitForSelector(loadMoreSelector, { visible: true });
-            await loadMoreBtn.click();
-            //await this.page.waitForTimeout(2000); // Wait for new jobs to load
+                await this.page.waitForSelector(loadMoreSelector, { visible: true });
+                await loadMoreBtn.click();
+                //await this.page.waitForTimeout(2000); // Wait for new jobs to load
             } catch (err) {
-            console.warn(`⚠️ Skipping click due to: ${err.message}`);
-            break; // Avoid infinite loop
+                console.warn(`⚠️ Skipping click due to: ${err.message}`);
+                break; // Avoid infinite loop
             }
         }
 
@@ -61,7 +61,7 @@ class MeeshoJobsScraper {
 
         const jobUrls = await this.page.evaluate(() => {
             return Array.from(document.querySelectorAll('a[href^="/jobs/"]'))
-            .map(a => a.href.startsWith('http') ? a.href : `https://www.meesho.io${a.getAttribute('href')}`);
+                .map(a => a.href.startsWith('http') ? a.href : `https://www.meesho.io${a.getAttribute('href')}`);
         });
 
         this.jobLinks.push(...jobUrls);
@@ -93,7 +93,7 @@ class MeeshoJobsScraper {
             });
 
             await jobPage.close();
-            return { ...jobData};
+            return { ...jobData };
         } catch (err) {
             await jobPage.close();
             console.warn(`⚠️ Failed to extract from ${url}:`, err.message);
@@ -106,7 +106,7 @@ class MeeshoJobsScraper {
             console.log(`📝 Processing job ${i + 1}/${this.jobLinks.length}`);
             const jobData = await this.extractJobDetailsFromLink(this.jobLinks[i]);
 
-            if(jobData.title){
+            if (jobData.title) {
                 const enrichedJob = extractMeeshoData(jobData);
                 this.allJobs.push(enrichedJob);
 
@@ -142,54 +142,54 @@ class MeeshoJobsScraper {
 // Custom data extraction function for Meesho jobs
 const extractMeeshoData = (job) => {
     if (!job) return job;
-  
+
     let cleanedDescription = job.description || '';
-  
+
     if (cleanedDescription) {
-      // Step 1: Truncate content if unwanted sections are detected
-      const patterns = [
-        /about\s+us/i,
-        /our\s+mission/i
-      ];
-  
-      let minIdx = cleanedDescription.length;
-      for (const pattern of patterns) {
-        const match = cleanedDescription.match(pattern);
-        if (match && match.index < minIdx) {
-          minIdx = match.index;
+        // Step 1: Truncate content if unwanted sections are detected
+        const patterns = [
+            /about\s+us/i,
+            /our\s+mission/i
+        ];
+
+        let minIdx = cleanedDescription.length;
+        for (const pattern of patterns) {
+            const match = cleanedDescription.match(pattern);
+            if (match && match.index < minIdx) {
+                minIdx = match.index;
+            }
         }
-      }
-  
-      if (minIdx !== cleanedDescription.length) {
-        cleanedDescription = cleanedDescription.substring(0, minIdx).trim();
-      }
-  
-      // Step 2: Remove specific phrases (case-insensitive)
-      cleanedDescription = cleanedDescription
-        .replace(/what you will do:?/gi, '')
-        .replace(/about\s+the\s+team\s*[:\-]?/gi, '')
-        .replace(/about\s+the\s+role\s*[:\-]?/gi, '');
-  
-      // Step 3: Remove trailing spaces and excessive newlines
-      cleanedDescription = cleanedDescription
-        .replace(/[ \t]+$/gm, '')     // Trailing spaces
-        .replace(/\n{2,}/g, '\n')     // Excessive blank lines
-        .trim();
+
+        if (minIdx !== cleanedDescription.length) {
+            cleanedDescription = cleanedDescription.substring(0, minIdx).trim();
+        }
+
+        // Step 2: Remove specific phrases (case-insensitive)
+        cleanedDescription = cleanedDescription
+            .replace(/what you will do:?/gi, '')
+            .replace(/about\s+the\s+team\s*[:\-]?/gi, '')
+            .replace(/about\s+the\s+role\s*[:\-]?/gi, '');
+
+        // Step 3: Remove trailing spaces and excessive newlines
+        cleanedDescription = cleanedDescription
+            .replace(/[ \t]+$/gm, '')     // Trailing spaces
+            .replace(/\n{2,}/g, '\n')     // Excessive blank lines
+            .trim();
     }
-  
+
     const cleanedTitle = job.title?.trim() || '';
     const cleanedLocation = job.location?.trim() || '';
-  
+
     return {
-      ...job,
-      title: cleanedTitle,
-      location: cleanedLocation,
-      description: cleanedDescription,
-      company: 'Meesho',
-      scrapedAt: new Date().toISOString()
+        ...job,
+        title: cleanedTitle,
+        location: cleanedLocation,
+        description: cleanedDescription,
+        company: 'Meesho',
+        scrapedAt: new Date().toISOString()
     };
-  };
-  
+};
+
 
 const runMeeshoScraper = async () => {
     const scraper = new MeeshoJobsScraper();

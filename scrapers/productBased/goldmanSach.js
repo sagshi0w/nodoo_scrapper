@@ -37,6 +37,7 @@ class GoldmanSachsScraper {
     }
 
     async navigateToJobsPage() {
+        console.log('🌐 Navigating to GoldmanSach Careers page...');
         await this.page.goto('https://higher.gs.com/results?LOCATION=Hyderabad|Mumbai&page=1&sort=POSTED_DATE', {
             waitUntil: 'networkidle2',
             timeout: 60000
@@ -57,7 +58,7 @@ class GoldmanSachsScraper {
 
                 await this.autoScroll();
 
-                const currentPageLinks = await this.page.$$eval(Selectors.jobLinks, links => 
+                const currentPageLinks = await this.page.$$eval(Selectors.jobLinks, links =>
                     links.map(link => {
                         const href = link.getAttribute('href');
                         return href.startsWith('http') ? href : `https://higher.gs.com${href}`;
@@ -114,8 +115,8 @@ class GoldmanSachsScraper {
 
         for (let i = 0; i < jobArray.length; i++) {
             const jobUrl = jobArray[i];
-            console.log(`Processing job ${i+1}/${jobArray.length}: ${jobUrl}`);
-            
+            console.log(`Processing job ${i + 1}/${jobArray.length}: ${jobUrl}`);
+
             const jobPage = await this.browser.newPage();
             try {
                 await jobPage.goto(jobUrl, {
@@ -132,9 +133,9 @@ class GoldmanSachsScraper {
                 const enrichedJob = extractGoldmanData(job, job);
                 if (enrichedJob.title) {
                     this.allJobs.push(enrichedJob);
-                    console.log(`✅ [${i+1}/${jobArray.length}] ${enrichedJob.title} - ${enrichedJob.location}`);
+                    console.log(`✅ [${i + 1}/${jobArray.length}] ${enrichedJob.title} - ${enrichedJob.location}`);
                 } else {
-                    console.log(`⚠️ [${i+1}/${jobArray.length}] No job title found at ${jobUrl}`);
+                    console.log(`⚠️ [${i + 1}/${jobArray.length}] No job title found at ${jobUrl}`);
                     fs.appendFileSync('failed_jobs.txt', `${jobUrl}\n`);
                 }
             } catch (err) {
@@ -173,7 +174,7 @@ class GoldmanSachsScraper {
     async saveResults() {
         //fs.writeFileSync('./scrappedJobs/goldmanSachsJobs.json', JSON.stringify(this.allJobs, null, 2));
         console.log(`💾 Saved ${this.allJobs.length} jobs to goldmanSachsJobs.json`);
-        
+
         if (fs.existsSync('failed_jobs.txt')) {
             console.log('⚠️ Some jobs failed to scrape - see failed_jobs.txt');
         }

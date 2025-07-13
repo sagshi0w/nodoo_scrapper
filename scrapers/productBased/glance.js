@@ -67,7 +67,7 @@ class GlanceJobsScraper {
     console.log('📋 Collecting job links from job cards...');
     await this.page.waitForSelector('.styles__JobCardContainer-sc-tfwrse-10.fHYFOp a', { timeout: 10000 });
 
-    const links = await this.page.$$eval('.styles__JobCardContainer-sc-tfwrse-10.fHYFOp a', anchors => 
+    const links = await this.page.$$eval('.styles__JobCardContainer-sc-tfwrse-10.fHYFOp a', anchors =>
       anchors.map(a => {
         let href = a.getAttribute('href');
         return href.startsWith('http') ? href : `https://glance.com${href}`;
@@ -78,91 +78,91 @@ class GlanceJobsScraper {
     console.log(`✅ Total job links collected: ${this.jobLinks.length}`);
   }
 
-//   async extractJobDetailsFromLink(url) {
-//     const jobPage = await this.browser.newPage();
-//     try {
-//       await jobPage.goto(url, { waitUntil: 'networkidle2', timeout: 60000 });
-//       //await jobPage.waitForSelector('h1', { timeout: 10000 });
+  //   async extractJobDetailsFromLink(url) {
+  //     const jobPage = await this.browser.newPage();
+  //     try {
+  //       await jobPage.goto(url, { waitUntil: 'networkidle2', timeout: 60000 });
+  //       //await jobPage.waitForSelector('h1', { timeout: 10000 });
 
-//       const details = await jobPage.evaluate(() => {
-//         const getText = sel => (document.querySelector(sel) || {}).innerText?.trim() || '';
-//         //const meta = getText('p.job-posting-detail--highlight').split('|').map(p => p.trim());
-//         return {
-//           title: getText('h1.section-header.section-header--large.font-primary'),
-//           //team: meta[0] || 'N/A',
-//           location: getText('div.job__location > div'),
-//           //remoteType: meta[2] || 'N/A',
-//           //employmentType: meta[3] || 'N/A',
-//           description: getText('div.job__description.body') 
-//                        //|| document.body.innerText.slice(0, 500)
-//         };
-//       });
-//       await jobPage.close();
-//       return { ...details, url };
-//     } catch (err) {
-//       await jobPage.close();
-//       console.warn(`⚠️ Failed to extract from ${url}:`, err.message);
-//       return { title: '', location: '', description: '', url };
-//     }
-//   }
+  //       const details = await jobPage.evaluate(() => {
+  //         const getText = sel => (document.querySelector(sel) || {}).innerText?.trim() || '';
+  //         //const meta = getText('p.job-posting-detail--highlight').split('|').map(p => p.trim());
+  //         return {
+  //           title: getText('h1.section-header.section-header--large.font-primary'),
+  //           //team: meta[0] || 'N/A',
+  //           location: getText('div.job__location > div'),
+  //           //remoteType: meta[2] || 'N/A',
+  //           //employmentType: meta[3] || 'N/A',
+  //           description: getText('div.job__description.body') 
+  //                        //|| document.body.innerText.slice(0, 500)
+  //         };
+  //       });
+  //       await jobPage.close();
+  //       return { ...details, url };
+  //     } catch (err) {
+  //       await jobPage.close();
+  //       console.warn(`⚠️ Failed to extract from ${url}:`, err.message);
+  //       return { title: '', location: '', description: '', url };
+  //     }
+  //   }
 
   async extractJobDetailsFromLink(url) {
     const jobPage = await this.browser.newPage();
-        try {
-            await jobPage.goto(url, { waitUntil: 'networkidle2', timeout: 60000 });
+    try {
+      await jobPage.goto(url, { waitUntil: 'networkidle2', timeout: 60000 });
 
-            // Wait for the iframe to load
-            await jobPage.waitForSelector('#greenhouse-iframe', { timeout: 15000 });
+      // Wait for the iframe to load
+      await jobPage.waitForSelector('#greenhouse-iframe', { timeout: 15000 });
 
-            // Get iframe src
-            const iframeSrc = await jobPage.$eval('#greenhouse-iframe', iframe => iframe.src);
+      // Get iframe src
+      const iframeSrc = await jobPage.$eval('#greenhouse-iframe', iframe => iframe.src);
 
-            //await jobPage.close();
+      //await jobPage.close();
 
-            // Open iframe URL in a new page
-            const iframePage = await this.browser.newPage();
-            await iframePage.goto(iframeSrc, { waitUntil: 'networkidle2', timeout: 60000 });
+      // Open iframe URL in a new page
+      const iframePage = await this.browser.newPage();
+      await iframePage.goto(iframeSrc, { waitUntil: 'networkidle2', timeout: 60000 });
 
-            // Wait for job content inside iframe
-            await iframePage.waitForSelector('body > main', { timeout: 10000 });
+      // Wait for job content inside iframe
+      await iframePage.waitForSelector('body > main', { timeout: 10000 });
 
-            const details = await iframePage.evaluate(() => {
-            const getText = sel => document.querySelector(sel)?.innerText?.trim() || '';
+      const details = await iframePage.evaluate(() => {
+        const getText = sel => document.querySelector(sel)?.innerText?.trim() || '';
 
-            const title = getText('body > main > div > div:nth-child(1) > div.job__header > div > h1');
-            const location = getText('body > main > div > div:nth-child(1) > div.job__header > div > div');
-            const description = getText('body > main > div > div:nth-child(1) > div.job__description.body > div:nth-child(1)');
+        const title = getText('body > main > div > div:nth-child(1) > div.job__header > div > h1');
+        const location = getText('body > main > div > div:nth-child(1) > div.job__header > div > div');
+        const description = getText('body > main > div > div:nth-child(1) > div.job__description.body > div:nth-child(1)');
 
-            return { title, location, description };
-            });
+        return { title, location, description };
+      });
 
-            if (!iframePage.isClosed()) await iframePage.close();
+      if (!iframePage.isClosed()) await iframePage.close();
 
-            const raw = details.description;
+      const raw = details.description;
 
-            const extractSection = (start, end) => {
-            const regex = new RegExp(`${start}(.*?)${end ? end : '$'}`, 'is');
-            const match = raw.match(regex);
-            return match ? match[1].trim().replace(/\n{2,}/g, '\n') : '';
-            };
+      const extractSection = (start, end) => {
+        const regex = new RegExp(`${start}(.*?)${end ? end : '$'}`, 'is');
+        const match = raw.match(regex);
+        return match ? match[1].trim().replace(/\n{2,}/g, '\n') : '';
+      };
 
-            const responsibilities = extractSection('Key Responsibilities'|| 'What we’re looking for' || 'What you will be doing?' || 'Overview of the role');
-            const qualifications = extractSection('Required Qualifications' || 'Qualifications' || 'The experience we need');
+      const responsibilities = extractSection('Key Responsibilities' || 'What we’re looking for' || 'What you will be doing?' || 'Overview of the role');
+      const qualifications = extractSection('Required Qualifications' || 'Qualifications' || 'The experience we need');
 
-            return {
-                title: details.title,
-                location: details.location,
-                responsibilities: responsibilities,
-                qualifications: qualifications,
-                description: (!responsibilities && !qualifications) ? details.description : null,
-                url
-            };
-        } catch (err) {
-            await jobPage.close();
-            console.warn(`⚠️ Failed to extract from ${url}:`, err.message);
-            return { title: '', location: '', description: '', url };
-        }
+      return {
+        title: details.title,
+        location: details.location,
+        responsibilities: responsibilities,
+        qualifications: qualifications,
+        description: (!responsibilities && !qualifications) ? details.description : null,
+        url
+      };
+    } catch (err) {
+      await jobPage.close();
+      console.warn(`⚠️ Failed to extract from ${url}:`, err.message);
+      return { title: '', location: '', description: '', url };
     }
+  }
 
 
   async processAllJobs() {

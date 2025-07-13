@@ -5,44 +5,44 @@ const delay = ms => new Promise(res => setTimeout(res, ms));
 
 // Custom data extraction function for Microsoft jobs
 const extractMicrosoftData = (job) => {
-    if (!job) return job;
-    
-    // Clean description
-    let cleanedDescription = job.description || '';
-    if (cleanedDescription) {
-        // Remove 'Overview' (case-insensitive, at start or anywhere as a heading)
-        cleanedDescription = cleanedDescription.replace(/^overview\s*[:\-]?/i, '');
-        cleanedDescription = cleanedDescription.replace(/\n+overview\s*[:\-]?/gi, '\n');
-        // Add extra newlines between logical sections
-        cleanedDescription = cleanedDescription
-            .replace(/(Qualifications:|Responsibilities:|Requirements:|Skills:)/gi, '\n$1\n')
-            // Remove common unwanted patterns
-            .replace(/^(description|job\s+descriptions?)\s*[:\-]?\s*/i, '')
-            .replace(/^[^a-zA-Z0-9\n\r]+/, '')
-            .replace(/\n{3,}/g, '\n\n') // Remove excessive newlines
-            .trim();
-    }
-    
-    // Clean title
-    let cleanedTitle = job.title || '';
-    if (cleanedTitle) {
-        cleanedTitle = cleanedTitle.trim();
-    }
-    
-    // Clean location
-    let cleanedLocation = job.location || '';
-    if (cleanedLocation) {
-        cleanedLocation = cleanedLocation.trim();
-    }
-    
-    return {
-        ...job,
-        title: cleanedTitle,
-        location: cleanedLocation,
-        description: cleanedDescription,
-        company: 'Microsoft',
-        scrapedAt: new Date().toISOString()
-    };
+  if (!job) return job;
+
+  // Clean description
+  let cleanedDescription = job.description || '';
+  if (cleanedDescription) {
+    // Remove 'Overview' (case-insensitive, at start or anywhere as a heading)
+    cleanedDescription = cleanedDescription.replace(/^overview\s*[:\-]?/i, '');
+    cleanedDescription = cleanedDescription.replace(/\n+overview\s*[:\-]?/gi, '\n');
+    // Add extra newlines between logical sections
+    cleanedDescription = cleanedDescription
+      .replace(/(Qualifications:|Responsibilities:|Requirements:|Skills:)/gi, '\n$1\n')
+      // Remove common unwanted patterns
+      .replace(/^(description|job\s+descriptions?)\s*[:\-]?\s*/i, '')
+      .replace(/^[^a-zA-Z0-9\n\r]+/, '')
+      .replace(/\n{3,}/g, '\n\n') // Remove excessive newlines
+      .trim();
+  }
+
+  // Clean title
+  let cleanedTitle = job.title || '';
+  if (cleanedTitle) {
+    cleanedTitle = cleanedTitle.trim();
+  }
+
+  // Clean location
+  let cleanedLocation = job.location || '';
+  if (cleanedLocation) {
+    cleanedLocation = cleanedLocation.trim();
+  }
+
+  return {
+    ...job,
+    title: cleanedTitle,
+    location: cleanedLocation,
+    description: cleanedDescription,
+    company: 'Microsoft',
+    scrapedAt: new Date().toISOString()
+  };
 };
 
 class MicrosoftJobsScraper {
@@ -62,6 +62,7 @@ class MicrosoftJobsScraper {
   }
 
   async navigateToJobsPage() {
+    console.log('🌐 Navigating to Microsoft Careers...');
     await this.page.goto('https://jobs.careers.microsoft.com/global/en/search?lc=India', {
       waitUntil: 'networkidle2'
     });
@@ -102,7 +103,7 @@ class MicrosoftJobsScraper {
           await delay(1000);
         } catch (err) {
           console.error(`❌ Job ${i + 1} failed:`, err.message);
-          await this.page.goBack({ waitUntil: 'networkidle2' }).catch(() => {});
+          await this.page.goBack({ waitUntil: 'networkidle2' }).catch(() => { });
           await delay(1000);
         }
       }

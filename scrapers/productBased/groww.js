@@ -36,45 +36,45 @@ class GrowwJobsScraper {
         console.log('📋 Collecting job links...');
 
         //while (true) {
-            // Collect job URLs
+        // Collect job URLs
 
-            await delay(2000);
-            const newJobUrls = await this.page.evaluate(() => {
-                return Array.from(document.querySelectorAll('td.cell a[href^="https://job-boards.eu.greenhouse.io/groww/jobs/"]'))
-                    .map(a => a.href);  // get the full absolute URL
-            });
+        await delay(2000);
+        const newJobUrls = await this.page.evaluate(() => {
+            return Array.from(document.querySelectorAll('td.cell a[href^="https://job-boards.eu.greenhouse.io/groww/jobs/"]'))
+                .map(a => a.href);  // get the full absolute URL
+        });
 
-            for (const url of newJobUrls) {
-                this.jobLinks.push(url);
-            }
+        for (const url of newJobUrls) {
+            this.jobLinks.push(url);
+        }
 
-            console.log(`🔗 Found ${this.jobLinks.length} unique job links so far...`);
+        console.log(`🔗 Found ${this.jobLinks.length} unique job links so far...`);
 
-            // const loadMoreSelector = 'button.iconNext';
+        // const loadMoreSelector = 'button.iconNext';
 
-            // const loadMoreBtn = await this.page.$(loadMoreSelector);
-            // if (!loadMoreBtn) {
-            //     console.log('❌ No more "Load more" button — all jobs loaded.');
-            //     break;
-            // }
+        // const loadMoreBtn = await this.page.$(loadMoreSelector);
+        // if (!loadMoreBtn) {
+        //     console.log('❌ No more "Load more" button — all jobs loaded.');
+        //     break;
+        // }
 
-            // try {
-            //     console.log('🔄 Clicking "Load more"...');
+        // try {
+        //     console.log('🔄 Clicking "Load more"...');
 
-            //     await this.page.evaluate(selector => {
-            //         const btn = document.querySelector(selector);
-            //         if (btn) {
-            //             btn.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            //         }
-            //     }, loadMoreSelector);
+        //     await this.page.evaluate(selector => {
+        //         const btn = document.querySelector(selector);
+        //         if (btn) {
+        //             btn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        //         }
+        //     }, loadMoreSelector);
 
-            //     await this.page.waitForSelector(loadMoreSelector, { visible: true, timeout: 5000 });
-            //     await loadMoreBtn.click();
-            //     await delay(2000);
-            // } catch (err) {
-            //     console.warn(`⚠️ Skipping click due to error: ${err.message}`);
-            //     break;
-            // }
+        //     await this.page.waitForSelector(loadMoreSelector, { visible: true, timeout: 5000 });
+        //     await loadMoreBtn.click();
+        //     await delay(2000);
+        // } catch (err) {
+        //     console.warn(`⚠️ Skipping click due to error: ${err.message}`);
+        //     break;
+        // }
         //}
 
         console.log(`✅ Total unique jobs collected: ${this.jobLinks.length}`);
@@ -104,7 +104,7 @@ class GrowwJobsScraper {
             });
 
             await jobPage.close();
-            return { ...jobData};
+            return { ...jobData };
         } catch (err) {
             await jobPage.close();
             console.warn(`⚠️ Failed to extract from ${url}:`, err.message);
@@ -119,7 +119,7 @@ class GrowwJobsScraper {
             console.log(`📝 Processing job ${i + 1}/${this.jobLinks.length}`);
             const jobData = await this.extractJobDetailsFromLink(this.jobLinks[i]);
 
-            if(jobData.title && !seen.has(jobData.title)){
+            if (jobData.title && !seen.has(jobData.title)) {
                 seen.add(jobData.title);
 
                 const enrichedJob = extractGrowwData(jobData);

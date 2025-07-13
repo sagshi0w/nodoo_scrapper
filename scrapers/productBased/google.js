@@ -54,6 +54,8 @@ class GoogleJobsScraper {
     let pageCount = 1;
     let hasMore = true;
 
+    console.log('🌐 Navigating to Google Careers page...');
+
     while (hasMore) {
       const url = `https://www.google.com/about/careers/applications/jobs/results?location=India&page=${pageCount}`;
       console.log(`🌐 Navigating to Page ${pageCount}...`);

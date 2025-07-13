@@ -26,7 +26,8 @@ class SwiggyJobsScraper {
   }
 
   async collectJobIds() {
-    console.log('🌐 Navigating to job listings...');
+    console.log('🌐 Navigating to Swiggy Careers page...');
+    
     await this.page.goto('https://careers.swiggy.com/#/careers', { waitUntil: 'networkidle2' });
     await this.page.waitForSelector('iframe#mnhembedded', { timeout: 15000 });
     const iframeHandle = await this.page.$('iframe#mnhembedded');

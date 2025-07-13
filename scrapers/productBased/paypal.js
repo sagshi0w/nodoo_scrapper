@@ -13,19 +13,19 @@ class PaypalJobsScraper {
 
   async initialize() {
     this.browser = await puppeteer.launch({
-        headless: this.headless ? true : false,
-          args: [
-            '--no-sandbox',
-            '--disable-setuid-sandbox',
-            '--disable-dev-shm-usage',
-            '--disable-accelerated-2d-canvas',
-            '--disable-gpu',
-            '--no-zygote',
-            '--single-process',
-            '--disable-setuid-sandbox',
-            ...(this.headless ? [] : ['--start-maximized'])
-          ],
-        defaultViewport: this.headless ? { width: 1920, height: 1080 } : null
+      headless: this.headless ? true : false,
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-accelerated-2d-canvas',
+        '--disable-gpu',
+        '--no-zygote',
+        '--single-process',
+        '--disable-setuid-sandbox',
+        ...(this.headless ? [] : ['--start-maximized'])
+      ],
+      defaultViewport: this.headless ? { width: 1920, height: 1080 } : null
     });
 
     this.page = await this.browser.newPage();
@@ -47,7 +47,7 @@ class PaypalJobsScraper {
     let start = 0;
     let pageCount = 1;
 
-    const indianCities = [ /* Indian cities list as before */ 
+    const indianCities = [ /* Indian cities list as before */
       "Bangalore", "Bengaluru", "Mumbai", "Delhi", "Hyderabad", "Chennai", "Pune", "Gurgaon", "Noida",
       "Kolkata", "Ahmedabad", "Jaipur", "Chandigarh", "Indore", "Lucknow", "Coimbatore", "Nagpur",
       "Surat", "Visakhapatnam", "Bhopal", "Patna", "Vadodara", "Ghaziabad", "Ludhiana", "Agra",
