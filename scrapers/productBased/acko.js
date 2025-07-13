@@ -125,7 +125,7 @@ class AckoJobsScraper {
     }
 
     async saveResults() {
-        writeFileSync('./scrappedJobs/ackoJobs.json', JSON.stringify(this.allJobs, null, 2));
+        //writeFileSync('./scrappedJobs/ackoJobs.json', JSON.stringify(this.allJobs, null, 2));
         console.log(`💾 Saved ${this.allJobs.length} jobs to ackoJobs.json`);
     }
 
@@ -139,7 +139,7 @@ class AckoJobsScraper {
             await this.navigateToJobsPage();
             await this.collectAllJobCardLinks();
             await this.processAllJobs();
-            //await this.saveResults();
+            await this.saveResults();
         } catch (error) {
             console.error('❌ Scraper failed:', error);
         } finally {
