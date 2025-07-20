@@ -46,15 +46,6 @@ jobs:
           EMAIL_PASS: ${{ secrets.MAIL_PASSWORD }}
           BACKEND_URL: ${{ secrets.BACKEND_URL }}
 
-      - name: 🖼 Upload Debug Artifacts (on failure)
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: zoho-debug
-          path: |
-            zoho_debug.html
-            zoho_debug.png
-
       - name: ✅ Send Success Email
         if: success()
         uses: dawidd6/action-send-mail@v3
