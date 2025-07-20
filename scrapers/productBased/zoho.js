@@ -69,7 +69,7 @@ class ZohoJobsScraper {
     fs.writeFileSync('zoho_debug.html', await this.page.content());
 
     this.jobUrls = await this.page.evaluate(() =>
-      Array.from(document.querySelectorAll('a.job-title')).map((a) => a.href)
+      Array.from(document.querySelectorAll('h3')).map((a) => a.href)
     );
     console.log(`🔗 Found ${this.jobUrls.length} job URLs`);
   }
