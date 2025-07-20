@@ -41,39 +41,24 @@ class ZohoJobsScraper {
   }
 
   async navigateToJobsPage() {
-    console.log('🌐 Navigating to Zoho Careers page...');
-    await this.page.goto('https://www.zoho.com/careers/', {
+    const targetURL = 'https://careers.zohorecruit.com/jobs/Careers';
+
+    console.log(`🌐 Navigating to direct job page: ${targetURL}`);
+    await this.page.goto(targetURL, {
       waitUntil: 'networkidle2',
       timeout: 60000,
     });
 
-    // Take screenshot + HTML for CI debug
-    await this.page.screenshot({ path: 'zoho_landing.png', fullPage: true });
-    fs.writeFileSync('zoho_landing.html', await this.page.content());
+    // Wait for job cards (update selector to match correct structure)
+    await this.page.waitForSelector('a.job-title', { timeout: 20000 });
 
-    try {
-      // Try waiting for iframe containing the job listing if applicable
-      const frames = this.page.frames();
-      const jobFrame = frames.find((frame) =>
-        frame.url().includes('zohorecruit') || frame.url().includes('zoho')
-      );
+    // Debug dump
+    await this.page.screenshot({ path: 'zoho_jobs.png', fullPage: true });
+    fs.writeFileSync('zoho_jobs.html', await this.page.content());
 
-      if (jobFrame) {
-        console.log('🧭 Switching to iframe...');
-        await jobFrame.waitForSelector('li.rec-job-title a', { timeout: 20000 });
-      } else {
-        // Direct DOM fallback
-        await this.page.waitForSelector('li.rec-job-title a', { timeout: 20000 });
-      }
-
-      await delay(3000);
-    } catch (err) {
-      // Dump again for post-mortem
-      await this.page.screenshot({ path: 'zoho_error.png', fullPage: true });
-      fs.writeFileSync('zoho_error.html', await this.page.content());
-      throw new Error(`Job selector not found: ${err.message}`);
-    }
+    await delay(3000);
   }
+
 
 
   async collectAllJobCardLinks() {
@@ -84,7 +69,7 @@ class ZohoJobsScraper {
     fs.writeFileSync('zoho_debug.html', await this.page.content());
 
     this.jobUrls = await this.page.evaluate(() =>
-      Array.from(document.querySelectorAll('li.rec-job-title a')).map((a) => a.href)
+      Array.from(document.querySelectorAll('a.job-title')).map((a) => a.href)
     );
     console.log(`🔗 Found ${this.jobUrls.length} job URLs`);
   }
