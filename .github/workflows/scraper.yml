@@ -2,34 +2,60 @@ name: Daily Scraper Job
 
 on:
   schedule:
-    #- cron: '30 2 * * *'  # 8:00 AM IST
-    - cron: '30 18 * * *'  # Triggers daily at 12:00 AM IST
-  workflow_dispatch:      # Allow manual trigger
+    # - cron: '30 2 * * *'   # 8:00 AM IST
+    - cron: "30 18 * * *" # 12:00 AM IST
+  workflow_dispatch: # Manual trigger option
 
 jobs:
   run-scraper:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repo
+      - name: 📦 Checkout Repo
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
+      - name: ⚙️ Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: "18"
 
-      - name: Install Dependencies
+      - name: 📁 Install Puppeteer Dependencies (for Chromium)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libnss3 \
+            libatk-bridge2.0-0 \
+            libxss1 \
+            libgtk-3-0 \
+            libasound2 \
+            libxshmfence1 \
+            libgbm-dev \
+            libxrandr2 \
+            libu2f-udev \
+            libvulkan1 \
+            fonts-liberation \
+            xdg-utils
+
+      - name: 📦 Install Project Dependencies
         run: npm install
 
-      - name: Run scheduler
+      - name: 🏃 Run scheduler
         run: node scheduler.js
         env:
           EMAIL_USER: ${{ secrets.MAIL_USERNAME }}
           EMAIL_PASS: ${{ secrets.MAIL_PASSWORD }}
           BACKEND_URL: ${{ secrets.BACKEND_URL }}
 
-      - name: Send Success Email
+      - name: 🖼 Upload Debug Artifacts (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: zoho-debug
+          path: |
+            zoho_debug.html
+            zoho_debug.png
+
+      - name: ✅ Send Success Email
         if: success()
         uses: dawidd6/action-send-mail@v3
         with:
@@ -38,15 +64,14 @@ jobs:
           secure: true
           username: ${{ secrets.MAIL_USERNAME }}
           password: ${{ secrets.MAIL_PASSWORD }}
-          subject: "✅ scheduler Success: $(date)"
+          subject: "✅ Scheduler Success: $(date)"
           to: ${{ secrets.MAIL_RECIPIENT }}
           from: "GitHub Action <${{ secrets.MAIL_USERNAME }}>"
           body: |
-            Your scheduler ran successfully at 8:00 AM IST.
-            ✅ Status: Success
+            ✅ The scheduler ran successfully at 8:00 AM IST.
             📅 Timestamp: ${{ github.event.head_commit.timestamp }}
 
-      - name: Send Failure Email
+      - name: ❌ Send Failure Email
         if: failure()
         uses: dawidd6/action-send-mail@v3
         with:
@@ -55,10 +80,9 @@ jobs:
           secure: true
           username: ${{ secrets.MAIL_USERNAME }}
           password: ${{ secrets.MAIL_PASSWORD }}
-          subject: "❌ schedule Failed: $(date)"
+          subject: "❌ Scheduler Failed: $(date)"
           to: ${{ secrets.MAIL_RECIPIENT }}
           from: "GitHub Action <${{ secrets.MAIL_USERNAME }}>"
           body: |
-            Your schedule failed to complete successfully.
-            ❌ Status: Failed
+            ❌ The scheduler failed to complete successfully.
             📅 Timestamp: ${{ github.event.head_commit.timestamp }}
