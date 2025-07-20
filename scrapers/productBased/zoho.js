@@ -47,10 +47,34 @@ class ZohoJobsScraper {
       timeout: 60000,
     });
 
-    // 🕒 Ensure jobs are rendered
-    await this.page.waitForSelector('li.rec-job-title a', { timeout: 15000 });
-    await delay(3000);
+    // Take screenshot + HTML for CI debug
+    await this.page.screenshot({ path: 'zoho_landing.png', fullPage: true });
+    fs.writeFileSync('zoho_landing.html', await this.page.content());
+
+    try {
+      // Try waiting for iframe containing the job listing if applicable
+      const frames = this.page.frames();
+      const jobFrame = frames.find((frame) =>
+        frame.url().includes('zohorecruit') || frame.url().includes('zoho')
+      );
+
+      if (jobFrame) {
+        console.log('🧭 Switching to iframe...');
+        await jobFrame.waitForSelector('li.rec-job-title a', { timeout: 20000 });
+      } else {
+        // Direct DOM fallback
+        await this.page.waitForSelector('li.rec-job-title a', { timeout: 20000 });
+      }
+
+      await delay(3000);
+    } catch (err) {
+      // Dump again for post-mortem
+      await this.page.screenshot({ path: 'zoho_error.png', fullPage: true });
+      fs.writeFileSync('zoho_error.html', await this.page.content());
+      throw new Error(`Job selector not found: ${err.message}`);
+    }
   }
+
 
   async collectAllJobCardLinks() {
     console.log('📄 Collecting job links from page...');
