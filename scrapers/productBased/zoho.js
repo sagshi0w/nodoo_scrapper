@@ -18,6 +18,12 @@ class ZohoJobsScraper {
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-accelerated-2d-canvas',
+        '--no-first-run',
+        '--no-zygote',
+        '--single-process',
+        '--disable-gpu',
         ...(this.headless ? [] : ['--start-maximized']),
       ],
       defaultViewport: this.headless ? { width: 1440, height: 900 } : null,
