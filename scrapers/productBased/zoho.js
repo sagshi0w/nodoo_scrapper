@@ -50,7 +50,7 @@ class ZohoJobsScraper {
     });
 
     // Wait for job cards (update selector to match correct structure)
-    await this.page.waitForSelector('a.job-title', { timeout: 20000 });
+    await this.page.waitForSelector('h3', { timeout: 20000 });
 
     // Debug dump
     await this.page.screenshot({ path: 'zoho_jobs.png', fullPage: true });
