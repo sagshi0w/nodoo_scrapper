@@ -835,78 +835,219 @@ export default function extractSkillsAndExperience(job) {
         "Dehradun", "Hubli", "Dharwad", "Nellore", "Thane", "Panaji", "Shimla", "Mangalore",
         "Bareilly", "Salem", "Aligarh", "Bhavnagar", "Kolhapur", "Ajmer", "Belgaum", "Tirupati",
         "Rourkela", "Bilaspur", "Anantapur", "Silchar", "Kochi", "Thiruvananthapuram"
-      ];
-
-    // Function to extract experience range
- /**
- * Extracts and formats experience requirements with focus on "years of experience" patterns
- * @param {string} desc - Job description text
- * @returns {string} Formatted experience range or default text
- */
- const extractExperience = (desc) => {
-    if (!desc) return 'Not specified';
-
-    // Map number words to digits
-    const numberWords = {
-        one: 1, two: 2, three: 3, four: 4, five: 5,
-        six: 6, seven: 7, eight: 8, nine: 9, ten: 10,
-        eleven: 11, twelve: 12, thirteen: 13, fourteen: 14, fifteen: 15,
-        sixteen: 16, seventeen: 17, eighteen: 18, nineteen: 19, twenty: 20
-    };
-
-    // Try digit-based patterns first (existing logic)
-    const patterns = [
-        // Explicit range patterns with years/experience
-        /(\d+)\s*-\s*(\d+)\s*years\s*of\s*experience/i,
-        /(\d+)\s*to\s*(\d+)\s*years\s*of\s*experience/i,
-        /(\d+)\s*\+\s*years\s*of\s*experience/i,
-        /(\d+)\s*years\s*of\s*experience/i,
-        /(\d+)\s*-\s*(\d+)\s*yrs\.?\s*of\s*exp\.?/i,
-        /(\d+)\s*to\s*(\d+)\s*yrs\.?\s*of\s*exp\.?/i,
-        /(\d+)\s*\+\s*yrs\.?\s*of\s*exp\.?/i,
-        /(\d+)\s*yrs\.?\s*of\s*exp\.?/i,
-        // General range patterns
-        /(\d+)\s*-\s*(\d+)\s*years?/i,
-        /(\d+)\s*to\s*(\d+)\s*years?/i,
-        /(\d+)\s*\+\s*years?/i,
-        /(\d+)\s*years?/i,
-        /(?:experience|exp)\s*:\s*(\d+)\s*(?:-|\+)?\s*(\d+)?/i,
-        /(?:minimum|min)\.?\s*(\d+)\s*years?/i
     ];
 
-    for (const pattern of patterns) {
-        const match = desc.match(pattern);
-        if (match) {
-            const minYears = parseInt(match[1]);
-            const maxYears = match[2] ? parseInt(match[2]) : null;
-            const isPlusRange = match[0].includes('+') || 
-                              match[0].includes('least') || 
-                              match[0].includes('minimum');
+    const sectorKeywords = {
+        "Technology / Engineering": [
+            "developer",
+            "engineer",
+            "sde",
+            "software",
+            "programmer",
+            "full stack",
+            "frontend",
+            "backend",
+            "devops",
+            "sre",
+            "qa",
+            "testing",
+            "mobile",
+            "android",
+            "ios",
+            "flutter",
+            "react",
+            "java",
+            "python",
+            "javascript",
+            "cybersecurity",
+            "blockchain",
+            "web3",
+            "embedded",
+            "iot",
+            "data science",
+            "ml",
+            "machine learning",
+        ],
+        "Product & Design": [
+            "designer",
+            "design",
+            "ux",
+            "ui",
+            "product",
+            "creative",
+            "visual",
+            "graphic",
+            "content",
+            "editor",
+            "writer",
+            "seo",
+            "game design",
+            "design research",
+            "researcher",
+            "product management",
+        ],
+        "Marketing & Growth": [
+            "marketing",
+            "growth",
+            "digital",
+            "seo",
+            "content",
+            "social",
+            "brand",
+            "campaign",
+            "analytics",
+            "performance marketing",
+            "sem",
+        ],
+        "Sales & Business Development": [
+            "sales",
+            "business development",
+            "business",
+            "account",
+            "revenue",
+            "partnership",
+            "channel sales",
+            "client",
+            "b2b",
+            "customer success",
+            "account manager",
+            "enterprise sales",
+            "inside sales",
+        ],
+        "Finance & Legal": [
+            "finance",
+            "financial",
+            "accounting",
+            "fp&a",
+            "audit",
+            "actuarial",
+            "pricing",
+            "strategy",
+            "legal",
+            "counsel",
+            "compliance",
+            "regulatory",
+            "filing",
+            "corporate",
+            "budget",
+            "investment banking",
+            "vc",
+            "venture capital",
+            "corporate law",
+        ],
+        "Human Resources": [
+            "hr",
+            "human resource",
+            "recruitment",
+            "talent",
+            "people operations",
+            "people",
+            "training",
+            "learning",
+            "development",
+            "l&d",
+            "hrbp",
+        ],
+        Operations: [
+            "operations",
+            "operational",
+            "fleet",
+            "supervisor",
+            "coordinator",
+            "manager",
+            "process",
+            "workflow",
+            "efficiency",
+            "planning",
+            "supply chain",
+            "procurement",
+            "vendor management",
+            "bizops",
+        ],
+        "Support & Customer Experience": [
+            "support",
+            "customer service",
+            "helpdesk",
+            "call center",
+            "service",
+            "technical support",
+            "onboarding",
+            "customer support",
+        ],
+    };
 
-            // Format the output based on what we found
-            if (maxYears) {
-                return `${minYears}-${maxYears} yrs`;
-            } else if (isPlusRange) {
-                // For plus ranges, estimate max as min+2 (5+ → 5-7)
-                return `${minYears}-${minYears + 2} yrs`;
-            } else {
-                // For single values, create range (14 → 12-14)
-                return `${Math.max(1, minYears - 2)}-${minYears} yrs`;
+
+
+    // Function to extract experience range
+    /**
+    * Extracts and formats experience requirements with focus on "years of experience" patterns
+    * @param {string} desc - Job description text
+    * @returns {string} Formatted experience range or default text
+    */
+    const extractExperience = (desc) => {
+        if (!desc) return 'Not specified';
+
+        // Map number words to digits
+        const numberWords = {
+            one: 1, two: 2, three: 3, four: 4, five: 5,
+            six: 6, seven: 7, eight: 8, nine: 9, ten: 10,
+            eleven: 11, twelve: 12, thirteen: 13, fourteen: 14, fifteen: 15,
+            sixteen: 16, seventeen: 17, eighteen: 18, nineteen: 19, twenty: 20
+        };
+
+        // Try digit-based patterns first (existing logic)
+        const patterns = [
+            // Explicit range patterns with years/experience
+            /(\d+)\s*-\s*(\d+)\s*years\s*of\s*experience/i,
+            /(\d+)\s*to\s*(\d+)\s*years\s*of\s*experience/i,
+            /(\d+)\s*\+\s*years\s*of\s*experience/i,
+            /(\d+)\s*years\s*of\s*experience/i,
+            /(\d+)\s*-\s*(\d+)\s*yrs\.?\s*of\s*exp\.?/i,
+            /(\d+)\s*to\s*(\d+)\s*yrs\.?\s*of\s*exp\.?/i,
+            /(\d+)\s*\+\s*yrs\.?\s*of\s*exp\.?/i,
+            /(\d+)\s*yrs\.?\s*of\s*exp\.?/i,
+            // General range patterns
+            /(\d+)\s*-\s*(\d+)\s*years?/i,
+            /(\d+)\s*to\s*(\d+)\s*years?/i,
+            /(\d+)\s*\+\s*years?/i,
+            /(\d+)\s*years?/i,
+            /(?:experience|exp)\s*:\s*(\d+)\s*(?:-|\+)?\s*(\d+)?/i,
+            /(?:minimum|min)\.?\s*(\d+)\s*years?/i
+        ];
+
+        for (const pattern of patterns) {
+            const match = desc.match(pattern);
+            if (match) {
+                const minYears = parseInt(match[1]);
+                const maxYears = match[2] ? parseInt(match[2]) : null;
+                const isPlusRange = match[0].includes('+') ||
+                    match[0].includes('least') ||
+                    match[0].includes('minimum');
+
+                // Format the output based on what we found
+                if (maxYears) {
+                    return `${minYears}-${maxYears} yrs`;
+                } else if (isPlusRange) {
+                    // For plus ranges, estimate max as min+2 (5+ → 5-7)
+                    return `${minYears}-${minYears + 2} yrs`;
+                } else {
+                    // For single values, create range (14 → 12-14)
+                    return `${Math.max(1, minYears - 2)}-${minYears} yrs`;
+                }
             }
         }
-    }
 
-    // Now try word-based patterns (e.g., 'six years of experience')
-    const wordPattern = new RegExp(`(${Object.keys(numberWords).join('|')})[+\-\s]*years?\s*of\s*experience`, 'i');
-    const wordMatch = desc.match(wordPattern);
-    if (wordMatch) {
-        const minYears = numberWords[wordMatch[1].toLowerCase()];
-        // For single word, create a range as above
-        return `${Math.max(1, minYears - 2)}-${minYears} yrs`;
-    }
+        // Now try word-based patterns (e.g., 'six years of experience')
+        const wordPattern = new RegExp(`(${Object.keys(numberWords).join('|')})[+\-\s]*years?\s*of\s*experience`, 'i');
+        const wordMatch = desc.match(wordPattern);
+        if (wordMatch) {
+            const minYears = numberWords[wordMatch[1].toLowerCase()];
+            // For single word, create a range as above
+            return `${Math.max(1, minYears - 2)}-${minYears} yrs`;
+        }
 
-    return 'Not specified';
-};
+        return 'Not specified';
+    };
 
     // Preprocess job description: remove 'description' at start, trim spaces, remove blank lines
     function cleanDescription(desc) {
@@ -963,6 +1104,7 @@ export default function extractSkillsAndExperience(job) {
         return Array.from(foundSkills); // No limit on number of skills
     };
 
+    // Get job type.
     const extractJobType = (desc) => {
         if (!desc) return "Not specified";
         const lower = desc.toLowerCase();
@@ -975,9 +1117,10 @@ export default function extractSkillsAndExperience(job) {
         if (lower.includes("temporary")) return "Temporary";
         if (lower.includes("freelance")) return "Freelance";
         if (lower.includes("consultant")) return "Consultant";
-        return "Not specified";
+        return "Full time";
     };
 
+    // Get city
     const extractCity = (location) => {
         if (!location) return "Not specified";
         const lowerLoc = location.toLowerCase();
@@ -989,12 +1132,43 @@ export default function extractSkillsAndExperience(job) {
         return "Not specified";
     };
 
+    function isEntryLevelJob(title, experience) {
+        const normalizedTitle = title.toLowerCase();
+        const seniorityKeywords = [
+            "sr.", "senior", "lead", "director", "head", "vp", "chief", "principal", "manager", "architect", "president", "executive", "expert", "specialist", "consultant", "supervisor", "officer", "owner", "founder", "co-founder", "ii", "sde 2", "sde 3", "2", "3"
+        ];
+        if (seniorityKeywords.some(keyword => normalizedTitle.includes(keyword))) return false;
+        if (!experience || experience.trim().toLowerCase() === "not specified") return true;
+        const match = experience.match(/(\d+)(?:-(\d+))?/);
+        if (!match) return false;
+        const min = parseInt(match[1], 10);
+        const max = match[2] ? parseInt(match[2], 10) : min;
+        return min <= 1 && max <= 1;
+    }
+
+    function categorizeJob(title, description) {
+        const normalizedTitle = (title || "").toLowerCase();
+        const normalizedDescription = (description || "").toLowerCase();
+
+        for (const [sector, keywords] of Object.entries(sectorKeywords)) {
+            if (keywords.some(keyword =>
+                normalizedTitle.includes(keyword) || normalizedDescription.includes(keyword)
+            )) {
+                return sector;
+            }
+        }
+
+        return null;
+    }
+
     return {
         ...job,
         // Clean the description before extracting info
         description: cleanDescription(job.description),
         skills: extractSkills(cleanDescription(job.description)),
         experience: extractExperience(cleanDescription(job.description)),
+        sector: categorizeJob(job.title, cleanDescription(job.description)),
+        isEntryLevel: isEntryLevelJob(job.title, cleanDescription(job.description)),
         jobType: extractJobType(cleanDescription(job.description)),
         location: extractCity(job.location),
         postedAt: new Date().toISOString().split('T')[0]
