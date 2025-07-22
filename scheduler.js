@@ -116,7 +116,7 @@ ${error.stack}`;
 // ];
 
 const scrapers = [
-  { fn: runPaypalScraper, headless: true }
+  { fn: runAckoScraper, headless: true }
 ];
 
 const runAllScrapers = async () => {
