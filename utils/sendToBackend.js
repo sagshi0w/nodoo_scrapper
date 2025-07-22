@@ -3,7 +3,9 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const BACKEND_URL = process.env.BACKEND_URL;
+
 const API_URL = `${BACKEND_URL}/api/jobs/bulk-replace`;
+console.log("API_URL", API_URL);
 
 const MAX_RETRIES = 3;
 const INITIAL_RETRY_DELAY = 1000;
