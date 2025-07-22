@@ -60,7 +60,7 @@ class PaypalJobsScraper {
       "Rourkela", "Bilaspur", "Anantapur", "Silchar", "Kochi", "Thiruvananthapuram"
     ];
 
-    while (start < 10) {
+    while (start < 150) {
       const url = `https://paypal.eightfold.ai/careers?domain=paypal.com&triggerGoButton=false&location=India&pid=274907005780&sort_by=timestamp&filter_include_remote=1&start=${start}`;
 
       console.log(`🌐 Navigating to Page ${pageCount} -> ${url}`);
