@@ -23,7 +23,7 @@ class techMahindraJobsScraper {
 
     async navigateToJobsPage() {
         console.log('🌐 Navigating to TechMahindra Careers...');
-        await this.page.goto('https://careers.techmahindra.com/CurrentOpportunity.aspx#Advance', {
+        await this.page.goto('https://ltimindtree.ripplehire.com/candidate/?token=xviyQvbnyYZdGtozXoNm&lang=en&source=CAREERSITE#list/geo=India', {
             waitUntil: 'networkidle2'
         });
         await delay(5000);
@@ -33,15 +33,14 @@ class techMahindraJobsScraper {
         this.allJobLinks = [];
         let pageIndex = 1;
 
-        while (pageIndex < 51) {
+        while (true) {
             // Wait for job listings container
             //await this.page.waitForSelector('div.paragraph--type--card-info-stand-tiles', { timeout: 10000 });
 
             // Extract job detail links
-            const jobLinks = await this.page.$$eval('a', anchors =>
-                anchors
-                    .filter(a => a.textContent.trim() === 'Apply/Shortlist')
-                    .map(a => a.href)
+            const jobLinks = await this.page.$$eval(
+                'a.job-title[href^="#detail/job/"]',
+                anchors => anchors.map(a => a.href)
             );
 
             for (const link of jobLinks) {
@@ -79,35 +78,31 @@ class techMahindraJobsScraper {
             await delay(5000);
 
             // Extract job summary
-            const jobSummary = await jobPage.evaluate(() => {
-                const heading = Array.from(document.querySelectorAll('div.col-md-12 h3'))
-                    .find(el => el.innerText.trim() === 'Job Summary');
-                const para = heading?.nextElementSibling;
-                return para?.innerText.trim() || '';
+            const jobDetails = await page.evaluate(() => {
+                const roleDescContainer = document.querySelector('.PD24');
+
+                const descriptionText = roleDescContainer.querySelector('.description')?.innerText.trim() || "";
+                const skillsText = roleDescContainer.querySelector('.skills')?.innerText.trim() || "";
+
+                const combinedText = `${descriptionText}\n\n${skillsText}`;
+
+                return {
+                    combinedText
+                };
             });
 
             // Extract other job details
-            const job = await jobPage.evaluate((jobSummary) => {
+            const job = await jobPage.evaluate((combinedText) => {
                 const getText = sel => document.querySelector(sel)?.innerText.trim() || '';
 
-                const getTextFromIconClass = (iconClass) => {
-                    const items = [...document.querySelectorAll('ul.skillset li')];
-                    for (let li of items) {
-                        if (li.querySelector(`i.${iconClass}`)) {
-                            return li.querySelector('span.red')?.innerText.trim() || '';
-                        }
-                    }
-                    return '';
-                };
-
                 return {
-                    title: getText('#ctl00_ContentPlaceHolder1_lblDesignationName'),
-                    company: 'Tech Mahindra',
-                    location: getTextFromIconClass('fa-map-marker'),
-                    description: jobSummary,
+                    title: getText('.section-title h2'),
+                    company: 'LTIMindtree',
+                    location: getText('.section-title .location-text'),
+                    description: combinedText,
                     url: window.location.href
                 };
-            }, jobSummary);
+            }, jobDetails.combinedText);
 
             await jobPage.close();
             return job;
@@ -178,7 +173,7 @@ const extractWiproData = (job) => {
         title: job.title?.trim() || '',
         location: job.location?.trim() || '',
         description: cleanedDescription,
-        company: 'Wipro'
+        company: 'LTIMindtree'
     };
 };
 
