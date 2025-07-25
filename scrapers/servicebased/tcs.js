@@ -68,6 +68,10 @@ class TcsJobsScraper {
                     await this.page.evaluate(el => el.scrollIntoView(), card);
                     await card.click();
                     await delay(4000);
+
+                    const bodyText = await this.page.evaluate(() => document.body.innerText);
+                    console.log('🔍 Page body preview:\n', bodyText.slice(0, 1000));
+                    
                     await this.page.waitForFunction(() => {
                         const el = document.querySelector('span[data-ng-bind="jobDescription.title"]');
                         return el && el.innerText.trim().length > 0;
