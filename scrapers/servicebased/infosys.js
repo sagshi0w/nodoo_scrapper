@@ -75,12 +75,6 @@ class InfosysJobsScraper {
                     const cardTitle = await this.page.evaluate(el =>
                         el.querySelector('span.jobTitle')?.innerText.trim() || '', card);
 
-                    if (!cardTitle) {
-                        console.warn(`⚠️ No title in card ${index + 1}. Skipping...`);
-                        index++;
-                        continue;
-                    }
-
                     if (processedTitles.has(cardTitle)) {
                         console.log(`⏭️ Already processed: ${cardTitle}`);
                         index++;
