@@ -88,14 +88,14 @@ class GoogleJobsScraper {
             const responsibilities = getText('div.BDNOWe');
 
             const fullDescription = `
-${jobDescription}
+                ${jobDescription}
 
-**Qualifications:**
-${qualifications}
+                **Qualifications:**
+                ${qualifications}
 
-**Responsibilities:**
-${responsibilities}
-            `.trim();
+                **Responsibilities:**
+                ${responsibilities}
+                            `.trim();
 
             return {
               title: getText('h2.p1N2lc'),
