@@ -54,30 +54,37 @@ class InfosysJobsScraper {
 
     async scrapeAllPagesOneByOne() {
         const jobCardsSelector = 'mat-card.custom-card';
-        const nextBtnSelector = 'div.iframe-button-wrapper > button';
         const processedTitles = new Set();
-
         let pageNum = 1;
+        let lastFirstTitle = '';
+
         while (true) {
             console.log(`📄 Scraping Page ${pageNum}...`);
+            await this.page.waitForSelector(jobCardsSelector, { timeout: 10000 });
 
-            let index = 0;
+            const cards = await this.page.$$(jobCardsSelector);
+            if (cards.length === 0) break;
 
-            while (true) {
+            const currentFirstTitle = await this.page.evaluate(el =>
+                el.querySelector('div.job-titleTxt')?.innerText.trim() || '',
+                cards[0]
+            );
+
+            if (currentFirstTitle === lastFirstTitle) {
+                console.log('✅ Reached last page (duplicate first job)');
+                break;
+            }
+            lastFirstTitle = currentFirstTitle;
+
+            for (let index = 0; index < cards.length; index++) {
                 try {
-                    await this.page.waitForSelector(jobCardsSelector, { timeout: 10000 });
-                    const cards = await this.page.$$(jobCardsSelector);
-                    if (index >= cards.length) break;
-
                     const card = cards[index];
 
-                    // Read title from this specific card (no prefetching)
                     const cardTitle = await this.page.evaluate(el =>
                         el.querySelector('div.job-titleTxt')?.innerText.trim() || '', card);
 
                     if (processedTitles.has(cardTitle)) {
                         console.log(`⏭️ Already processed: ${cardTitle}`);
-                        index++;
                         continue;
                     }
 
@@ -102,7 +109,6 @@ class InfosysJobsScraper {
                     processedTitles.add(job.title);
                     console.log(`✅ ${job.title}`);
 
-                    // Close job detail view
                     const closeBtn = await this.page.$('[data-ph-at-id="close-button"]');
                     if (closeBtn) {
                         await closeBtn.click();
@@ -111,38 +117,45 @@ class InfosysJobsScraper {
                     }
 
                     await delay(1500);
-                    index++;
                 } catch (err) {
                     console.warn(`⚠️ Error on job ${index + 1}: ${err.message}`);
-                    index++;
                 }
             }
 
-            // ⏭ Move to next page
-            const navButtons = await this.page.$$('li.pointer > a > img[alt="previous icon"]');
+            // Go to next page
+            const navButtons = await this.page.$$('li.pointer');
 
-            if (navButtons.length === 2) {
-                const nextBtn = navButtons[1];
-                await nextBtn.evaluate(el => el.scrollIntoView({ behavior: 'smooth', block: 'center' }));
-                await nextBtn.click();
-                await new Promise(res => setTimeout(res, 1000));
-            } else if (navButtons.length === 1) {
-                const nextBtn = navButtons[0];
-                await nextBtn.evaluate(el => el.scrollIntoView({ behavior: 'smooth', block: 'center' }));
-                await nextBtn.click();
-                await new Promise(res => setTimeout(res, 1000));
-            } else {
-                console.log('🛑 No navigation buttons found');
+            let nextBtnFound = false;
+            for (const btn of navButtons) {
+                const isVisible = await btn.evaluate(el => {
+                    return el.offsetParent !== null && !el.classList.contains('disabled');
+                });
+
+                const imgAlt = await btn.$eval('img', img => img.getAttribute('alt')).catch(() => null);
+
+                if (isVisible && imgAlt === 'previous icon') {
+                    await btn.evaluate(el => el.scrollIntoView({ behavior: 'smooth', block: 'center' }));
+                    await btn.click();
+                    await delay(2000);
+                    nextBtnFound = true;
+                    break;
+                }
             }
+
+            if (!nextBtnFound) {
+                console.log('🛑 No more pages or next button disabled');
+                break;
+            }
+
+            pageNum++;
         }
 
         console.log(`✅ Total jobs scraped: ${this.allJobs.length}`);
     }
 
-
     async saveResults() {
-        // writeFileSync('./scrappedJobs/infosysJobs.json', JSON.stringify(this.allJobs, null, 2));
         console.log(`💾 Would save ${this.allJobs.length} jobs to scrappedJobs/infosysJobs.json`);
+        // writeFileSync('./scrappedJobs/infosysJobs.json', JSON.stringify(this.allJobs, null, 2));
     }
 
     async close() {
