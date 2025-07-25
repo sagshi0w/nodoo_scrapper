@@ -58,7 +58,7 @@ class SiemensJobsScraper {
   async scrapeAllJobs() {
     const jobCardsSelector = '#pcs-body-container div.search-results-main-container div.position-cards-container div:nth-child(2) > div';
     const jobDetailsSelector = 'div.position-details div.position-job-description-column div.custom-jd-container';
-    const maxPages = 1000;
+    const maxPages = 500;
     let pageNum = 1;
 
     for (; pageNum <= maxPages; pageNum++) {
