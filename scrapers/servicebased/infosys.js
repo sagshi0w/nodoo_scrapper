@@ -119,27 +119,24 @@ class InfosysJobsScraper {
             }
 
             // Move to next page
-            const navButtons = await this.page.$$('#filtered_jobs > div > div > div.col-md-9.padL30 > div.rowright_align.ng-star-inserted > div > ul > li:nth-child(4)');
+            const nextBtnSelector = 'li.pointer img[src*="icon-next-arrow.svg"]';
+            const nextBtn = await this.page.$(nextBtnSelector);
 
-            let nextBtnFound = false;
-            for (const btn of navButtons) {
-                const altText = await this.page.evaluate(el => el.alt?.toLowerCase(), btn);
-                if (altText && altText.includes('next')) {
-                    await btn.evaluate(el => el.scrollIntoView({ behavior: 'smooth', block: 'center' }));
-                    await btn.click();
-                    await delay(3000);
-                    nextBtnFound = true;
+            if (nextBtn) {
+                const isDisabled = await this.page.evaluate(btn => btn.disabled, nextBtn);
+                if (!isDisabled) {
+                    console.log('➡️ Moving to next page...');
+                    await nextBtn.click();
+                    await delay(5000);
+                } else {
+                    console.log('🛑 No more pages.');
                     break;
                 }
-            }
-
-            if (!nextBtnFound) {
+            } else {
                 console.log('🛑 Reached last page or no "Next" button found.');
                 break;
             }
-
         }
-
         console.log(`✅ Total jobs scraped: ${this.allJobs.length}`);
     }
 
