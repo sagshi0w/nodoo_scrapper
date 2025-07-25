@@ -1,0 +1,79 @@
+name: Daily Scraper Job Test
+
+on:
+  schedule:
+    # - cron: '30 2 * * *'   # 8:00 AM IST
+    - cron: "30 18 * * *" # 12:00 AM IST
+  workflow_dispatch: # Manual trigger option
+
+jobs:
+  run-scraper:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📦 Checkout Repo
+        uses: actions/checkout@v4
+
+      - name: ⚙️ Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+
+      - name: 📁 Install Puppeteer Dependencies (for Chromium)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libnss3 \
+            libatk-bridge2.0-0 \
+            libxss1 \
+            libgtk-3-0 \
+            libasound2t64 \
+            libxshmfence1 \
+            libgbm-dev \
+            libxrandr2 \
+            libu2f-udev \
+            libvulkan1 \
+            fonts-liberation \
+            xdg-utils
+
+      - name: 📦 Install Project Dependencies
+        run: npm install
+
+      - name: 🏃 Run scheduler test
+        run: node schedulerTest.js
+        env:
+          EMAIL_USER: ${{ secrets.MAIL_USERNAME }}
+          EMAIL_PASS: ${{ secrets.MAIL_PASSWORD }}
+          BACKEND_URL: ${{ secrets.BACKEND_URL }}
+
+      - name: ✅ Send Success Email
+        if: success()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          subject: "✅ Scheduler test Success: $(date)"
+          to: ${{ secrets.MAIL_RECIPIENT }}
+          from: "GitHub Action <${{ secrets.MAIL_USERNAME }}>"
+          body: |
+            ✅ The scheduler test ran successfully at 8:00 AM IST.
+            📅 Timestamp: ${{ github.event.head_commit.timestamp }}
+
+      - name: ❌ Send Failure Email
+        if: failure()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          subject: "❌ Scheduler Failed: $(date)"
+          to: ${{ secrets.MAIL_RECIPIENT }}
+          from: "GitHub Action <${{ secrets.MAIL_USERNAME }}>"
+          body: |
+            ❌ The scheduler failed to complete successfully.
+            📅 Timestamp: ${{ github.event.head_commit.timestamp }}
