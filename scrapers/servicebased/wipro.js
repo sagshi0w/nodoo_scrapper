@@ -30,21 +30,59 @@ class wiproJobsScraper {
     }
 
     async collectAllJobCardLinks() {
-        const jobCardsExist = await this.page.$('a.jobTitle-link');
-        if (!jobCardsExist) {
-            console.error('🚫 No job cards found on the page!');
-            return;
+        this.allJobLinks = [];
+        let pageIndex = 1;
+
+        while (true) {
+            // Wait for job links on current page
+            await this.page.waitForSelector('a.jobTitle-link', { timeout: 5000 });
+
+            // Collect job links
+            const jobLinks = await this.page.$$eval('a.jobTitle-link', anchors =>
+                anchors.map(a => a.href).filter(href => href.includes('/job/'))
+            );
+
+            for (const link of jobLinks) {
+                if (!this.allJobLinks.includes(link)) {
+                    this.allJobLinks.push(link);
+                }
+            }
+
+            console.log(`📄 Page ${pageIndex}: Total job links so far: ${this.allJobLinks.length}`);
+
+            // Get all visible page numbers
+            const pageNumbers = await this.page.$$eval('ul.pagination li a', links =>
+                links
+                    .map(a => ({
+                        text: a.textContent.trim(),
+                        href: a.getAttribute('href'),
+                    }))
+                    .filter(a => /^\d+$/.test(a.text)) // Only page numbers
+            );
+
+            // Find the one with text == pageIndex + 1
+            const nextPage = pageNumbers.find(p => Number(p.text) === pageIndex + 1);
+
+            if (!nextPage) {
+                console.log('✅ No more pages left. Done.');
+                break;
+            }
+
+            // Click the next page
+            console.log(`➡️ Clicking page ${pageIndex + 1}`);
+            await Promise.all([
+                this.page.click(`ul.pagination li a[title="Page ${pageIndex + 1}"]`),
+                this.page.waitForNavigation({ waitUntil: 'networkidle2' }),
+            ]);
+
+            pageIndex++;
         }
 
-        const pageJobLinks = await this.page.$$eval('a.jobTitle-link', anchors =>
-            anchors
-                .map(a => a.href)
-                .filter(href => href.includes('/job/'))
-        );
-
-        this.allJobLinks = [...new Set(pageJobLinks)];
-        console.log(`🔗 Found ${this.allJobLinks.length} job links`);
+        console.log(`🎉 Done! Total unique job links collected: ${this.allJobLinks.length}`);
     }
+
+
+
 
     async extractJobDetailsFromLink(url) {
         const jobPage = await this.browser.newPage();
@@ -89,7 +127,7 @@ class wiproJobsScraper {
 
     async saveResults() {
         // fs.writeFileSync('./scrappedJobs/phonepeJobs.json', JSON.stringify(this.allJobs, null, 2));
-        console.log(`💾 Saved ${this.allJobs.length} jobs to phonepeJobs.json`);
+        console.log(`💾 Saved ${this.allJobs.length} jobs to wiproJobs.json`);
     }
 
     async close() {
