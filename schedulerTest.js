@@ -106,12 +106,12 @@ ${error.stack}`;
 //   
 //   
 //   
-//   
+//   { fn: runFreshworksScraper, headless: true },
 //   { fn: runZohoScraper, headless: true },
 // ];
 
 const scrapers = [
-  { fn: runFreshworksScraper, headless: true },
+  { fn: runFlipkartScraper, headless: true },
 ];
 
 const runAllScrapers = async () => {
