@@ -95,7 +95,7 @@ ${error.stack}`;
 };
 
 const scrapers = [
-  
+  { fn: runAckoScraper, headless: true },
   { fn: runAtlassianScraper, headless: true },
   { fn: runGoldmanScraper, headless: true },
   { fn: runGoogleScraper, headless: true },

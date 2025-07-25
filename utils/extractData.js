@@ -1123,28 +1123,53 @@ export default function extractSkillsAndExperience(job) {
     // Get city
     const extractCity = (location) => {
         if (!location) return "Not specified";
-        const lowerLoc = location.toLowerCase();
+
+        // Normalize known aliases before matching
+        let lowerLoc = location.toLowerCase();
+        if (lowerLoc.includes("bengaluru") || lowerLoc.includes("bangaluru")) {
+            lowerLoc = lowerLoc.replace(/bengaluru|bangaluru/g, "Bangalore");
+        }
+
         for (const city of knownCities) {
             if (lowerLoc.includes(city.toLowerCase())) {
                 return city;
             }
         }
+
         return "Not specified";
     };
+
 
     function isEntryLevelJob(title, experience) {
         const normalizedTitle = title.toLowerCase();
         const seniorityKeywords = [
-            "sr.", "senior", "lead", "director", "head", "vp", "chief", "principal", "manager", "architect", "president", "executive", "expert", "specialist", "consultant", "supervisor", "officer", "owner", "founder", "co-founder", "ii", "sde 2", "sde 3", "2", "3"
+            "sr.", "senior", "lead", "director", "head", "vp", "chief", "principal",
+            "manager", "architect", "president", "executive", "expert", "specialist",
+            "consultant", "supervisor", "officer", "owner", "founder", "co-founder",
+            "ii", "sde 2", "sde 3", "2", "3"
         ];
-        if (seniorityKeywords.some(keyword => normalizedTitle.includes(keyword))) return false;
-        if (!experience || experience.trim().toLowerCase() === "not specified") return true;
-        const match = experience.match(/(\d+)(?:-(\d+))?/);
+
+        // Reject if title contains seniority indicators
+        if (seniorityKeywords.some(keyword => normalizedTitle.includes(keyword))) {
+            return false;
+        }
+
+        // No experience info or explicitly "not specified" → assume entry level
+        if (!experience || experience.trim().toLowerCase() === "not specified") {
+            return true;
+        }
+
+        // Extract year range like "0-1", "1-2", "1-3", etc.
+        const match = experience.match(/(\d+)(?:\s*-\s*(\d+))?/);
         if (!match) return false;
+
         const min = parseInt(match[1], 10);
         const max = match[2] ? parseInt(match[2], 10) : min;
-        return min <= 1 && max <= 1;
+
+        // ✅ Entry-level if experience starts at 0 or 1 year
+        return min <= 1;
     }
+
 
     function categorizeJob(title, description) {
         const normalizedTitle = (title || "").toLowerCase();
@@ -1152,7 +1177,8 @@ export default function extractSkillsAndExperience(job) {
 
         for (const [sector, keywords] of Object.entries(sectorKeywords)) {
             if (keywords.some(keyword =>
-                normalizedTitle.includes(keyword) || normalizedDescription.includes(keyword)
+                //normalizedTitle.includes(keyword) || normalizedDescription.includes(keyword)
+                normalizedTitle.includes(keyword)
             )) {
                 return sector;
             }
