@@ -50,13 +50,37 @@ class zensarJobsScraper {
             // Try to click "See more results" button
             // Check if "Show More Results" button exists and is visible
             const showMoreButton = await this.page.$('span.button__label');
+
             if (!showMoreButton) {
                 console.log('✅ No more "Show More Results" button. Finished collecting.');
                 break;
             } else {
                 await delay(5000);
-                showMoreButton.click();
+
+                // Scroll the element into view
+                await showMoreButton.evaluate(el => el.scrollIntoView({ behavior: 'smooth', block: 'center' }));
+
+                // Wait for a short moment after scroll (optional)
+                await this.page.waitForTimeout(1000);
+
+                // Ensure it's still visible and attached
+                const isVisible = await showMoreButton.evaluate(el => {
+                    const rect = el.getBoundingClientRect();
+                    return (
+                        el.offsetParent !== null &&
+                        rect.width > 0 &&
+                        rect.height > 0
+                    );
+                });
+
+                if (isVisible) {
+                    await showMoreButton.click();
+                } else {
+                    console.log('⚠️ "Show More Results" button not visible or not clickable.');
+                    break;
+                }
             }
+
         }
 
         return this.allJobLinks;;
