@@ -152,8 +152,6 @@ class techMahindraJobsScraper {
                 description: jobData.description,
                 company
             };
-
-            console.log(finalJob);
             return finalJob;
         } catch (err) {
             await jobPage.close();
