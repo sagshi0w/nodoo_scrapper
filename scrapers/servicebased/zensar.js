@@ -58,7 +58,7 @@ class zensarJobsScraper {
             // Scroll into view and click the button
             await showMoreButton.evaluate(btn => btn.scrollIntoView({ behavior: 'smooth', block: 'center' }));
             await Promise.all([
-                this.page.waitForTimeout(1500),
+                await delay(5000),
                 showMoreButton.click()
             ]);
         }
