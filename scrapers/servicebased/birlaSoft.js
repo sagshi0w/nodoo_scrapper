@@ -38,17 +38,17 @@ class birlaSoftJobsScraper {
             await this.page.waitForSelector('a.jobTitle-link', { timeout: 10000 });
 
             // Collect new links
-            // const newLinks = await this.page.$$eval(
-            //     'a.jobTitle-link',
-            //     anchors => anchors.map(a => a.href)
-            // );
-
-            const jobLinks = await this.page.$$eval('a.jobTitle-link', els =>
-                els.map(el => ({
-                    title: el.textContent.trim(),
-                    url: el.href
-                }))
+            const jobLinks = await this.page.$$eval(
+                'a.jobTitle-link',
+                anchors => anchors.map(a => a.href)
             );
+
+            // const jobLinks = await this.page.$$eval('a.jobTitle-link', els =>
+            //     els.map(el => ({
+            //         title: el.textContent.trim(),
+            //         url: el.href
+            //     }))
+            // );
 
             for (const link of jobLinks) {
                 this.allJobLinks.push(link);
