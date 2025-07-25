@@ -97,13 +97,12 @@ ${error.stack}`;
 // const scrapers = [
 //   { fn: runAckoScraper, headless: true },
 //   { fn: runAmazonScraper, headless: true },
-//   { fn: runAdobeScraper, headless: true },
 //   
 //   
 //   
 //   
 // 
-//   
+//   { fn: runAdobeScraper, headless: true },
 //   { fn: runClearTaxScraper, headless: true },
 //   { fn: runFlipkartScraper, headless: true },
 //   { fn: runFreshworksScraper, headless: true },
@@ -111,7 +110,7 @@ ${error.stack}`;
 // ];
 
 const scrapers = [
-    
+    { fn: runAckoScraper, headless: true },
 ];
 
 const runAllScrapers = async () => {
