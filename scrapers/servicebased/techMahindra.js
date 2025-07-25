@@ -64,7 +64,7 @@ class techMahindraJobsScraper {
             console.log('➡️ Clicking next page...');
             await Promise.all([
                 //this.page.click(nextPageSelector),
-                await delay(5000)
+                await delay(30000)
                 //this.page.waitForTimeout(5000),
             ]);
 
