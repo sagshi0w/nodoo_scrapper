@@ -71,7 +71,7 @@ class zensarJobsScraper {
 
             // ✅ Extract job summary using jobPage
             const jobDetails = await jobPage.evaluate(() => {
-                const descriptionContainer = document.querySelector('.job-details__description-content');
+                const descriptionContainer = document.querySelector('div.job-details__section');
                 if (!descriptionContainer) return {};
 
                 const rawHTML = descriptionContainer.innerHTML;
