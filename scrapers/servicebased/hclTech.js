@@ -19,13 +19,23 @@ class hclTechJobsScraper {
             defaultViewport: this.headless ? { width: 1920, height: 1080 } : null
         });
         this.page = await this.browser.newPage();
+
+        await this.page.setRequestInterception(true);
+        this.page.on('request', (req) => {
+            const resourceType = req.resourceType();
+            if (['image', 'stylesheet', 'font', 'media'].includes(resourceType)) {
+                req.abort();
+            } else {
+                req.continue();
+            }
+        });
     }
 
     async navigateToJobsPage() {
         console.log('🌐 Navigating to HCLTech Careers...');
         await this.page.goto('https://www.hcltech.com/careers/careers-in-india', {
-            waitUntil: 'networkidle2',
-            timeout: 60000
+            waitUntil: 'load',
+            timeout: 90000
         });
         await delay(5000);
     }
