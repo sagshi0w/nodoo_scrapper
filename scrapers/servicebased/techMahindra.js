@@ -33,7 +33,7 @@ class techMahindraJobsScraper {
         this.allJobLinks = [];
         let pageIndex = 1;
 
-        while (true) {
+        while (pageIndex < 51) {
             // Wait for job listings container
             await this.page.waitForSelector('div.paragraph--type--card-info-stand-tiles', { timeout: 10000 });
 
@@ -71,9 +71,6 @@ class techMahindraJobsScraper {
 
         console.log(`🎉 Done! Total unique job links collected: ${this.allJobLinks.length}`);
     }
-
-
-
 
     async extractJobDetailsFromLink(url) {
         const jobPage = await this.browser.newPage();

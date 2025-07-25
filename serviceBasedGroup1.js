@@ -12,6 +12,7 @@ require('dotenv').config();
 
 // ✅ Scrapers
 import runWiproScraper from "./scrapers/servicebased/wipro.js";
+import runTechMahindraScraper from "./scrapers/servicebased/techMahindra.js";
 
 const config = {
   concurrency: 5,
@@ -79,6 +80,7 @@ ${error.stack}`;
 
 const scrapers = [
   { fn: runWiproScraper, headless: true },
+  { fn: runTechMahindraScraper, headless: true },
 ];
 
 const runAllScrapers = async () => {
