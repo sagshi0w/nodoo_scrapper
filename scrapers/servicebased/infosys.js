@@ -103,11 +103,20 @@ class InfosysJobsScraper {
                     console.log(`✅ ${job.title}`);
 
                     // Close job detail view
-                    const closeBtn = await this.page.$('[data-ph-at-id="close-button"]');
-                    if (closeBtn) {
-                        await closeBtn.click();
+                    const navButtons = await this.page.$$('li.pointer > a > img[alt="previous icon"]');
+
+                    if (navButtons.length === 2) {
+                        const nextBtn = navButtons[1];
+                        await nextBtn.evaluate(el => el.scrollIntoView({ behavior: 'smooth', block: 'center' }));
+                        await nextBtn.click();
+                        await this.page.waitForTimeout(3000);
+                    } else if (navButtons.length === 1) {
+                        const nextBtn = navButtons[0];
+                        await nextBtn.evaluate(el => el.scrollIntoView({ behavior: 'smooth', block: 'center' }));
+                        await nextBtn.click();
+                        await this.page.waitForTimeout(3000);
                     } else {
-                        await this.page.goBack({ waitUntil: 'networkidle2' });
+                        console.log('🛑 No navigation buttons found');
                     }
 
                     await delay(1500);
