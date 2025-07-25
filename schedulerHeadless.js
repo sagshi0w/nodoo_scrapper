@@ -95,6 +95,7 @@ ${error.stack}`;
 };
 
 const scrapers = [
+  { fn: runGoogleScraper, headless: true },
   { fn: runGrowwScraper, headless: true },
   { fn: runPhonepeScraper, headless: true },
   { fn: runPaypalScraper, headless: true },
