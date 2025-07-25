@@ -30,13 +30,13 @@ class wiproJobsScraper {
     }
 
     async collectAllJobCardLinks() {
-        const jobCardsExist = await this.page.$('a.card');
+        const jobCardsExist = await this.page.$('a.jobTitle-link');
         if (!jobCardsExist) {
             console.error('🚫 No job cards found on the page!');
             return;
         }
 
-        const pageJobLinks = await this.page.$$eval('span.jobTitle.hidden-phone a.jobTitle-link', anchors =>
+        const pageJobLinks = await this.page.$$eval('a.jobTitle-link', anchors =>
             anchors
                 .map(a => a.href)
                 .filter(href => href.includes('/job/'))
