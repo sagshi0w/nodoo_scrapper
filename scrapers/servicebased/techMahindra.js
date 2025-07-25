@@ -35,11 +35,11 @@ class techMahindraJobsScraper {
 
         while (pageIndex < 51) {
             // Wait for job listings container
-            await this.page.waitForSelector('div.paragraph--type--card-info-stand-tiles', { timeout: 10000 });
+            //await this.page.waitForSelector('div.paragraph--type--card-info-stand-tiles', { timeout: 10000 });
 
             // Extract job detail links
             const jobLinks = await this.page.$$eval('a.btn-md.btn-primary', anchors =>
-                anchors.map(a => a.href).filter(href => href.includes('JobDetails.aspx'))
+                anchors.map(a => a.href)
             );
 
             for (const link of jobLinks) {
@@ -61,7 +61,7 @@ class techMahindraJobsScraper {
 
             console.log('➡️ Clicking next page...');
             await Promise.all([
-                this.page.click(nextPageSelector),
+                //this.page.click(nextPageSelector),
                 await delay(5000)
                 //this.page.waitForTimeout(5000),
             ]);
@@ -77,34 +77,37 @@ class techMahindraJobsScraper {
         try {
             await jobPage.goto(url, { waitUntil: 'networkidle2' });
             await delay(5000);
-            //await jobPage.waitForSelector('div.job__description.body', { timeout: 10000 });
 
-            const job = await jobPage.evaluate(() => {
-                const getText = sel => document.querySelector(sel)?.innerText.trim() || '';
-
-                const getTextFromLabel = (label) => {
-                    const items = [...document.querySelectorAll('ul.skillset li')];
-                    const item = items.find(li => li.innerText.includes(label));
-                    return item?.querySelector('span.red')?.innerText.trim() || '';
-                };
-
-                const summaryBlock = document.querySelector('h3')?.innerText === 'Job Summary'
-                    ? document.querySelector('h3 + p')?.innerText.trim() || ''
-                    : '';
-
-                // Extract title from paragraph (e.g. "Role: Sr. Java Developer")
-                const roleMatch = summaryBlock.match(/Role\s*:\s*(.*)/i);
-                const title = roleMatch ? roleMatch[1].split('\n')[0].trim() : '';
-
-                return {
-                    title,
-                    company: 'Tech Mahindra',
-                    location: getTextFromLabel('Location'),
-                    description: summaryBlock,
-                    url: window.location.href
-                };
+            // Extract job summary
+            const jobSummary = await jobPage.evaluate(() => {
+                const heading = Array.from(document.querySelectorAll('div.col-md-12 h3'))
+                    .find(el => el.innerText.trim() === 'Job Summary');
+                const para = heading?.nextElementSibling;
+                return para?.innerText.trim() || '';
             });
 
+            // Extract other job details
+            const job = await jobPage.evaluate((jobSummary) => {
+                const getText = sel => document.querySelector(sel)?.innerText.trim() || '';
+
+                const getTextFromIconClass = (iconClass) => {
+                    const items = [...document.querySelectorAll('ul.skillset li')];
+                    for (let li of items) {
+                        if (li.querySelector(`i.${iconClass}`)) {
+                            return li.querySelector('span.red')?.innerText.trim() || '';
+                        }
+                    }
+                    return '';
+                };
+
+                return {
+                    title: getText('#ctl00_ContentPlaceHolder1_lblDesignationName'),
+                    company: 'Tech Mahindra',
+                    location: getTextFromIconClass('fa-map-marker'),
+                    description: jobSummary,
+                    url: window.location.href
+                };
+            }, jobSummary);
 
             await jobPage.close();
             return job;
