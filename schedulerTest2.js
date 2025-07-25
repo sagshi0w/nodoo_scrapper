@@ -98,10 +98,6 @@ ${error.stack}`;
 //   { fn: runAckoScraper, headless: true },
 //   { fn: runAmazonScraper, headless: true },
 //   { fn: runAdobeScraper, headless: true },
-//   { fn: runAtlassianScraper, headless: true },
-//   { fn: runClearTaxScraper, headless: true },
-//   { fn: runFlipkartScraper, headless: true },
-//   { fn: runFreshworksScraper, headless: true },
 //   
 //   
 //   

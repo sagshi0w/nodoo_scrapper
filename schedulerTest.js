@@ -111,7 +111,7 @@ ${error.stack}`;
 // ];
 
 const scrapers = [
-    { fn: runAtlassianScraper, headless: true },
+    { fn: runAdobeScraper, headless: true },
 ];
 
 const runAllScrapers = async () => {

@@ -105,7 +105,7 @@ class AdobeJobsScraper {
     }
 
     async saveResults() {
-        writeFileSync('./scrappedJobs/adobeJobs.json', JSON.stringify(this.allJobs, null, 2));
+        //writeFileSync('./scrappedJobs/adobeJobs.json', JSON.stringify(this.allJobs, null, 2));
         console.log(`💾 Saved ${this.allJobs.length} jobs to adobeJobs.json`);
     }
 
