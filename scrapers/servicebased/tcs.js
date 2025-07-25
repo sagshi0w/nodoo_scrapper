@@ -81,7 +81,7 @@ class TcsJobsScraper {
                     const frame = await iframeElement.contentFrame();
 
                     // Wait for job title inside iframe
-                    await frame.waitForSelector(jobTitleSelector, { timeout: 10000 });
+                     await frame.waitForSelector('span[data-ng-bind="jobDescription.title"]', { timeout: 10000 });
 
                     const job = await frame.evaluate(
                         (titleSel, locationSel, descSel) => ({
