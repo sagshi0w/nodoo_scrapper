@@ -95,7 +95,8 @@ ${error.stack}`;
 };
 
 const scrapers = [
-  { fn: runPaypalScraper, headless: true }
+  { fn: runPaypalScraper, headless: true },
+  { fn: runUberScraper, headless: true }
 ];
 
 const runAllScrapers = async () => {
