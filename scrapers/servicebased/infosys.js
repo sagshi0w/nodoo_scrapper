@@ -119,7 +119,7 @@ class InfosysJobsScraper {
             }
 
             // Move to next page
-            const navButtons = await this.page.$$('li.pointer > a > img');
+            const navButtons = await this.page.$$('#filtered_jobs > div > div > div.col-md-9.padL30 > div.rowright_align.ng-star-inserted > div > ul > li:nth-child(4)');
 
             let nextBtnFound = false;
             for (const btn of navButtons) {
