@@ -45,7 +45,7 @@ class zensarJobsScraper {
             for (const link of newLinks) {
                 this.allJobLinks.push(link);
             }
-            console.log(`📄 Collected ${this.allJobLinks.size} unique job links so far...`);
+            console.log(`📄 Collected ${this.allJobLinks.length} unique job links so far...`);
 
             // Try to click "See more results" button
             // Check if "Show More Results" button exists and is visible
@@ -53,14 +53,10 @@ class zensarJobsScraper {
             if (!showMoreButton) {
                 console.log('✅ No more "Show More Results" button. Finished collecting.');
                 break;
-            }
-
-            // Scroll into view and click the button
-            await showMoreButton.evaluate(btn => btn.scrollIntoView({ behavior: 'smooth', block: 'center' }));
-            await Promise.all([
+            } else {
                 await delay(5000),
-                showMoreButton.click()
-            ]);
+                showMoreButton.click();
+            }
         }
 
         return this.allJobLinks;;
