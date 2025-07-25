@@ -107,16 +107,14 @@ ${error.stack}`;
 //   { fn: runGrowwScraper, headless: true },
 //   { fn: runMeeshoScraper, headless: true },
 //   { fn: runMicrosoftScraper, headless: true },
-//   { fn: runPaypalScraper, headless: true },
 //   { fn: runPhonepeScraper, headless: true },
 //   { fn: runRazorpayScraper, headless: true },
-//   { fn: runSiemensScraper, headless: true },
-//   { fn: runUberScraper, headless: true },
+//   
 //   { fn: runZohoScraper, headless: true },
 // ];
 
 const scrapers = [
-  { fn: runUberScraper, headless: true }
+  { fn: runSiemensScraper, headless: true },
 ];
 
 const runAllScrapers = async () => {
