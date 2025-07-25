@@ -30,8 +30,8 @@ import runSiemensScraper from "./scrapers/productBased/siemens.js";
 import runUberScraper from "./scrapers/productBased/uber.js";
 import runZohoScraper from "./scrapers/productBased/zoho.js";
 
-import runLTIMindtreeScrapper from "./scrapers/servicebased/ltiMindTree.js"
-import runMphasisScrapper from "./scrapers/servicebased/mphasis.js"
+import runLTIMindtreeScrapper from "./scrapers/servicebased/ltiMindTree.js";
+import runMphasisScrapper from "./scrapers/servicebased/mphasis.js";
 
 const config = {
   concurrency: 5,
