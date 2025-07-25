@@ -35,11 +35,11 @@ class sonataSoftwareJobsScraper {
 
         while (true) {
             // Wait for job links to load
-            await this.page.waitForSelector('a.clickable.color-blue.custom-theme-color', { timeout: 10000 });
+            await this.page.waitForSelector('a.clickable', { timeout: 10000 });
 
             // Collect new links
             const jobLinks = await this.page.$$eval(
-                'a.clickable.color-blue.custom-theme-color',
+                'a.clickable',
                 anchors => anchors.map(a => a.href)
             );
 
