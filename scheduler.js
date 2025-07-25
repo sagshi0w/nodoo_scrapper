@@ -34,6 +34,7 @@ import runZohoScraper from "./scrapers/productBased/zoho.js";
 import runTCSScraper from "./scrapers/servicebased/tcs.js";
 import runInfosysScraper from "./scrapers/servicebased/infosys.js";
 import runWiproScraper from "./scrapers/servicebased/wipro.js";
+import runZensarJobsScraper from "./scrapers/servicebased/zensar.js";
 
 const config = {
   concurrency: 5,
@@ -119,7 +120,7 @@ ${error.stack}`;
 // ];
 
 const scrapers = [
-  { fn: runWiproScraper, headless: true },
+  { fn: runZensarJobsScraper, headless: true },
 ];
 
 const runAllScrapers = async () => {
