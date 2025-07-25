@@ -61,7 +61,7 @@ class zensarJobsScraper {
                 await showMoreButton.evaluate(el => el.scrollIntoView({ behavior: 'smooth', block: 'center' }));
 
                 // Wait for a short moment after scroll (optional)
-                await this.page.waitForTimeout(1000);
+                 await delay(5000);
 
                 // Ensure it's still visible and attached
                 const isVisible = await showMoreButton.evaluate(el => {
