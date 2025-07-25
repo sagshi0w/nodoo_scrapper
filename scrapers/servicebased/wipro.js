@@ -26,7 +26,7 @@ class wiproJobsScraper {
         await this.page.goto('https://careers.wipro.com/search/?createNewAlert=false&q=&locationsearch=India', {
             waitUntil: 'networkidle2'
         });
-        await delay(2000);
+        await delay(5000);
     }
 
     async collectAllJobCardLinks() {
@@ -35,7 +35,7 @@ class wiproJobsScraper {
 
         while (true) {
             // Wait for job links on current page
-            await this.page.waitForSelector('a.jobTitle-link', { timeout: 5000 });
+            await this.page.waitForSelector('a.jobTitle-link', { timeout: 10000 });
 
             // Collect job links
             const jobLinks = await this.page.$$eval('a.jobTitle-link', anchors =>
