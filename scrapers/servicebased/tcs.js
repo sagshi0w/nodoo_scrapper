@@ -70,14 +70,14 @@ class TcsJobsScraper {
                     await delay(1500);
 
                     await this.page.waitForFunction(() => {
-                        const title = document.querySelector('span[data-ng-bind="jobDescription.title"]');
+                        const title = document.querySelector('span.jobDescription.title');
                         return title && title.innerText.length > 0;
                     }, { timeout: 5000 });
 
                     const job = await this.page.evaluate((detailsSelector) => {
                         return {
-                            title: document.querySelector('span[data-ng-bind="jobDescription.title"]')?.innerText.trim() || '',
-                            location: document.querySelector('span[data-ng-bind="jobDescription.location"]')?.innerText.trim() || '',
+                            title: document.querySelector('span.jobDescription.title')?.innerText.trim() || '',
+                            location: document.querySelector('span.jobDescription.location')?.innerText.trim() || '',
                             description: document.querySelector(detailsSelector)?.innerHTML.trim() || '',
                             url: window.location.href,
                             company: 'TCS'
