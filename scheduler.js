@@ -32,6 +32,7 @@ import runZohoScraper from "./scrapers/productBased/zoho.js";
 
 // ✅ Service based scrapers
 import runTCSScraper from "./scrapers/servicebased/tcs.js";
+import runInfosysScraper from "./scrapers/servicebased/infosys.js";
 
 const config = {
   concurrency: 5,
@@ -117,7 +118,7 @@ ${error.stack}`;
 // ];
 
 const scrapers = [
-  { fn: runTCSScraper, headless: true },
+  { fn: runInfosysScraper, headless: true },
 ];
 
 const runAllScrapers = async () => {
