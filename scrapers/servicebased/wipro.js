@@ -33,7 +33,7 @@ class wiproJobsScraper {
         this.allJobLinks = [];
         let pageIndex = 1;
 
-        while (true) {
+        while (pageIndex < 200) {
             // Wait for job links on current page
             await this.page.waitForSelector('a.jobTitle-link', { timeout: 10000 });
 
