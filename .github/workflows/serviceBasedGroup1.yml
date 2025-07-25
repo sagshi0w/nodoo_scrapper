@@ -1,4 +1,4 @@
-name: ProductBased Group One
+name: ServiceBased Group 1
 
 on:
   schedule:
@@ -40,7 +40,7 @@ jobs:
         run: npm install
 
       - name: 🏃 Run scheduler
-        run: node productBasedGroupOne.js
+        run: node serviceBasedGroup1.js
         env:
           EMAIL_USER: ${{ secrets.MAIL_USERNAME }}
           EMAIL_PASS: ${{ secrets.MAIL_PASSWORD }}

@@ -13,22 +13,9 @@ require('dotenv').config();
 // ✅ Scrapers
 import runAckoScraper from "./scrapers/productBased/acko.js";
 import runAmazonScraper from "./scrapers/productBased/amazon.js";
-import runAdobeScraper from "./scrapers/productBased/adobe.js";
 import runAtlassianScraper from "./scrapers/productBased/atlassian.js";
-import runClearTaxScraper from "./scrapers/productBased/clearTax.js";
-import runFlipkartScraper from "./scrapers/productBased/flipkart.js";
-import runFreshworksScraper from "./scrapers/productBased/freshworks.js";
 import runGoldmanScraper from "./scrapers/productBased/goldmanSach.js";
 import runGoogleScraper from "./scrapers/productBased/google.js";
-import runGrowwScraper from "./scrapers/productBased/groww.js";
-import runMeeshoScraper from "./scrapers/productBased/meesho.js";
-import runMicrosoftScraper from "./scrapers/productBased/microsoft.js";
-import runPaypalScraper from "./scrapers/productBased/paypal.js";
-import runPhonepeScraper from "./scrapers/productBased/phonepe.js";
-import runRazorpayScraper from "./scrapers/productBased/razorpay.js";
-import runSiemensScraper from "./scrapers/productBased/siemens.js";
-import runUberScraper from "./scrapers/productBased/uber.js";
-import runZohoScraper from "./scrapers/productBased/zoho.js";
 
 const config = {
   concurrency: 5,
@@ -96,15 +83,10 @@ ${error.stack}`;
 
 const scrapers = [
   { fn: runAckoScraper, headless: true },
+  { fn: runAmazonScraper, headless: true },
   { fn: runAtlassianScraper, headless: true },
   { fn: runGoldmanScraper, headless: true },
-  { fn: runGoogleScraper, headless: true },
-  { fn: runGrowwScraper, headless: true },
-  { fn: runPhonepeScraper, headless: true },
-  { fn: runPaypalScraper, headless: true },
-  { fn: runSiemensScraper, headless: true },
-  { fn: runRazorpayScraper, headless: true },
-  { fn: runUberScraper, headless: true }
+  { fn: runGoogleScraper, headless: true }
 ];
 
 const runAllScrapers = async () => {
