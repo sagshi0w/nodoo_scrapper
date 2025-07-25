@@ -38,7 +38,7 @@ class techMahindraJobsScraper {
             //await this.page.waitForSelector('div.paragraph--type--card-info-stand-tiles', { timeout: 10000 });
 
             // Extract job detail links
-            const jobLinks = await page.$$eval('a', anchors =>
+            const jobLinks = await this.page.$$eval('a', anchors =>
                 anchors
                     .filter(a => a.textContent.trim() === 'Apply/Shortlist')
                     .map(a => a.href)
