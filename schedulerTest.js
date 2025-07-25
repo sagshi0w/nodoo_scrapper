@@ -31,7 +31,7 @@ import runUberScraper from "./scrapers/productBased/uber.js";
 import runZohoScraper from "./scrapers/productBased/zoho.js";
 
 import runTechMahindraScraper from "./scrapers/servicebased/techMahindra.js";
-import runLTIMindtreeScrapper from "./scrapers/servicebased/ltiMindTree.js"
+
 
 const config = {
     concurrency: 5,
@@ -114,7 +114,6 @@ ${error.stack}`;
 
 const scrapers = [
     { fn: runTechMahindraScraper, headless: true },
-    { fn: runLTIMindtreeScrapper, headless: true },
 ];
 
 const runAllScrapers = async () => {

@@ -30,6 +30,8 @@ import runSiemensScraper from "./scrapers/productBased/siemens.js";
 import runUberScraper from "./scrapers/productBased/uber.js";
 import runZohoScraper from "./scrapers/productBased/zoho.js";
 
+import runLTIMindtreeScrapper from "./scrapers/servicebased/ltiMindTree.js"
+
 const config = {
   concurrency: 5,
   notification: {
@@ -109,7 +111,7 @@ ${error.stack}`;
 // ];
 
 const scrapers = [
-  { fn: runAmazonScraper, headless: true },
+  { fn: runLTIMindtreeScrapper, headless: true },
 ];
 
 const runAllScrapers = async () => {
