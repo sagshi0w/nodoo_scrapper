@@ -84,14 +84,30 @@ class techMahindraJobsScraper {
 
             const job = await jobPage.evaluate(() => {
                 const getText = sel => document.querySelector(sel)?.innerText.trim() || '';
+
+                const getTextFromLabel = (label) => {
+                    const items = [...document.querySelectorAll('ul.skillset li')];
+                    const item = items.find(li => li.innerText.includes(label));
+                    return item?.querySelector('span.red')?.innerText.trim() || '';
+                };
+
+                const summaryBlock = document.querySelector('h3')?.innerText === 'Job Summary'
+                    ? document.querySelector('h3 + p')?.innerText.trim() || ''
+                    : '';
+
+                // Extract title from paragraph (e.g. "Role: Sr. Java Developer")
+                const roleMatch = summaryBlock.match(/Role\s*:\s*(.*)/i);
+                const title = roleMatch ? roleMatch[1].split('\n')[0].trim() : '';
+
                 return {
-                    title: getText('h1 span[itemprop="title"]'),
-                    company: 'Wipro',
-                    location: getText('span[data-careersite-propertyid="city"]'),
-                    description: getText('span[itemprop="description"]'),
+                    title,
+                    company: 'Tech Mahindra',
+                    location: getTextFromLabel('Location'),
+                    description: summaryBlock,
                     url: window.location.href
                 };
             });
+
 
             await jobPage.close();
             return job;
