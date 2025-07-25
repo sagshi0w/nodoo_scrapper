@@ -71,7 +71,7 @@ class UberJobsScraper {
         currentPageLinks.forEach(link => this.allJobLinks.add(link));
         console.log(`📄 Page ${pageCount}: Collected ${currentPageLinks.length} job links`);
 
-        const nextButton = await this.page.$('button[aria-label="Next page"]');
+        const nextButton = await this.page.$('button:has-text("Show more openings")');
         if (nextButton) {
           const previousCount = this.allJobLinks.size;
           await nextButton.evaluate(btn => btn.scrollIntoView({ behavior: 'smooth', block: 'center' }));
