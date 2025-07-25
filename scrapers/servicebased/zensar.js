@@ -49,13 +49,13 @@ class zensarJobsScraper {
 
             // Try to click "See more results" button
             // Check if "Show More Results" button exists and is visible
-            const showMoreButton = await this.page.$('button.button.text-color-primary[data-bind*="loadMore"]');
+            const showMoreButton = await this.page.$('span.button__label');
             if (!showMoreButton) {
                 console.log('✅ No more "Show More Results" button. Finished collecting.');
                 break;
             } else {
-                await delay(5000),
-                    showMoreButton.click();
+                await delay(5000);
+                showMoreButton.click();
             }
         }
 
