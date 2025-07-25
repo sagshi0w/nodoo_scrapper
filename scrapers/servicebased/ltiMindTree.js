@@ -78,7 +78,7 @@ class techMahindraJobsScraper {
             await delay(5000);
 
             // Extract job summary
-            const jobDetails = await this.page.evaluate(() => {
+            const jobDetails = await page.evaluate(() => {
                 const roleDescContainer = document.querySelector('.PD24');
 
                 const descriptionText = roleDescContainer.querySelector('.description')?.innerText.trim() || "";
