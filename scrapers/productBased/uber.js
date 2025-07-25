@@ -154,7 +154,7 @@ ${qualifications.length ? 'Qualifications:\n• ' + qualifications.join('\n• '
   }
 
   async saveResults() {
-    fs.writeFileSync('./scrappedJobs/uberJobs.json', JSON.stringify(this.allJobs, null, 2));
+    //fs.writeFileSync('./scrappedJobs/uberJobs.json', JSON.stringify(this.allJobs, null, 2));
     console.log(`💾 Saved ${this.allJobs.length} jobs to ./scrappedJobs/uberJobs.json`);
   }
 
