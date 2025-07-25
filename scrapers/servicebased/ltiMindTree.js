@@ -178,7 +178,7 @@ const extractWiproData = (job) => {
         title: job.title?.trim() || '',
         location: job.location?.trim() || '',
         description: cleanedDescription,
-        company: 'Tech Mahindra'
+        company: 'Wipro'
     };
 };
 
