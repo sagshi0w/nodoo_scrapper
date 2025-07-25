@@ -1,7 +1,7 @@
 import puppeteer from 'puppeteer';
 import { writeFileSync } from 'fs';
 
-const delay = ms => new Promise(res => setTimeout(res, ms));
+const delay = (ms) => new Promise((res) => setTimeout(res, ms));
 
 class TcsJobsScraper {
     constructor(headless = true) {
@@ -45,12 +45,14 @@ class TcsJobsScraper {
     async scrapeAllJobs() {
         const jobCardsSelector = 'div.row.custom-row.searched-job';
         const jobDetailsSelector = 'span[data-ng-bind-html="jobDesc"]';
+        const jobTitleSelector = 'span[data-ng-bind="jobDescription.title"]';
+        const jobLocationSelector = 'span[data-ng-bind="jobDescription.location"]';
         const maxPages = 100;
 
         for (let pageNum = 1; pageNum <= maxPages; pageNum++) {
             console.log(`📄 Scraping Page ${pageNum}...`);
 
-            await this.page.waitForSelector(jobCardsSelector, { timeout: 10000 });
+            await this.page.waitForSelector(jobCardsSelector, { timeout: 15000 });
             const cards = await this.page.$$(jobCardsSelector);
 
             if (cards.length === 0) {
@@ -58,55 +60,68 @@ class TcsJobsScraper {
                 break;
             }
 
-            console.log("Number of cards found=", cards.length);
+            console.log(`🔍 Found ${cards.length} job cards`);
 
             for (let i = 0; i < cards.length; i++) {
                 console.log(`📝 Processing TCS job ${i + 1}/${cards.length}`);
 
                 try {
                     const card = cards[i];
-                    await this.page.evaluate(el => el.scrollIntoView(), card);
+
+                    // Scroll into view and click
+                    await card.evaluate(el =>
+                        el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                    );
+                    await delay(1000);
                     await card.click();
-                    await delay(4000);
+                    await delay(3000); // Give time for panel to open
 
-                    const bodyText = await this.page.evaluate(() => document.body.innerText);
-                    console.log('🔍 Page body preview:\n', bodyText.slice(0, 1000));
-                    
-                    await this.page.waitForFunction(() => {
-                        const el = document.querySelector('span[data-ng-bind="jobDescription.title"]');
-                        return el && el.innerText.trim().length > 0;
-                    }, { timeout: 10000 });
+                    // Wait for title to appear
+                    await this.page.waitForSelector(jobTitleSelector, { timeout: 10000 });
 
-                    const job = await this.page.evaluate((detailsSelector) => {
-                        return {
-                            title: document.querySelector('span[data-ng-bind="jobDescription.title"]')?.innerText.trim() || '',
-                            location: document.querySelector('span[data-ng-bind="jobDescription.location"]')?.innerText.trim() || '',
-                            description: document.querySelector(detailsSelector)?.innerHTML.trim() || '',
+                    // Extract job data
+                    const job = await this.page.evaluate(
+                        (titleSel, locationSel, descSel) => ({
+                            title: document.querySelector(titleSel)?.innerText.trim() || '',
+                            location: document.querySelector(locationSel)?.innerText.trim() || '',
+                            description:
+                                document.querySelector(descSel)?.innerHTML.trim() || '',
                             url: window.location.href,
                             company: 'TCS'
-                        };
-                    }, jobDetailsSelector);
+                        }),
+                        jobTitleSelector,
+                        jobLocationSelector,
+                        jobDetailsSelector
+                    );
 
                     if (job?.title) {
                         job.description = this.cleanJobDescription(job.description);
                         job.scrapedAt = new Date().toISOString();
                         this.allJobs.push(job);
-                        console.log(`✅ ${job.title}`);
+                        console.log(`✅ Scraped: ${job.title}`);
                     } else {
-                        console.log(`⚠️ Skipped: No title found.`);
+                        console.warn(`⚠️ Skipped: No title found`);
                     }
 
+                    await delay(1000); // small delay between jobs
                 } catch (err) {
                     console.warn(`⚠️ Error processing job ${i + 1}:`, err.message);
+
+                    // Optional: take screenshot for debugging
+                    await this.page.screenshot({
+                        path: `tcs-error-job-${i + 1}.png`,
+                        fullPage: true
+                    });
+                    console.warn(`📸 Screenshot saved: tcs-error-job-${i + 1}.png`);
                 }
             }
 
-            // Move to next page if available
+            // Try to go to next page
             const nextBtnSelector = 'div.iframe-button-wrapper > button';
             const nextBtn = await this.page.$(nextBtnSelector);
 
             if (nextBtn) {
-                const isDisabled = await this.page.evaluate(btn => btn.disabled, nextBtn);
+                const isDisabled = await this.page.evaluate((btn) => btn.disabled, nextBtn);
                 if (!isDisabled) {
                     console.log('➡️ Moving to next page...');
                     await nextBtn.click();
@@ -116,6 +131,7 @@ class TcsJobsScraper {
                     break;
                 }
             } else {
+                console.log('❌ Next button not found. Ending pagination.');
                 break;
             }
         }
@@ -124,7 +140,7 @@ class TcsJobsScraper {
     }
 
     async saveResults() {
-        //writeFileSync('./scrappedJobs/tcsJobs.json', JSON.stringify(this.allJobs, null, 2));
+        writeFileSync('./scrappedJobs/tcsJobs.json', JSON.stringify(this.allJobs, null, 2));
         console.log(`💾 Saved ${this.allJobs.length} jobs to scrappedJobs/tcsJobs.json`);
     }
 
@@ -146,6 +162,7 @@ class TcsJobsScraper {
     }
 }
 
+// Exportable runner
 const runTcsScraper = async ({ headless = true } = {}) => {
     const scraper = new TcsJobsScraper(headless);
     await scraper.run();
@@ -154,7 +171,7 @@ const runTcsScraper = async ({ headless = true } = {}) => {
 
 export default runTcsScraper;
 
-// CLI runner
+// CLI Runner
 if (import.meta.url === `file://${process.argv[1]}`) {
     const headlessArg = process.argv.includes('--headless=false') ? false : true;
     (async () => {
