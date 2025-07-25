@@ -34,14 +34,12 @@ class techMahindraJobsScraper {
         let pageIndex = 1;
 
         while (true) {
-            // Wait for job links on current page
+            // Wait for job listings container
             await this.page.waitForSelector('div.paragraph--type--card-info-stand-tiles', { timeout: 10000 });
 
-            // Collect job links
+            // Extract job detail links
             const jobLinks = await this.page.$$eval('a.btn-md.btn-primary', anchors =>
-                anchors
-                    .map(a => a.href)
-                    .filter(href => href.includes('JobDetails.aspx'))
+                anchors.map(a => a.href).filter(href => href.includes('JobDetails.aspx'))
             );
 
             for (const link of jobLinks) {
@@ -52,29 +50,20 @@ class techMahindraJobsScraper {
 
             console.log(`📄 Page ${pageIndex}: Total job links so far: ${this.allJobLinks.length}`);
 
-            // Get all visible page numbers
-            const pageNumbers = await this.page.$$eval('ul.pagination li a', links =>
-                links
-                    .map(a => ({
-                        text: a.textContent.trim(),
-                        href: a.getAttribute('href'),
-                    }))
-                    .filter(a => /^\d+$/.test(a.text)) // Only page numbers
-            );
+            // Check for next page button
+            const nextPageSelector = 'a.page_enabled[href*="__doPostBack"]';
+            const hasNext = await this.page.$(nextPageSelector);
 
-            // Find the one with text == pageIndex + 1
-            const nextPage = pageNumbers.find(p => Number(p.text) === pageIndex + 1);
-
-            if (!nextPage) {
-                console.log('✅ No more pages left. Done.');
+            if (!hasNext) {
+                console.log('✅ No more pages.');
                 break;
             }
 
-            // Click the next page
-            console.log(`➡️ Clicking page ${pageIndex + 1}`);
+            console.log('➡️ Clicking next page...');
             await Promise.all([
-                this.page.click(`ul.pagination li a[title="Page ${pageIndex + 1}"]`),
-                this.page.waitForNavigation({ waitUntil: 'networkidle2' }),
+                this.page.click(nextPageSelector),
+                await delay(5000)
+                //this.page.waitForTimeout(5000),
             ]);
 
             pageIndex++;
