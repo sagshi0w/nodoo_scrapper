@@ -103,20 +103,11 @@ class InfosysJobsScraper {
                     console.log(`✅ ${job.title}`);
 
                     // Close job detail view
-                    const navButtons = await this.page.$$('li.pointer > a > img[alt="previous icon"]');
-
-                    if (navButtons.length === 2) {
-                        const nextBtn = navButtons[1];
-                        await nextBtn.evaluate(el => el.scrollIntoView({ behavior: 'smooth', block: 'center' }));
-                        await nextBtn.click();
-                        await this.page.waitForTimeout(3000);
-                    } else if (navButtons.length === 1) {
-                        const nextBtn = navButtons[0];
-                        await nextBtn.evaluate(el => el.scrollIntoView({ behavior: 'smooth', block: 'center' }));
-                        await nextBtn.click();
-                        await this.page.waitForTimeout(3000);
+                    const closeBtn = await this.page.$('[data-ph-at-id="close-button"]');
+                    if (closeBtn) {
+                        await closeBtn.click();
                     } else {
-                        console.log('🛑 No navigation buttons found');
+                        await this.page.goBack({ waitUntil: 'networkidle2' });
                     }
 
                     await delay(1500);
@@ -128,21 +119,20 @@ class InfosysJobsScraper {
             }
 
             // ⏭ Move to next page
-            const nextBtn = await this.page.$(nextBtnSelector);
-            if (nextBtn) {
-                const isDisabled = await this.page.evaluate(btn => btn.disabled, nextBtn);
-                if (isDisabled) {
-                    console.log('🛑 No more pages.');
-                    break;
-                } else {
-                    console.log('➡️ Moving to next page...');
-                    await nextBtn.click();
-                    await delay(4000);
-                    pageNum++;
-                }
+            const navButtons = await this.page.$$('li.pointer > a > img[alt="previous icon"]');
+
+            if (navButtons.length === 2) {
+                const nextBtn = navButtons[1];
+                await nextBtn.evaluate(el => el.scrollIntoView({ behavior: 'smooth', block: 'center' }));
+                await nextBtn.click();
+                await this.page.waitForTimeout(3000);
+            } else if (navButtons.length === 1) {
+                const nextBtn = navButtons[0];
+                await nextBtn.evaluate(el => el.scrollIntoView({ behavior: 'smooth', block: 'center' }));
+                await nextBtn.click();
+                await this.page.waitForTimeout(3000);
             } else {
-                console.log('❌ Next button not found.');
-                break;
+                console.log('🛑 No navigation buttons found');
             }
         }
 
