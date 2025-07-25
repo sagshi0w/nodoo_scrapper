@@ -125,12 +125,12 @@ class InfosysJobsScraper {
                 const nextBtn = navButtons[1];
                 await nextBtn.evaluate(el => el.scrollIntoView({ behavior: 'smooth', block: 'center' }));
                 await nextBtn.click();
-                await this.page.waitForTimeout(3000);
+                await new Promise(res => setTimeout(res, 1000));
             } else if (navButtons.length === 1) {
                 const nextBtn = navButtons[0];
                 await nextBtn.evaluate(el => el.scrollIntoView({ behavior: 'smooth', block: 'center' }));
                 await nextBtn.click();
-                await this.page.waitForTimeout(3000);
+                await new Promise(res => setTimeout(res, 1000));
             } else {
                 console.log('🛑 No navigation buttons found');
             }
