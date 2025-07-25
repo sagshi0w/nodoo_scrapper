@@ -35,7 +35,7 @@ class TcsJobsScraper {
 
     cleanJobDescription(html = '') {
         return html
-            .replace(/<[^>]*>/g, '') // strip HTML tags
+            .replace(/<[^>]*>/g, '')
             .replace(/&nbsp;/g, ' ')
             .replace(/\s{2,}/g, ' ')
             .replace(/\n{2,}/g, '\n')
@@ -44,9 +44,10 @@ class TcsJobsScraper {
 
     async scrapeAllJobs() {
         const jobCardsSelector = 'div.row.custom-row.searched-job';
-        const jobDetailsSelector = 'span[data-ng-bind-html="jobDesc"]';
         const jobTitleSelector = 'span[data-ng-bind="jobDescription.title"]';
         const jobLocationSelector = 'span[data-ng-bind="jobDescription.location"]';
+        const jobDetailsSelector = 'span[data-ng-bind-html="jobDesc"]';
+        const nextBtnSelector = 'div.iframe-button-wrapper > button';
         const maxPages = 100;
 
         for (let pageNum = 1; pageNum <= maxPages; pageNum++) {
@@ -67,20 +68,22 @@ class TcsJobsScraper {
 
                 try {
                     const card = cards[i];
-
-                    // Scroll into view and click
-                    await card.evaluate(el =>
+                    await card.evaluate((el) =>
                         el.scrollIntoView({ behavior: 'smooth', block: 'center' })
                     );
                     await delay(1000);
                     await card.click();
-                    await delay(3000); // Give time for panel to open
+                    await delay(3000);
 
-                    // Wait for title to appear
-                    await this.page.waitForSelector(jobTitleSelector, { timeout: 10000 });
+                    // Wait for iframe
+                    await this.page.waitForSelector('iframe', { timeout: 10000 });
+                    const iframeElement = await this.page.$('iframe');
+                    const frame = await iframeElement.contentFrame();
 
-                    // Extract job data
-                    const job = await this.page.evaluate(
+                    // Wait for job title inside iframe
+                    await frame.waitForSelector(jobTitleSelector, { timeout: 10000 });
+
+                    const job = await frame.evaluate(
                         (titleSel, locationSel, descSel) => ({
                             title: document.querySelector(titleSel)?.innerText.trim() || '',
                             location: document.querySelector(locationSel)?.innerText.trim() || '',
@@ -103,11 +106,9 @@ class TcsJobsScraper {
                         console.warn(`⚠️ Skipped: No title found`);
                     }
 
-                    await delay(1000); // small delay between jobs
+                    await delay(1000);
                 } catch (err) {
                     console.warn(`⚠️ Error processing job ${i + 1}:`, err.message);
-
-                    // Optional: take screenshot for debugging
                     await this.page.screenshot({
                         path: `tcs-error-job-${i + 1}.png`,
                         fullPage: true
@@ -116,10 +117,8 @@ class TcsJobsScraper {
                 }
             }
 
-            // Try to go to next page
-            const nextBtnSelector = 'div.iframe-button-wrapper > button';
+            // Go to next page
             const nextBtn = await this.page.$(nextBtnSelector);
-
             if (nextBtn) {
                 const isDisabled = await this.page.evaluate((btn) => btn.disabled, nextBtn);
                 if (!isDisabled) {
@@ -140,7 +139,7 @@ class TcsJobsScraper {
     }
 
     async saveResults() {
-        writeFileSync('./scrappedJobs/tcsJobs.json', JSON.stringify(this.allJobs, null, 2));
+        //writeFileSync('./scrappedJobs/tcsJobs.json', JSON.stringify(this.allJobs, null, 2));
         console.log(`💾 Saved ${this.allJobs.length} jobs to scrappedJobs/tcsJobs.json`);
     }
 
