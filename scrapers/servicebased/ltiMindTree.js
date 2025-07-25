@@ -22,7 +22,7 @@ class techMahindraJobsScraper {
     }
 
     async navigateToJobsPage() {
-        console.log('🌐 Navigating to TechMahindra Careers...');
+        console.log('🌐 Navigating to LTIMindtree Careers...');
         await this.page.goto('https://ltimindtree.ripplehire.com/candidate/?token=xviyQvbnyYZdGtozXoNm&lang=en&source=CAREERSITE#list/geo=India', {
             waitUntil: 'networkidle2'
         });
@@ -39,9 +39,6 @@ class techMahindraJobsScraper {
             await this.page.evaluate(() => {
                 window.scrollBy(0, window.innerHeight);
             });
-
-            // Wait for jobs to load (adjust as needed)
-            await this.page.waitForTimeout(1500);
 
             // Extract links after scroll
             const newLinks = await this.page.$$eval(
@@ -138,7 +135,7 @@ class techMahindraJobsScraper {
 
     async saveResults() {
         // fs.writeFileSync('./scrappedJobs/phonepeJobs.json', JSON.stringify(this.allJobs, null, 2));
-        console.log(`💾 Saved ${this.allJobs.length} jobs to techMahindraJobs.json`);
+        console.log(`💾 Saved ${this.allJobs.length} jobs to ltiMindtreeJobs.json`);
     }
 
     async close() {
