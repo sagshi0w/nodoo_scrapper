@@ -163,13 +163,6 @@ const extractWiproData = (job) => {
             // Remove specific single-line phrases
             .replace(/^\s*(TRENDING|BE THE FIRST TO APPLY)\s*$/gim, '')
 
-            // Remove specific headers or blocks
-            .replace(/about\s+phonepe\s+group\s*:/gi, '')
-            .replace(/about\s+phonepe\s*:/gi, '')
-            .replace(/culture/gi, '')
-            .replace(/job summary:?/gi, '')
-            .replace(/(\n\s*)(responsibilities|requirements|qualifications|skills|experience|education|benefits|what\s+we\s+offer|key\s+responsibilities|job\s+description|role\s+and\s+responsibilities|about\s+the\s+role|what\s+you'll\s+do|what\s+you\s+will\s+do)(\s*:?\s*\n)/gi, '\n\n$1$2$3\n\n')
-
             // Format bullet points and numbered lists
             .replace(/(\n\s*)(\d+\.\s*)(.*?)(\n)/gi, '\n\n$1$2$3$4\n')
             .replace(/(\n\s*)(•\s*)(.*?)(\n)/gi, '\n\n$1$2$3$4\n')
