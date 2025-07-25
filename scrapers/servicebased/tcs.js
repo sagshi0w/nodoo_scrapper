@@ -57,7 +57,7 @@ class SiemensJobsScraper {
 
   async scrapeAllJobs() {
     const jobCardsSelector = 'div.row.custom-row.searched-job';
-    const jobDetailsSelector = 'div.position-details div.position-job-description-column div.custom-jd-container';
+    const jobDetailsSelector = 'div.job-description';
     const maxPages = 1000;
     let pageNum = 1;
 
@@ -80,25 +80,13 @@ class SiemensJobsScraper {
           await delay(2000);
 
           const job = await this.page.evaluate((detailsSelector) => {
-            const fields = {};
-            const elements = document.querySelectorAll(detailsSelector);
-
-            elements.forEach(el => {
-              const label = el.querySelector('h4')?.innerText.trim();
-              const value = el.querySelector('div')?.innerText.trim();
-              if (label && value) {
-                const key = label.toLowerCase().replace(/[^a-z0-9]+(.)/g, (_, chr) => chr.toUpperCase());
-                fields[key] = value;
-              }
-            });
 
             return {
               title: document.querySelector('span[data-ng-bind="jobDescription.title"]')?.innerText.trim() || '',
               location: document.querySelector('span[data-ng-bind="jobDescription.location"]')?.innerText.trim() || '',
               description: document.querySelector('div.job-description')?.innerText.trim() || '',
               url: window.location.href,
-              company: 'TCS',
-              ...fields
+              company: 'TCS'
             };
           }, jobDetailsSelector);
 
@@ -108,13 +96,6 @@ class SiemensJobsScraper {
             this.allJobs.push(job);
             console.log(`✅ ${job.title}`);
           }
-
-        //   const closeBtn = await this.page.$('[data-ph-at-id="close-button"]');
-        //   if (closeBtn) {
-        //     await closeBtn.click();
-        //     await delay(500);
-        //   }
-
         } catch (err) {
           console.warn(`⚠️ Error processing job ${i + 1}:`, err.message);
         }
