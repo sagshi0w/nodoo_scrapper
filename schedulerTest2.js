@@ -113,7 +113,7 @@ ${error.stack}`;
 // ];
 
 const scrapers = [
-  { fn: runGoldmanScraper, headless: true },
+  
 ];
 
 const runAllScrapers = async () => {
