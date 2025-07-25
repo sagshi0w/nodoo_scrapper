@@ -58,6 +58,8 @@ class TcsJobsScraper {
                 break;
             }
 
+            console.log("Number of cards found=", cards.length);
+
             for (let i = 0; i < cards.length; i++) {
                 console.log(`📝 Processing TCS job ${i + 1}/${cards.length}`);
 
@@ -65,16 +67,16 @@ class TcsJobsScraper {
                     const card = cards[i];
                     await this.page.evaluate(el => el.scrollIntoView(), card);
                     await card.click();
-                    await delay(1000);
+                    await delay(1500);
 
                     await this.page.waitForFunction(() => {
-                        const title = document.querySelector('#app-body > div.page-content.noTPad > div.ng-scope > div > div:nth-child(2) > div:nth-child(1) > div.row.custom-row.description-container > div.row.custom-row.description-title > span');
+                        const title = document.querySelector('span[data-ng-bind="jobDescription.title"]');
                         return title && title.innerText.length > 0;
                     }, { timeout: 5000 });
 
                     const job = await this.page.evaluate((detailsSelector) => {
                         return {
-                            title: document.querySelector('#app-body > div.page-content.noTPad > div.ng-scope > div > div:nth-child(2) > div:nth-child(1) > div.row.custom-row.description-container > div.row.custom-row.description-title > span')?.innerText.trim() || '',
+                            title: document.querySelector('span[data-ng-bind="jobDescription.title"]')?.innerText.trim() || '',
                             location: document.querySelector('span[data-ng-bind="jobDescription.location"]')?.innerText.trim() || '',
                             description: document.querySelector(detailsSelector)?.innerHTML.trim() || '',
                             url: window.location.href,
