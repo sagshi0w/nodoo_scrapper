@@ -15,12 +15,12 @@ class TcsJobsScraper {
         this.browser = await puppeteer.launch({
             headless: this.headless,
             args: ['--no-sandbox', '--disable-setuid-sandbox'],
-            defaultViewport: { width: 1920, height: 1080 }
+            defaultViewport: { width: 1920, height: 1080 },
         });
-
         this.page = await this.browser.newPage();
         await this.page.setUserAgent(
-            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 ' +
+            '(KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
         );
     }
 
@@ -28,7 +28,7 @@ class TcsJobsScraper {
         console.log('🌐 Navigating to TCS Careers page...');
         await this.page.goto('https://ibegin.tcsapps.com/candidate/jobs/search', {
             waitUntil: 'networkidle2',
-            timeout: 60000
+            timeout: 60000,
         });
         await delay(5000);
     }
@@ -43,103 +43,82 @@ class TcsJobsScraper {
     }
 
     async scrapeAllJobs() {
-        const jobCardsSelector = 'div.row.custom-row.searched-job';
-        const jobTitleSelector = 'span[data-ng-bind="jobDescription.title"]';
-        const jobLocationSelector = 'span[data-ng-bind="jobDescription.location"]';
-        const jobDetailsSelector = 'span[data-ng-bind-html="jobDesc"]';
-        const nextBtnSelector = 'div.iframe-button-wrapper > button';
-        const maxPages = 100;
+        const cardsSelector = 'div.row.custom-row.searched-job';
+        const titleSel = 'span[data-ng-bind="jobDescription.title"]';
+        const locSel = 'span[data-ng-bind="jobDescription.location"]';
+        const descSel = 'span[data-ng-bind-html="jobDesc"]';
+        const nextBtnSel = 'div.iframe-button-wrapper > button';
 
-        for (let pageNum = 1; pageNum <= maxPages; pageNum++) {
+        for (let pageNum = 1; pageNum <= 100; pageNum++) {
             console.log(`📄 Scraping Page ${pageNum}...`);
-
-            await this.page.waitForSelector(jobCardsSelector, { timeout: 15000 });
-            const cards = await this.page.$$(jobCardsSelector);
-
-            if (cards.length === 0) {
-                console.log('✅ No more job cards. Stopping...');
-                break;
-            }
-
+            await this.page.waitForSelector(cardsSelector, { timeout: 15000 });
+            const cards = await this.page.$$(cardsSelector);
+            if (!cards.length) break;
             console.log(`🔍 Found ${cards.length} job cards`);
 
             for (let i = 0; i < cards.length; i++) {
-                console.log(`📝 Processing TCS job ${i + 1}/${cards.length}`);
-
+                console.log(`📝 Processing job ${i + 1}/${cards.length}`);
                 try {
                     const card = cards[i];
-                    await card.evaluate((el) =>
+                    await card.evaluate(el =>
                         el.scrollIntoView({ behavior: 'smooth', block: 'center' })
                     );
                     await delay(1000);
                     await card.click();
                     await delay(3000);
 
-                    // Wait for iframe
                     await this.page.waitForSelector('iframe', { timeout: 10000 });
-                    const iframeElement = await this.page.$('iframe');
-                    const frame = await iframeElement.contentFrame();
+                    const frameHandle = await this.page.$('iframe');
+                    const frame = await frameHandle.contentFrame();
+                    if (!frame) throw new Error('Failed to access iframe context');
 
-                    // Wait for job title inside iframe
-                     await frame.waitForSelector('span[data-ng-bind="jobDescription.title"]', { timeout: 10000 });
+                    await frame.waitForSelector(titleSel, { timeout: 10000 });
 
-                    const job = await frame.evaluate(
-                        (titleSel, locationSel, descSel) => ({
-                            title: document.querySelector(titleSel)?.innerText.trim() || '',
-                            location: document.querySelector(locationSel)?.innerText.trim() || '',
-                            description:
-                                document.querySelector(descSel)?.innerHTML.trim() || '',
+                    const raw = await frame.evaluate(
+                        (ts, ls, ds) => ({
+                            title: document.querySelector(ts)?.innerText.trim() || '',
+                            location: document.querySelector(ls)?.innerText.trim() || '',
+                            description: document.querySelector(ds)?.innerHTML.trim() || '',
                             url: window.location.href,
-                            company: 'TCS'
+                            company: 'TCS',
                         }),
-                        jobTitleSelector,
-                        jobLocationSelector,
-                        jobDetailsSelector
+                        titleSel,
+                        locSel,
+                        descSel
                     );
 
-                    if (job?.title) {
-                        job.description = this.cleanJobDescription(job.description);
-                        job.scrapedAt = new Date().toISOString();
+                    if (raw.title) {
+                        const cleaned = this.cleanJobDescription(raw.description);
+                        const job = { ...raw, description: cleaned, scrapedAt: new Date().toISOString() };
                         this.allJobs.push(job);
                         console.log(`✅ Scraped: ${job.title}`);
                     } else {
-                        console.warn(`⚠️ Skipped: No title found`);
+                        console.warn('⚠️ Skipped: No title in iframe view');
                     }
 
                     await delay(1000);
                 } catch (err) {
-                    console.warn(`⚠️ Error processing job ${i + 1}:`, err.message);
+                    console.warn(`⚠️ Error on job ${i + 1}:`, err.message);
                     await this.page.screenshot({
                         path: `tcs-error-job-${i + 1}.png`,
                         fullPage: true
                     });
-                    console.warn(`📸 Screenshot saved: tcs-error-job-${i + 1}.png`);
+                    console.warn(`📸 Screenshot saved for job ${i + 1}`);
                 }
             }
 
-            // Go to next page
-            const nextBtn = await this.page.$(nextBtnSelector);
-            if (nextBtn) {
-                const isDisabled = await this.page.evaluate((btn) => btn.disabled, nextBtn);
-                if (!isDisabled) {
-                    console.log('➡️ Moving to next page...');
-                    await nextBtn.click();
-                    await delay(5000);
-                } else {
-                    console.log('🛑 Reached last page.');
-                    break;
-                }
-            } else {
-                console.log('❌ Next button not found. Ending pagination.');
-                break;
-            }
+            const next = await this.page.$(nextBtnSel);
+            if (next && !(await this.page.evaluate(btn => btn.disabled, next))) {
+                console.log('➡️ Going to next page');
+                await next.click();
+                await delay(5000);
+            } else break;
         }
-
-        console.log(`✅ Total jobs scraped: ${this.allJobs.length}`);
+        console.log(`✅ Done! Scraped ${this.allJobs.length} jobs`);
     }
 
     async saveResults() {
-        //writeFileSync('./scrappedJobs/tcsJobs.json', JSON.stringify(this.allJobs, null, 2));
+        writeFileSync('./scrappedJobs/tcsJobs.json', JSON.stringify(this.allJobs, null, 2));
         console.log(`💾 Saved ${this.allJobs.length} jobs to scrappedJobs/tcsJobs.json`);
     }
 
@@ -153,27 +132,22 @@ class TcsJobsScraper {
             await this.navigateToJobsPage();
             await this.scrapeAllJobs();
             await this.saveResults();
-        } catch (error) {
-            console.error('❌ Scraper failed:', error);
+        } catch (e) {
+            console.error('❌ Scraper failed:', e);
         } finally {
             await this.close();
         }
     }
 }
 
-// Exportable runner
-const runTcsScraper = async ({ headless = true } = {}) => {
+export default async function runTcsScraper({ headless = true } = {}) {
     const scraper = new TcsJobsScraper(headless);
     await scraper.run();
     return scraper.allJobs;
-};
+}
 
-export default runTcsScraper;
-
-// CLI Runner
 if (import.meta.url === `file://${process.argv[1]}`) {
-    const headlessArg = process.argv.includes('--headless=false') ? false : true;
     (async () => {
-        await runTcsScraper({ headless: headlessArg });
+        await runTcsScraper({ headless: process.argv.includes('--headless=false') ? false : true });
     })();
 }
