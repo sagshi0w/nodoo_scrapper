@@ -73,7 +73,7 @@ class InfosysJobsScraper {
 
                     // Read title from this specific card (no prefetching)
                     const cardTitle = await this.page.evaluate(el =>
-                        el.querySelector('span.jobTitle')?.innerText.trim() || '', card);
+                        el.querySelector('div.job-titleTxt')?.innerText.trim() || '', card);
 
                     if (processedTitles.has(cardTitle)) {
                         console.log(`⏭️ Already processed: ${cardTitle}`);
@@ -81,7 +81,7 @@ class InfosysJobsScraper {
                         continue;
                     }
 
-                    console.log(`📝 Processing job ${index + 1}: ${cardTitle}`);
+                    console.log(`📝 Processing Infosys job ${index + 1}: ${cardTitle}`);
                     await card.click();
                     await this.page.waitForSelector('span.jobTitle', { timeout: 10000 });
                     await delay(2000);
