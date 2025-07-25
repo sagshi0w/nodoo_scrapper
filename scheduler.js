@@ -10,7 +10,7 @@ const require = createRequire(import.meta.url);
 const nodemailer = require('nodemailer');
 require('dotenv').config();
 
-// ✅ Scrapers
+// ✅ Product based scrapers
 import runAckoScraper from "./scrapers/productBased/acko.js";
 import runAmazonScraper from "./scrapers/productBased/amazon.js";
 import runAdobeScraper from "./scrapers/productBased/adobe.js";
@@ -29,6 +29,9 @@ import runRazorpayScraper from "./scrapers/productBased/razorpay.js";
 import runSiemensScraper from "./scrapers/productBased/siemens.js";
 import runUberScraper from "./scrapers/productBased/uber.js";
 import runZohoScraper from "./scrapers/productBased/zoho.js";
+
+// ✅ Service based scrapers
+import runTCSScraper from "./scrapers/servicebased/tcs.js";
 
 const config = {
   concurrency: 5,
@@ -114,7 +117,7 @@ ${error.stack}`;
 // ];
 
 const scrapers = [
-  { fn: runRazorpayScraper, headless: true },
+  { fn: runTCSScraper, headless: true },
 ];
 
 const runAllScrapers = async () => {
