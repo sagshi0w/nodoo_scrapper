@@ -77,12 +77,12 @@ class techMahindraJobsScraper {
             await jobPage.goto(url, { waitUntil: 'networkidle2' });
             await delay(5000);
 
-            // Extract job summary
-            const jobDetails = await page.evaluate(() => {
+            // ✅ Extract job summary using jobPage
+            const jobDetails = await jobPage.evaluate(() => {
                 const roleDescContainer = document.querySelector('.PD24');
 
-                const descriptionText = roleDescContainer.querySelector('.description')?.innerText.trim() || "";
-                const skillsText = roleDescContainer.querySelector('.skills')?.innerText.trim() || "";
+                const descriptionText = roleDescContainer?.querySelector('.description')?.innerText.trim() || "";
+                const skillsText = roleDescContainer?.querySelector('.skills')?.innerText.trim() || "";
 
                 const combinedText = `${descriptionText}\n\n${skillsText}`;
 
@@ -91,7 +91,7 @@ class techMahindraJobsScraper {
                 };
             });
 
-            // Extract other job details
+            // ✅ Extract other job details
             const job = await jobPage.evaluate((combinedText) => {
                 const getText = sel => document.querySelector(sel)?.innerText.trim() || '';
 
@@ -106,12 +106,14 @@ class techMahindraJobsScraper {
 
             await jobPage.close();
             return job;
+
         } catch (err) {
             await jobPage.close();
             console.warn(`❌ Failed to scrape ${url}: ${err.message}`);
             return null;
         }
     }
+
 
     async processAllJobs() {
         for (let i = 0; i < this.allJobLinks.length; i++) {
