@@ -95,6 +95,8 @@ class SiemensJobsScraper {
             job.scrapedAt = new Date().toISOString();
             this.allJobs.push(job);
             console.log(`✅ ${job.title}`);
+          } else{
+            console.log(`Title not found.`);
           }
         } catch (err) {
           console.warn(`⚠️ Error processing job ${i + 1}:`, err.message);
@@ -124,7 +126,7 @@ class SiemensJobsScraper {
 
   async saveResults() {
     //writeFileSync('./scrappedJobs/siemensJobs.json', JSON.stringify(this.allJobs, null, 2));
-    console.log(`💾 Saved ${this.allJobs.length} jobs to scrappedJobs/siemensJobs.json`);
+    console.log(`💾 Saved ${this.allJobs.length} jobs to scrappedJobs/tcsJobs.json`);
   }
 
   async close() {
