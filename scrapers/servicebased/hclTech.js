@@ -15,7 +15,7 @@ class hclTechJobsScraper {
     async initialize() {
         this.browser = await puppeteer.launch({
             headless: this.headless,
-            args: ['--no-sandbox, --disable-http2', ...(this.headless ? [] : ['--start-maximized'])],
+            args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-http2', ...(this.headless ? [] : ['--start-maximized'])],
             defaultViewport: this.headless ? { width: 1920, height: 1080 } : null
         });
         this.page = await this.browser.newPage();
