@@ -111,7 +111,7 @@ ${error.stack}`;
 // ];
 
 const scrapers = [
-    { fn: runAdobeScraper, headless: true },
+    
 ];
 
 const runAllScrapers = async () => {
