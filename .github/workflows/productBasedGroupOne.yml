@@ -1,4 +1,4 @@
-name: Daily Scraper Job
+name: ProductBased Group One
 
 on:
   schedule:
@@ -40,7 +40,7 @@ jobs:
         run: npm install
 
       - name: 🏃 Run scheduler
-        run: node scheduler.js
+        run: node productBasedGroupOne.js
         env:
           EMAIL_USER: ${{ secrets.MAIL_USERNAME }}
           EMAIL_PASS: ${{ secrets.MAIL_PASSWORD }}
