@@ -43,7 +43,7 @@ class birlaSoftJobsScraper {
             //     anchors => anchors.map(a => a.href)
             // );
 
-            const jobLinks = await page.$$eval('a.jobTitle-link', els =>
+            const jobLinks = await this.page.$$eval('a.jobTitle-link', els =>
                 els.map(el => ({
                     title: el.textContent.trim(),
                     url: el.href
