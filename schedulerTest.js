@@ -30,7 +30,7 @@ import runSiemensScraper from "./scrapers/productBased/siemens.js";
 import runUberScraper from "./scrapers/productBased/uber.js";
 import runZohoScraper from "./scrapers/productBased/zoho.js";
 
-import runHCLTechScraper from "./scrapers/servicebased/hclTech.js";
+import runTechMahindraScraper from "./scrapers/servicebased/techMahindra.js";
 
 const config = {
     concurrency: 5,
@@ -112,7 +112,7 @@ ${error.stack}`;
 // ];
 
 const scrapers = [
-    { fn: runHCLTechScraper, headless: true },
+    { fn: runTechMahindraScraper, headless: true },
 ];
 
 const runAllScrapers = async () => {
