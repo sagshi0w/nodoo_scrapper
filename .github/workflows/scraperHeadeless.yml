@@ -2,7 +2,7 @@ name: Daily Scraper Job (Headless)
 
 on:
   schedule:
-    - cron: '30 3 * * *'   # 9:00 AM IST
+    - cron: '0 4 * * *'   # 9:30 AM IST
     #- cron: "30 18 * * *" # 12:00 AM IST
   workflow_dispatch: # Manual trigger option
 
