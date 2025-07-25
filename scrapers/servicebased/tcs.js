@@ -73,7 +73,7 @@ class SiemensJobsScraper {
       }
 
       for (let i = 0; i < cards.length; i++) {
-        console.log(`📝 Processing job ${i + 1}/${cards.length}`);
+        console.log(`📝 Processing TCS job ${i + 1}/${cards.length}`);
         try {
           const card = cards[i];
           await card.click();
@@ -93,9 +93,9 @@ class SiemensJobsScraper {
             });
 
             return {
-              title: document.querySelector('.position-title')?.innerText.trim() || '',
-              location: document.querySelector('.position-location')?.innerText.trim() || '',
-              description: document.querySelector('div.position-job-description')?.innerText.trim() || '',
+              title: document.querySelector('span[data-ng-bind="jobDescription.title"]')?.innerText.trim() || '',
+              location: document.querySelector('span[data-ng-bind="jobDescription.location"]')?.innerText.trim() || '',
+              description: document.querySelector('div.job-description')?.innerText.trim() || '',
               url: window.location.href,
               company: 'TCS',
               ...fields
@@ -109,11 +109,11 @@ class SiemensJobsScraper {
             console.log(`✅ ${job.title}`);
           }
 
-          const closeBtn = await this.page.$('[data-ph-at-id="close-button"]');
-          if (closeBtn) {
-            await closeBtn.click();
-            await delay(500);
-          }
+        //   const closeBtn = await this.page.$('[data-ph-at-id="close-button"]');
+        //   if (closeBtn) {
+        //     await closeBtn.click();
+        //     await delay(500);
+        //   }
 
         } catch (err) {
           console.warn(`⚠️ Error processing job ${i + 1}:`, err.message);
