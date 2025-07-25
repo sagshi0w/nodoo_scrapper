@@ -45,9 +45,7 @@ class techMahindraJobsScraper {
             );
 
             for (const link of jobLinks) {
-                if (!this.allJobLinks.includes(link)) {
-                    this.allJobLinks.push(link);
-                }
+                this.allJobLinks.push(link);
             }
 
             console.log(`📄 Page ${pageIndex}: Total job links so far: ${this.allJobLinks.length}`);
