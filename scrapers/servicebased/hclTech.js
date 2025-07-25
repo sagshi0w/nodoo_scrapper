@@ -24,7 +24,8 @@ class hclTechJobsScraper {
     async navigateToJobsPage() {
         console.log('🌐 Navigating to HCLTech Careers...');
         await this.page.goto('https://www.hcltech.com/careers/careers-in-india', {
-            waitUntil: 'networkidle2'
+            waitUntil: 'networkidle2',
+            timeout: 60000
         });
         await delay(5000);
     }
