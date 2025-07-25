@@ -67,14 +67,11 @@ class TcsJobsScraper {
                     const card = cards[i];
                     await this.page.evaluate(el => el.scrollIntoView(), card);
                     await card.click();
-                    await this.page.waitForSelector('span[data-ng-bind="jobDescription.title"]', {
-                        timeout: 10000, // increase timeout
-                    });
-
+                    await delay(4000);
                     await this.page.waitForFunction(() => {
-                        const title = document.querySelector('span[data-ng-bind="jobDescription.title"]');
-                        return title && title.innerText.length > 0;
-                    }, { timeout: 5000 });
+                        const el = document.querySelector('span[data-ng-bind="jobDescription.title"]');
+                        return el && el.innerText.trim().length > 0;
+                    }, { timeout: 10000 });
 
                     const job = await this.page.evaluate((detailsSelector) => {
                         return {
