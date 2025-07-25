@@ -31,44 +31,51 @@ class techMahindraJobsScraper {
 
     async collectAllJobCardLinks() {
         this.allJobLinks = [];
-        let pageIndex = 1;
+        let previousHeight = 0;
+        let sameHeightCount = 0;
 
         while (true) {
-            // Wait for job listings container
-            //await this.page.waitForSelector('div.paragraph--type--card-info-stand-tiles', { timeout: 10000 });
+            // Scroll to bottom
+            await this.page.evaluate(() => {
+                window.scrollBy(0, window.innerHeight);
+            });
 
-            // Extract job detail links
-            const jobLinks = await this.page.$$eval(
+            // Wait for jobs to load (adjust as needed)
+            await this.page.waitForTimeout(1500);
+
+            // Extract links after scroll
+            const newLinks = await this.page.$$eval(
                 'a.job-title[href^="#detail/job/"]',
                 anchors => anchors.map(a => a.href)
             );
 
-            for (const link of jobLinks) {
-                this.allJobLinks.push(link);
+            // Add only unique links
+            for (const link of newLinks) {
+                if (!this.allJobLinks.includes(link)) {
+                    this.allJobLinks.push(link);
+                }
             }
 
-            console.log(`📄 Page ${pageIndex}: Total job links so far: ${this.allJobLinks.length}`);
+            console.log(`📄 Found ${this.allJobLinks.length} job links so far...`);
 
-            // Check for next page button
-            const nextPageSelector = 'a.page_enabled[href*="__doPostBack"]';
-            const hasNext = await this.page.$(nextPageSelector);
+            // Check scroll height to decide if we're done
+            const currentHeight = await this.page.evaluate(() => document.body.scrollHeight);
 
-            if (!hasNext) {
-                console.log('✅ No more pages.');
+            if (currentHeight === previousHeight) {
+                sameHeightCount++;
+            } else {
+                sameHeightCount = 0;
+            }
+
+            if (sameHeightCount >= 2) {
+                console.log(`✅ Finished scrolling. Total job links collected: ${this.allJobLinks.length}`);
                 break;
             }
 
-            console.log('➡️ Clicking next page...');
-            await Promise.all([
-                this.page.click(nextPageSelector),
-                await delay(30000)
-                //this.page.waitForTimeout(5000),
-            ]);
-
-            pageIndex++;
+            previousHeight = currentHeight;
         }
 
-        console.log(`🎉 Done! Total unique job links collected: ${this.allJobLinks.length}`);
+        return this.allJobLinks;
     }
 
     async extractJobDetailsFromLink(url) {
@@ -137,6 +144,7 @@ class techMahindraJobsScraper {
     async close() {
         await this.browser.close();
     }
+
 
     async run() {
         try {
