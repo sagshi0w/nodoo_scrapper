@@ -102,7 +102,7 @@ class RazorpayJobsScraper {
   }
 
   async saveResults() {
-    fs.writeFileSync('./scrappedJobs/razorpayJobs.json', JSON.stringify(this.allJobs, null, 2));
+    //fs.writeFileSync('./scrappedJobs/razorpayJobs.json', JSON.stringify(this.allJobs, null, 2));
     console.log(`💾 Saved ${this.allJobs.length} jobs to razorpayJobs.json`);
   }
 

@@ -107,14 +107,14 @@ ${error.stack}`;
 //   { fn: runGrowwScraper, headless: true },
 //   { fn: runMeeshoScraper, headless: true },
 //   { fn: runMicrosoftScraper, headless: true },
-//   { fn: runPhonepeScraper, headless: true },
-//   { fn: runRazorpayScraper, headless: true },
+//   
+//   
 //   
 //   { fn: runZohoScraper, headless: true },
 // ];
 
 const scrapers = [
-  { fn: runRazorpayScraper, headless: true },
+  { fn: runPhonepeScraper, headless: true },
 ];
 
 const runAllScrapers = async () => {
