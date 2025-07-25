@@ -100,18 +100,18 @@ ${error.stack}`;
 //   { fn: runAdobeScraper, headless: true },
 //   { fn: runAtlassianScraper, headless: true },
 //   { fn: runClearTaxScraper, headless: true },
-//   { fn: runFlipkartScraper, headless: true },
+//   
 //   
 // 
 //   
 //   
-//   
+//   { fn: runFlipkartScraper, headless: true },
 //   { fn: runFreshworksScraper, headless: true },
 //   { fn: runZohoScraper, headless: true },
 // ];
 
 const scrapers = [
-  { fn: runFlipkartScraper, headless: true },
+  { fn: runClearTaxScraper, headless: true },
 ];
 
 const runAllScrapers = async () => {
