@@ -160,7 +160,7 @@ class InfosysJobsScraper {
         try {
             await this.initialize();
             await this.navigateToJobsPage();
-            await this.scrapeAllJobs();
+            await this.scrapeAllPagesOneByOne();
             await this.saveResults();
         } catch (error) {
             console.error('❌ Scraper failed:', error);
