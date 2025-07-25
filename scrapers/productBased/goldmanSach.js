@@ -7,7 +7,7 @@ class Selectors {
     // List page selectors
     static jobCards = 'div.gs-uitk-mb-2';
     static jobLinks = 'a.text-decoration-none';
-    static nextPageButton = '#__next > main > div > div.gs-uitk-c-8uookc--container-root.rounded.gs-layout-container > div > div > div > div:nth-child(2) > div > div:nth-child(2) > div > div > div.d-sm-flex.justify-content-between > nav > ul > li:nth-child(9)';
+    static nextPageButton = 'a[data-cy="gs-uitk-pagination__nav-link-next"]';
 
     // Job detail page selectors
     static jobTitle = '#__next > main > div > div:nth-child(1) > div > div > div > div.gs-uitk-c-172iff2--col-root.text-left.gs-layout-col > div > span.gs-uitk-c-lzsmqw--text-root.gs-uitk-mb-2.gs-text';
