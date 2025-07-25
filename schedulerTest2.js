@@ -31,7 +31,7 @@ import runUberScraper from "./scrapers/productBased/uber.js";
 import runZohoScraper from "./scrapers/productBased/zoho.js";
 
 import runLTIMindtreeScrapper from "./scrapers/servicebased/ltiMindTree.js";
-import runMphasisScrapper from "./scrapers/servicebased/mphasis.js";
+import runHexawareScrapper from "./scrapers/servicebased/hexaware.js";
 
 const config = {
   concurrency: 5,
@@ -112,7 +112,7 @@ ${error.stack}`;
 // ];
 
 const scrapers = [
-  { fn: runMphasisScrapper, headless: true },
+  { fn: runHexawareScrapper, headless: true },
 ];
 
 const runAllScrapers = async () => {

@@ -3,7 +3,7 @@ import fs from 'fs';
 
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
-class mphasisJobsScraper {
+class hexawareJobsScraper {
     constructor(headless = true) {
         this.headless = headless;
         this.browser = null;
@@ -22,8 +22,8 @@ class mphasisJobsScraper {
     }
 
     async navigateToJobsPage() {
-        console.log('🌐 Navigating to Mphasis Careers...');
-        await this.page.goto('https://mphasis.ripplehire.com/candidate/?token=ty4DfyWddnOrtpclQeia&source=CAREERSITE#list/function=IT%20Application%20Services&geo=IND', {
+        console.log('🌐 Navigating to Hexaware Careers...');
+        await this.page.goto('https://jobs.hexaware.com/#en/sites/CX_1/jobs?lastSelectedFacet=LOCATIONS&mode=location&selectedLocationsFacet=300000000446279&sortBy=POSTING_DATES_DESC', {
             waitUntil: 'networkidle2'
         });
         await delay(5000);
@@ -44,7 +44,7 @@ class mphasisJobsScraper {
 
             // Extract links after scroll
             const newLinks = await this.page.$$eval(
-                'a.job-title[href^="#detail/job/"]',
+                'a.job-list-item__link',
                 anchors => anchors.map(a => a.href)
             );
 
@@ -82,9 +82,9 @@ class mphasisJobsScraper {
             await delay(5000);
 
             // ✅ Extract job summary using jobPage
-            const jobData = await jobPage.evaluate(() => {
+            const job = await jobPage.evaluate(() => {
+                // Extract location and experience from list
                 const listItems = Array.from(document.querySelectorAll('ul > li'));
-
                 let location = '';
                 let experience = '';
 
@@ -96,61 +96,44 @@ class mphasisJobsScraper {
                     }
                 }
 
+                // Extract description and skills
                 const roleDescContainer = document.querySelector('.PD24');
                 const descriptionBlock = roleDescContainer?.querySelector('.description');
                 const skillsBlock = roleDescContainer?.querySelector('.skills');
 
                 let description = '';
                 if (descriptionBlock) {
-                    const divs = descriptionBlock.querySelectorAll('div, p, span');
-                    description = Array.from(divs)
+                    const textElements = descriptionBlock.querySelectorAll('div, p, span');
+                    description = Array.from(textElements)
                         .map(el => el.innerText.trim())
                         .filter(Boolean)
                         .join('\n');
                 }
 
-                // Append experience to description
                 if (experience) {
                     description += `\n\nExperience: ${experience}`;
                 }
 
-                let skills = '';
-                if (skillsBlock) {
-                    skills = skillsBlock.innerText
-                        .replace(/PRIMARY COMPETENCY\s*:\s*/gi, 'PRIMARY COMPETENCY: ')
-                        .replace(/PRIMARY SKILL\s*:\s*/gi, 'PRIMARY SKILL: ')
-                        .replace(/PRIMARY SKILL PERCENTAGE\s*:\s*/gi, '(%)\n')
-                        .replace(/SECONDARY COMPETENCY\s*:\s*/gi, '\nSECONDARY COMPETENCY: ')
-                        .replace(/SECONDARY SKILL\s*:\s*/gi, '\nSECONDARY SKILL: ')
-                        .replace(/SECONDARY SKILL PERCENTAGE\s*:\s*/gi, ' (%)\n')
-                        .replace(/TERTIARY COMPETENCY\s*:\s*/gi, '\nTERTIARY COMPETENCY: ')
-                        .replace(/TERTIARY SKILL\s*:\s*/gi, '\nTERTIARY SKILL: ')
-                        .replace(/TERTIARY SKILL PERCENTAGE\s*:\s*/gi, ' (%)');
-                }
-
-                const titleEl = document.querySelector('a.job-title, h1, h2'); // fallback if h1 or h2 used
+                // Extract job title
+                const titleEl = document.querySelector('a.job-title, h1, h2');
                 const title = titleEl ? titleEl.innerText.trim() : '';
 
                 return {
                     title,
                     location,
-                    description,
-                    skills
+                    description
                 };
             });
 
-            // Add URL and company
-            const jobUrl = jobPage.url();
-            const company = 'Mphasis';
-
+            // Add dynamic URL and static company name
             const finalJob = {
-                title: jobData.title,
-                location: jobData.location,
-                url: jobUrl,
-                description: jobData.description,
-                company
+                ...job,
+                url: jobPage.url(),
+                company: 'Hexaware'
             };
+
             return finalJob;
+
         } catch (err) {
             await jobPage.close();
             console.warn(`❌ Failed to scrape ${url}: ${err.message}`);
@@ -175,7 +158,7 @@ class mphasisJobsScraper {
 
     async saveResults() {
         // fs.writeFileSync('./scrappedJobs/phonepeJobs.json', JSON.stringify(this.allJobs, null, 2));
-        console.log(`💾 Saved ${this.allJobs.length} jobs to mphasisJobs.json`);
+        console.log(`💾 Saved ${this.allJobs.length} jobs to hexawareJobs.json`);
     }
 
     async close() {
@@ -220,23 +203,23 @@ const extractWiproData = (job) => {
         title: job.title?.trim() || '',
         location: job.location?.trim() || '',
         description: cleanedDescription,
-        company: 'Mphasis'
+        company: 'Hexaware'
     };
 };
 
 // ✅ Exportable runner function
-const runMphasisJobsScraper = async ({ headless = true } = {}) => {
-    const scraper = new mphasisJobsScraper(headless);
+const runHexawareJobsScraper = async ({ headless = true } = {}) => {
+    const scraper = new hexawareJobsScraper(headless);
     await scraper.run();
     return scraper.allJobs;
 };
 
-export default runMphasisJobsScraper;
+export default runHexawareJobsScraper;
 
 // ✅ CLI support: node phonepe.js --headless=false
 if (import.meta.url === `file://${process.argv[1]}`) {
     const headlessArg = process.argv.includes('--headless=false') ? false : true;
     (async () => {
-        await runMphasisJobsScraper({ headless: headlessArg });
+        await runHexawareJobsScraper({ headless: headlessArg });
     })();
 }
