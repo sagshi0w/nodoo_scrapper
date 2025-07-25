@@ -22,8 +22,8 @@ class techMahindraJobsScraper {
     }
 
     async navigateToJobsPage() {
-        console.log('🌐 Navigating to LTIMindtree Careers...');
-        await this.page.goto('https://ltimindtree.ripplehire.com/candidate/?token=xviyQvbnyYZdGtozXoNm&lang=en&source=CAREERSITE#list/geo=India', {
+        console.log('🌐 Navigating to Mphasis Careers...');
+        await this.page.goto('https://mphasis.ripplehire.com/candidate/?token=ty4DfyWddnOrtpclQeia&source=CAREERSITE#list/function=IT%20Application%20Services&geo=IND', {
             waitUntil: 'networkidle2'
         });
         await delay(5000);
@@ -84,35 +84,77 @@ class techMahindraJobsScraper {
             await delay(5000);
 
             // ✅ Extract job summary using jobPage
-            const jobDetails = await jobPage.evaluate(() => {
+            const jobData = await jobPage.evaluate(() => {
+                const listItems = Array.from(document.querySelectorAll('ul > li'));
+
+                let location = '';
+                let experience = '';
+
+                for (const li of listItems) {
+                    if (li.querySelector('.icon-glyph-14')) {
+                        location = li.textContent.trim();
+                    } else if (li.querySelector('.icon-glyph-111')) {
+                        experience = li.textContent.trim();
+                    }
+                }
+
                 const roleDescContainer = document.querySelector('.PD24');
+                const descriptionBlock = roleDescContainer?.querySelector('.description');
+                const skillsBlock = roleDescContainer?.querySelector('.skills');
 
-                const descriptionText = roleDescContainer?.querySelector('.description')?.innerText.trim() || "";
-                const skillsText = roleDescContainer?.querySelector('.skills')?.innerText.trim() || "";
+                let description = '';
+                if (descriptionBlock) {
+                    const divs = descriptionBlock.querySelectorAll('div, p, span');
+                    description = Array.from(divs)
+                        .map(el => el.innerText.trim())
+                        .filter(Boolean)
+                        .join('\n');
+                }
 
-                const combinedText = `${descriptionText}\n\n${skillsText}`;
+                // Append experience to description
+                if (experience) {
+                    description += `\n\nExperience: ${experience}`;
+                }
+
+                let skills = '';
+                if (skillsBlock) {
+                    skills = skillsBlock.innerText
+                        .replace(/PRIMARY COMPETENCY\s*:\s*/gi, 'PRIMARY COMPETENCY: ')
+                        .replace(/PRIMARY SKILL\s*:\s*/gi, 'PRIMARY SKILL: ')
+                        .replace(/PRIMARY SKILL PERCENTAGE\s*:\s*/gi, '(%)\n')
+                        .replace(/SECONDARY COMPETENCY\s*:\s*/gi, '\nSECONDARY COMPETENCY: ')
+                        .replace(/SECONDARY SKILL\s*:\s*/gi, '\nSECONDARY SKILL: ')
+                        .replace(/SECONDARY SKILL PERCENTAGE\s*:\s*/gi, ' (%)\n')
+                        .replace(/TERTIARY COMPETENCY\s*:\s*/gi, '\nTERTIARY COMPETENCY: ')
+                        .replace(/TERTIARY SKILL\s*:\s*/gi, '\nTERTIARY SKILL: ')
+                        .replace(/TERTIARY SKILL PERCENTAGE\s*:\s*/gi, ' (%)');
+                }
+
+                const titleEl = document.querySelector('a.job-title, h1, h2'); // fallback if h1 or h2 used
+                const title = titleEl ? titleEl.innerText.trim() : '';
 
                 return {
-                    combinedText
+                    title,
+                    location,
+                    description,
+                    skills
                 };
             });
 
-            // ✅ Extract other job details
-            const job = await jobPage.evaluate((combinedText) => {
-                const getText = sel => document.querySelector(sel)?.innerText.trim() || '';
+            // Add URL and company
+            const jobUrl = jobPage.url();
+            const company = 'Mphasis';
 
-                return {
-                    title: getText('.section-title h2'),
-                    company: 'LTIMindtree',
-                    location: getText('.section-title .location-text'),
-                    description: combinedText,
-                    url: window.location.href
-                };
-            }, jobDetails.combinedText);
+            const finalJob = {
+                title: jobData.title,
+                location: jobData.location,
+                url: jobUrl,
+                description: jobData.description,
+                company
+            };
 
-            await jobPage.close();
-            return job;
-
+            console.log(finalJob);
+            return finalJob;
         } catch (err) {
             await jobPage.close();
             console.warn(`❌ Failed to scrape ${url}: ${err.message}`);
@@ -137,7 +179,7 @@ class techMahindraJobsScraper {
 
     async saveResults() {
         // fs.writeFileSync('./scrappedJobs/phonepeJobs.json', JSON.stringify(this.allJobs, null, 2));
-        console.log(`💾 Saved ${this.allJobs.length} jobs to ltiMindtreeJobs.json`);
+        console.log(`💾 Saved ${this.allJobs.length} jobs to mphasisJobs.json`);
     }
 
     async close() {
@@ -182,7 +224,7 @@ const extractWiproData = (job) => {
         title: job.title?.trim() || '',
         location: job.location?.trim() || '',
         description: cleanedDescription,
-        company: 'LTIMindtree'
+        company: 'Mphasis'
     };
 };
 
