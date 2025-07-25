@@ -101,8 +101,8 @@ ${error.stack}`;
 //   { fn: runAtlassianScraper, headless: true },
 //   { fn: runClearTaxScraper, headless: true },
 //   { fn: runFlipkartScraper, headless: true },
-//   { fn: runFreshworksScraper, headless: true },
-//   { fn: runGoldmanScraper, headless: true },
+//   
+// 
 //   
 //   
 //   
@@ -111,7 +111,7 @@ ${error.stack}`;
 // ];
 
 const scrapers = [
-  { fn: runGoldmanScraper, headless: true },
+  { fn: runFreshworksScraper, headless: true },
 ];
 
 const runAllScrapers = async () => {

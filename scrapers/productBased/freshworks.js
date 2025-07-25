@@ -125,7 +125,7 @@ class FreshworksJobsScraper {
 
   async saveResults() {
     const path = './scrappedJobs/freshworksJobs.json';
-    fs.writeFileSync(path, JSON.stringify(this.allJobs, null, 2));
+    //fs.writeFileSync(path, JSON.stringify(this.allJobs, null, 2));
     console.log(`💾 Saved ${this.allJobs.length} jobs to ${path}`);
   }
 
