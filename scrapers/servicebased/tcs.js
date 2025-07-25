@@ -67,19 +67,19 @@ class TcsJobsScraper {
                     const card = cards[i];
                     await this.page.evaluate(el => el.scrollIntoView(), card);
                     await card.click();
-                    await this.page.waitForSelector('span.jobDescription.title', {
+                    await this.page.waitForSelector('span[data-ng-bind="jobDescription.title"]', {
                         timeout: 10000, // increase timeout
                     });
 
                     await this.page.waitForFunction(() => {
-                        const title = document.querySelector('span.jobDescription.title');
+                        const title = document.querySelector('span[data-ng-bind="jobDescription.title"]');
                         return title && title.innerText.length > 0;
                     }, { timeout: 5000 });
 
                     const job = await this.page.evaluate((detailsSelector) => {
                         return {
-                            title: document.querySelector('span.jobDescription.title')?.innerText.trim() || '',
-                            location: document.querySelector('span.jobDescription.location')?.innerText.trim() || '',
+                            title: document.querySelector('span[data-ng-bind="jobDescription.title"]')?.innerText.trim() || '',
+                            location: document.querySelector('span[data-ng-bind="jobDescription.location"]')?.innerText.trim() || '',
                             description: document.querySelector(detailsSelector)?.innerHTML.trim() || '',
                             url: window.location.href,
                             company: 'TCS'
