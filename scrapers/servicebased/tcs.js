@@ -67,7 +67,9 @@ class TcsJobsScraper {
                     const card = cards[i];
                     await this.page.evaluate(el => el.scrollIntoView(), card);
                     await card.click();
-                    await delay(1500);
+                    await this.page.waitForSelector('span.jobDescription.title', {
+                        timeout: 10000, // increase timeout
+                    });
 
                     await this.page.waitForFunction(() => {
                         const title = document.querySelector('span.jobDescription.title');
