@@ -22,8 +22,8 @@ class birlaSoftJobsScraper {
     }
 
     async navigateToJobsPage() {
-        console.log('🌐 Navigating to Zensar Careers...');
-        await this.page.goto('https://fa-etvl-saasfaprod1.fa.ocs.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX_1/jobs', {
+        console.log('🌐 Navigating to BirlaSoft Careers...');
+        await this.page.goto('https://jobs.birlasoft.com/go/Data-&-Analytics/716344/', {
             waitUntil: 'networkidle2'
         });
         await delay(5000);
