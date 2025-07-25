@@ -55,7 +55,7 @@ class zensarJobsScraper {
                 break;
             } else {
                 await delay(5000),
-                showMoreButton.click();
+                    showMoreButton.click();
             }
         }
 
@@ -68,65 +68,21 @@ class zensarJobsScraper {
         try {
             await jobPage.goto(url, { waitUntil: 'networkidle2' });
             await delay(5000);
+            //await jobPage.waitForSelector('div.job__description.body', { timeout: 10000 });
 
-            // ✅ Extract job summary using jobPage
-            const jobDetails = await jobPage.evaluate(() => {
-                const descriptionContainer = document.querySelector('div.job-details__section');
-                if (!descriptionContainer) return {};
-
-                const rawHTML = descriptionContainer.innerHTML;
-
-                // Extract job title
-                const titleMatch = rawHTML.match(/<strong>Job Title:\s*(.*?)<\/strong>/i);
-                const title = titleMatch ? titleMatch[1].trim() : '';
-
-                // Extract location
-                const locationMatch = rawHTML.match(/<strong>Location:<\/strong>\s*(.*?)<\/span>/i);
-                const location = locationMatch ? locationMatch[1].trim() : '';
-
-                // Extract years of experience
-                const expMatch = rawHTML.match(/Years of Exp\s*:\s*(.*?)<\/span>/i);
-                const experience = expMatch ? expMatch[1].trim() : '';
-
-                // Extract skills
-                const skillMatch = rawHTML.match(/Skills\s*:\s*(.*?)<\/span>/i);
-                const skills = skillMatch ? skillMatch[1].trim() : '';
-
-                // Extract all text for description (including responsibilities and qualifications)
-                const textContent = descriptionContainer.innerText.trim();
-
-                // Construct full description
-                const fullDescription = [
-                    experience ? `Experience: ${experience}` : '',
-                    skills ? `Skills: ${skills}` : '',
-                    '',
-                    textContent
-                ].filter(Boolean).join('\n\n');
-
+            const job = await jobPage.evaluate(() => {
+                const getText = sel => document.querySelector(sel)?.innerText.trim() || '';
                 return {
-                    title,
-                    location,
-                    description: fullDescription
+                    title: getText('h1.heading.job-details__title'),
+                    company: 'Zensar',
+                    location: getText('div.job-details__subtitle.text-color-secondary'),
+                    description: getText('div.job-details__section'),
+                    url: window.location.href
                 };
             });
 
-            // Get the job URL
-            const jobUrl = jobPage.url();
-
-            // Add company
-            const company = "Zensar";
-
-            // Final combined object
-            const finalJob = {
-                title: jobDetails.title,
-                location: jobDetails.location,
-                description: jobDetails.description,
-                url: jobUrl,
-                company: company
-            };
-
-            return finalJob;
-
+            await jobPage.close();
+            return job;
         } catch (err) {
             await jobPage.close();
             console.warn(`❌ Failed to scrape ${url}: ${err.message}`);
