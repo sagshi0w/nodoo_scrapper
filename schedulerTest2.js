@@ -32,6 +32,7 @@ import runZohoScraper from "./scrapers/productBased/zoho.js";
 
 import runLTIMindtreeScrapper from "./scrapers/servicebased/ltiMindTree.js";
 import runHexawareScrapper from "./scrapers/servicebased/hexaware.js";
+import runSonataSoftwareScrapper from "./scrapers/servicebased/sonataSoftware.js";
 
 const config = {
   concurrency: 5,
@@ -112,7 +113,7 @@ ${error.stack}`;
 // ];
 
 const scrapers = [
-  { fn: runHexawareScrapper, headless: true },
+  { fn: runSonataSoftwareScrapper, headless: true },
 ];
 
 const runAllScrapers = async () => {

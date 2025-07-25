@@ -3,7 +3,7 @@ import fs from 'fs';
 
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
-class birlaSoftJobsScraper {
+class sonataSoftwareJobsScraper {
     constructor(headless = true) {
         this.headless = headless;
         this.browser = null;
@@ -22,8 +22,8 @@ class birlaSoftJobsScraper {
     }
 
     async navigateToJobsPage() {
-        console.log('🌐 Navigating to BirlaSoft Careers...');
-        await this.page.goto('https://jobs.birlasoft.com/go/Data-&-Analytics/716344/', {
+        console.log('🌐 Navigating to Sonata Software Careers...');
+        await this.page.goto('https://sonataone.darwinbox.in/ms/candidate/careers', {
             waitUntil: 'networkidle2'
         });
         await delay(5000);
@@ -35,11 +35,11 @@ class birlaSoftJobsScraper {
 
         while (true) {
             // Wait for job links to load
-            await this.page.waitForSelector('a.jobTitle-link', { timeout: 10000 });
+            await this.page.waitForSelector('a.clickable.color-blue.custom-theme-color', { timeout: 10000 });
 
             // Collect new links
             const jobLinks = await this.page.$$eval(
-                'a.jobTitle-link',
+                'a.clickable.color-blue.custom-theme-color',
                 anchors => anchors.map(a => a.href)
             );
 
@@ -91,10 +91,11 @@ class birlaSoftJobsScraper {
             const job = await jobPage.evaluate(() => {
                 const getText = sel => document.querySelector(sel)?.innerText.trim() || '';
                 return {
-                    title: getText('h1.heading.job-details__title'),
-                    company: 'BirlaSoft',
-                    location: getText('span[data-careersite-propertyid="customfield5"]'),
-                    description: getText('span.jobdescription'),
+                    title: getText('h4.display-2.custom-theme-color'),
+                    company: 'Sonata Software',
+                    location: getText('p.mb-4.tooltip-custom'),
+                    experience: getText('div.experience-range'),
+                    description: getText('div.job-summary'),
                     url: window.location.href
                 };
             });
@@ -179,24 +180,24 @@ const extractWiproData = (job) => {
         title: job.title?.trim() || '',
         location: job.location?.trim() || '',
         description: cleanedDescription,
-        company: 'BirlaSoft'
+        company: 'Sonata Software'
     };
 };
 
 
 // ✅ Exportable runner function
-const runBirlaSoftJobsScraper = async ({ headless = true } = {}) => {
-    const scraper = new birlaSoftJobsScraper(headless);
+const runSonataSoftwareJobsScraper = async ({ headless = true } = {}) => {
+    const scraper = new sonataSoftwareJobsScraper(headless);
     await scraper.run();
     return scraper.allJobs;
 };
 
-export default runBirlaSoftJobsScraper;
+export default runSonataSoftwareJobsScraper;
 
 // ✅ CLI support: node phonepe.js --headless=false
 if (import.meta.url === `file://${process.argv[1]}`) {
     const headlessArg = process.argv.includes('--headless=false') ? false : true;
     (async () => {
-        await runBirlaSoftJobsScraper({ headless: headlessArg });
+        await runSonataSoftwareJobsScraper({ headless: headlessArg });
     })();
 }
