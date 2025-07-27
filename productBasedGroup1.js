@@ -12,6 +12,7 @@ require('dotenv').config();
 
 // ✅ Scrapers
 import runAckoScraper from "./scrapers/productBased/acko.js";
+import runAdobeScraper from "./scrapers/productBased/adobe.js"
 import runAmazonScraper from "./scrapers/productBased/amazon.js";
 import runAtlassianScraper from "./scrapers/productBased/atlassian.js";
 import runGoldmanScraper from "./scrapers/productBased/goldmanSach.js";
@@ -83,6 +84,7 @@ ${error.stack}`;
 
 const scrapers = [
   { fn: runAckoScraper, headless: true },
+  { fn: runAdobeScraper, headless: true },
   { fn: runAmazonScraper, headless: true },
   { fn: runAtlassianScraper, headless: true },
   { fn: runGoldmanScraper, headless: true },
