@@ -47,7 +47,7 @@ const runAmazonScraper = async ({ headless = true } = {}) => {
     let pageCount = 1;
     let hasNext = true;
 
-    while (hasNext) {
+    while (hasNext && pageCount < 50) {
         console.log(`\n📄 Processing Page ${pageCount}`);
 
         try {
