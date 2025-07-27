@@ -79,12 +79,7 @@ ${error.stack}`;
 };
 
 const scrapers = [
-  { fn: runGrowwScraper, headless: true },
-  { fn: runPhonepeScraper, headless: true },
-  { fn: runPaypalScraper, headless: true },
   { fn: runSiemensScraper, headless: true },
-  { fn: runRazorpayScraper, headless: true },
-  { fn: runUberScraper, headless: true }
 ];
 
 const runAllScrapers = async () => {
