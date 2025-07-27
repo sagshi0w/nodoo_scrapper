@@ -56,7 +56,7 @@ class GoogleJobsScraper {
 
     console.log('🌐 Navigating to Google Careers page...');
 
-    while (hasMore) {
+    while (hasMore && pageCount < 50) {
       const url = `https://www.google.com/about/careers/applications/jobs/results?location=India&page=${pageCount}`;
       console.log(`🌐 Navigating to Page ${pageCount}...`);
       await this.page.goto(url, { waitUntil: 'networkidle2', timeout: 60000 });
