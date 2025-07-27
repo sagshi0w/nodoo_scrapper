@@ -20,7 +20,9 @@ const config = {
       service: "Gmail",
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASS,
-      recipients: ["sagar.shinde0113@gmail.com"]
+      recipients: process.env.EMAIL_RECIPIENTS
+        ? process.env.EMAIL_RECIPIENTS.split(',').map(email => email.trim())
+        : []
     }
   }
 };
