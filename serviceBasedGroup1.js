@@ -14,6 +14,7 @@ const require = createRequire(import.meta.url);
 const nodemailer = require('nodemailer');
 
 // ✅ Scrapers
+import runBirlaSoftScrapper from "./scrapers/servicebased/birlaSoft.js"
 import runTechMahindraScraper from "./scrapers/servicebased/techMahindra.js";
 import runWiproScraper from "./scrapers/servicebased/wipro.js";
 
@@ -84,6 +85,7 @@ ${error.stack}`;
 };
 
 const scrapers = [
+  { fn: runBirlaSoftScrapper, headless: true },
   { fn: runTechMahindraScraper, headless: true },
   { fn: runWiproScraper, headless: true },
 ];
