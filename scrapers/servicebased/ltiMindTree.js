@@ -33,7 +33,7 @@ class techMahindraJobsScraper {
         this.allJobLinks = [];
         let previousHeight = 0;
         let scrollCount = 0;
-        const maxScrolls = 10;
+        const maxScrolls = 1;
 
         while (scrollCount < maxScrolls) {
             // Scroll to bottom
