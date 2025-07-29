@@ -33,7 +33,7 @@ import runSiemensScraper from "./scrapers/productBased/siemens.js";
 import runUberScraper from "./scrapers/productBased/uber.js";
 import runZohoScraper from "./scrapers/productBased/zoho.js";
 
-import runLTIMindtreeScrapper from "./scrapers/servicebased/ltiMindTree.js";
+import runHexawareScrapper from "./scrapers/servicebased/hexaware.js";
 
 
 const config = {
@@ -118,7 +118,7 @@ ${error.stack}`;
 // ];
 
 const scrapers = [
-    { fn: runLTIMindtreeScrapper, headless: true },
+    { fn: runHexawareScrapper, headless: true },
 ];
 
 const runAllScrapers = async () => {
