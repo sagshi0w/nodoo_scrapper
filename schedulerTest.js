@@ -34,7 +34,7 @@ import runUberScraper from "./scrapers/productBased/uber.js";
 import runZohoScraper from "./scrapers/productBased/zoho.js";
 
 import runInfosysScraper from "./scrapers/servicebased/infosys.js";
-import runLTIMindtreeScrapper from "./scrapers/servicebased/ltiMindTree.js";
+import runSonataSoftScrapper from "./scrapers/servicebased/sonataSoftware.js";
 
 
 
@@ -120,7 +120,7 @@ ${error.stack}`;
 // ];
 
 const scrapers = [
-    { fn: runLTIMindtreeScrapper, headless: true },
+    { fn: runSonataSoftScrapper, headless: true },
 ];
 
 const runAllScrapers = async () => {
