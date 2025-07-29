@@ -5,10 +5,13 @@ import { createRequire } from 'module';
 import fs from 'fs';
 import extractData from "./utils/extractData.js";
 import sendToBackend from "./utils/sendToBackend.js";
+import dotenv from 'dotenv';
+
+// Load environment variables
+dotenv.config();
 
 const require = createRequire(import.meta.url);
 const nodemailer = require('nodemailer');
-require('dotenv').config();
 
 // ✅ Scrapers
 import runWiproScraper from "./scrapers/servicebased/wipro.js";

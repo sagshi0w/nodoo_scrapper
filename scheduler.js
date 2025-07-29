@@ -5,10 +5,14 @@ import { createRequire } from 'module';
 import fs from 'fs';
 import extractData from "./utils/extractData.js";
 import sendToBackend from "./utils/sendToBackend.js";
+import dotenv from 'dotenv';
+
+// Load environment variables
+dotenv.config();
 
 const require = createRequire(import.meta.url);
 const nodemailer = require('nodemailer');
-require('dotenv').config();
+
 
 // ✅ Product based scrapers
 import runAckoScraper from "./scrapers/productBased/acko.js";
@@ -36,6 +40,8 @@ import runInfosysScraper from "./scrapers/servicebased/infosys.js";
 import runWiproScraper from "./scrapers/servicebased/wipro.js";
 import runZensarJobsScraper from "./scrapers/servicebased/zensar.js";
 import runBirlaSoftScrapper from "./scrapers/servicebased/birlaSoft.js"
+
+console.log('EMAIL_RECIPIENTS:', process.env.EMAIL_RECIPIENTS);
 
 const config = {
   concurrency: 5,
