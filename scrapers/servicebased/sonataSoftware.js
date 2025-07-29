@@ -35,11 +35,11 @@ class sonataSoftwareJobsScraper {
 
         while (pageIndex < 2) {
             // Wait for job links to load
-            await this.page.waitForSelector('body > app-root > div > app-user-views > div.module-container > app-jobs-wrapper > app-jobs > div > div.job-results-wrapper > div > div.loader-wrapper > app-jobs-list > app-custom-table > table > tbody > tr:nth-child(2) > td.clickable.color-blue.custom-theme-color', { timeout: 10000 });
+            await this.page.waitForSelector('table.db-table-one', { timeout: 10000 });
 
             // Collect new links
             const jobLinks = await this.page.$$eval(
-                'body > app-root > div > app-user-views > div.module-container > app-jobs-wrapper > app-jobs > div > div.job-results-wrapper > div > div.loader-wrapper > app-jobs-list > app-custom-table > table > tbody > tr:nth-child(2) > td.clickable.color-blue.custom-theme-color',
+                'table.db-table-one',
                 anchors => anchors.map(a => a.href)
             );
 
