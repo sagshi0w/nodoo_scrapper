@@ -31,39 +31,42 @@ class techMahindraJobsScraper {
 
     async collectAllJobCardLinks() {
         this.allJobLinks = [];
-        let seen = new Set();
-        let scrollAttempts = 0;
-        const maxScrolls = 20;
+        let previousHeight = 0;
+        let scrollCount = 0;
+        const maxScrolls = 10;
 
-        while (scrollAttempts < maxScrolls) {
-            // Scroll to bottom to trigger lazy-load
-            await this.page.evaluate(() => window.scrollBy(0, window.innerHeight));
-            await delay(2000);
+        while (scrollCount < maxScrolls) {
+            // Scroll to bottom
+            await this.page.evaluate(() => {
+                window.scrollTo(0, document.body.scrollHeight);
+            });
+
+            await delay(5000); // Wait for jobs to load
 
             const newLinks = await this.page.$$eval(
                 'a.job-title[href^="#detail/job/"]',
                 anchors => anchors.map(a => a.href)
             );
 
-            let added = 0;
+            let addedThisRound = 0;
+
             for (const link of newLinks) {
-                if (!seen.has(link)) {
-                    seen.add(link);
-                    this.allJobLinks.push(link);
-                    added++;
-                }
+                this.allJobLinks.push(link);
+                addedThisRound++;
             }
 
-            console.log(`🔎 Scroll ${scrollAttempts + 1}: +${added} new links, total: ${this.allJobLinks.length}`);
+            console.log(`🔁 Scroll ${scrollCount + 1}: +${addedThisRound} new links, total: ${this.allJobLinks.length}`);
 
-            if (added === 0) break; // no new links → done
-
-            scrollAttempts++;
+            const currentHeight = await this.page.evaluate(() => document.body.scrollHeight);
+            if (currentHeight === previousHeight) break;
+            previousHeight = currentHeight;
+            scrollCount++;
         }
 
-        console.log(`✅ Done. Total collected: ${this.allJobLinks.length}`);
+        console.log(`✅ Finished scrolling. Total job links collected: ${this.allJobLinks.length}`);
         return this.allJobLinks;
     }
+
 
 
 
