@@ -39,7 +39,7 @@ class sonataSoftwareJobsScraper {
 
             // Collect new links
             const jobLinks = await this.page.$$eval(
-                'a.clickable.color-blue.custom-theme-color',
+                'a.clickable',
                 anchors => anchors.map(a => a.href)
             );
 
