@@ -31,6 +31,7 @@ class techMahindraJobsScraper {
 
     async collectAllJobCardLinks() {
         this.allJobLinks = [];
+        const seen = new Set();
         let previousCount = 0;
         let unchangedScrolls = 0;
 
@@ -51,8 +52,11 @@ class techMahindraJobsScraper {
 
             let added = 0;
             for (const link of newLinks) {
-                this.allJobLinks.push(link);
-                added++;
+                if (!seen.has(link)) {
+                    seen.add(link);
+                    this.allJobLinks.push(link);
+                    added++;
+                }
             }
 
             console.log(`🔁 Scroll: +${added} new links, total: ${this.allJobLinks.length}`);
