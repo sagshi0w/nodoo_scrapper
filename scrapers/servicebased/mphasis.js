@@ -89,7 +89,7 @@ class mphasisJobsScraper {
                     title: getText('h2.job-title'),
                     company: 'Mphasis',
                     location: getText('li i.icon-glyph-14 + strong'),
-                    description: getText("div.job-desc"),
+                    description: getText("#job-desc"),
                     url: window.location.href
                 };
             });
