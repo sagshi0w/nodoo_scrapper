@@ -82,82 +82,27 @@ class mphasisJobsScraper {
             await delay(5000);
 
             // ✅ Extract job summary using jobPage
-            const jobData = await jobPage.evaluate(() => {
-                const listItems = Array.from(document.querySelectorAll('ul > li'));
-
-                let location = '';
-                let experience = '';
-
-                for (const li of listItems) {
-                    if (li.querySelector('.icon-glyph-14')) {
-                        location = li.textContent.trim();
-                    } else if (li.querySelector('.icon-glyph-111')) {
-                        experience = li.textContent.trim();
-                    }
-                }
-
-                const roleDescContainer = document.querySelector('.PD24');
-                const descriptionBlock = roleDescContainer?.querySelector('.description');
-                const skillsBlock = roleDescContainer?.querySelector('.skills');
-
-                let description = '';
-                if (descriptionBlock) {
-                    const divs = descriptionBlock.querySelectorAll('div, p, span');
-                    description = Array.from(divs)
-                        .map(el => el.innerText.trim())
-                        .filter(Boolean)
-                        .join('\n');
-                }
-
-                // Append experience to description
-                if (experience) {
-                    description += `\n\nExperience: ${experience}`;
-                }
-
-                let skills = '';
-                if (skillsBlock) {
-                    skills = skillsBlock.innerText
-                        .replace(/PRIMARY COMPETENCY\s*:\s*/gi, 'PRIMARY COMPETENCY: ')
-                        .replace(/PRIMARY SKILL\s*:\s*/gi, 'PRIMARY SKILL: ')
-                        .replace(/PRIMARY SKILL PERCENTAGE\s*:\s*/gi, '(%)\n')
-                        .replace(/SECONDARY COMPETENCY\s*:\s*/gi, '\nSECONDARY COMPETENCY: ')
-                        .replace(/SECONDARY SKILL\s*:\s*/gi, '\nSECONDARY SKILL: ')
-                        .replace(/SECONDARY SKILL PERCENTAGE\s*:\s*/gi, ' (%)\n')
-                        .replace(/TERTIARY COMPETENCY\s*:\s*/gi, '\nTERTIARY COMPETENCY: ')
-                        .replace(/TERTIARY SKILL\s*:\s*/gi, '\nTERTIARY SKILL: ')
-                        .replace(/TERTIARY SKILL PERCENTAGE\s*:\s*/gi, ' (%)');
-                }
-
-                const titleEl = document.querySelector('a.job-title, h1, h2'); // fallback if h1 or h2 used
-                const title = titleEl ? titleEl.innerText.trim() : '';
+            const job = await jobPage.evaluate(() => {
+                const getText = sel => document.querySelector(sel)?.innerText.trim() || '';
 
                 return {
-                    title,
-                    location,
-                    description,
-                    skills
+                    title: getText('h2.job-title'),
+                    company: 'Mphasis',
+                    location: getText('li i.icon-glyph-14 + strong'),
+                    description: getText("div.job-desc"),
+                    url: window.location.href
                 };
             });
 
-            // Add URL and company
-            const jobUrl = jobPage.url();
-            const company = 'Mphasis';
+            console.log("job=",job);
 
-            const finalJob = {
-                title: jobData.title,
-                location: jobData.location,
-                url: jobUrl,
-                description: jobData.description,
-                company
-            };
-            return finalJob;
+            return job;
         } catch (err) {
             await jobPage.close();
             console.warn(`❌ Failed to scrape ${url}: ${err.message}`);
             return null;
         }
     }
-
 
     async processAllJobs() {
         for (let i = 0; i < this.allJobLinks.length; i++) {
@@ -166,8 +111,10 @@ class mphasisJobsScraper {
             const jobData = await this.extractJobDetailsFromLink(url);
             if (jobData && jobData.title) {
                 const enrichedJob = extractWiproData(jobData);
+
+                console.log("enrichedJob=",enrichedJob);
                 this.allJobs.push(enrichedJob);
-                console.log(`✅ ${jobData.title}`);
+                //console.log(`✅ ${jobData.title}`);
             }
             await delay(1000);
         }
