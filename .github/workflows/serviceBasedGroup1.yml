@@ -55,7 +55,7 @@ jobs:
           username: ${{ secrets.MAIL_USERNAME }}
           password: ${{ secrets.MAIL_PASSWORD }}
           subject: "✅ Scheduler Success: $(date)"
-          to: ${{ secrets.MAIL_RECIPIENT }}
+          to: ${{ secrets.MAIL_RECIPIENT || 'nodooin86@gmail.com' }}
           from: "GitHub Action <${{ secrets.MAIL_USERNAME }}>"
           body: |
             ✅ The scheduler ran successfully at 8:00 AM IST.
@@ -71,7 +71,7 @@ jobs:
           username: ${{ secrets.MAIL_USERNAME }}
           password: ${{ secrets.MAIL_PASSWORD }}
           subject: "❌ Scheduler Failed: $(date)"
-          to: ${{ secrets.MAIL_RECIPIENT }}
+          to: ${{ secrets.MAIL_RECIPIENT || 'nodooin86@gmail.com' }}
           from: "GitHub Action <${{ secrets.MAIL_USERNAME }}>"
           body: |
             ❌ The scheduler failed to complete successfully.
