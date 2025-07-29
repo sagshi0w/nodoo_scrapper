@@ -35,8 +35,7 @@ class mphasisJobsScraper {
         let previousCount = 0;
         let retries = 0;
 
-        while (retries < 10) { // Allow a few retries in case some scrolls don't load new data
-            // Scroll manually (same as user would do with mouse)
+        while (retries < 10) { 
             await this.page.evaluate(() => {
                 window.scrollBy(0, window.innerHeight);
             });
