@@ -1050,20 +1050,67 @@ export default function extractSkillsAndExperience(job) {
     };
 
     // Preprocess job description: remove 'description' at start, trim spaces, remove blank lines
+    // function cleanDescription(desc) {
+    //     if (!desc) return '';
+    //     let cleaned = desc.trim();
+    //     // Remove 'description' or 'Job description(s)' at the start (case-insensitive)
+    //     cleaned = cleaned.replace(/^(job\s+)?descriptions?\s*[:\-]?\s*/i, '');
+    //     // Remove any special characters and newlines from the beginning
+    //     cleaned = cleaned.replace(/^[^a-zA-Z0-9\n\r]+/, '');
+    //     // Remove extra blank lines and trim each line
+    //     cleaned = cleaned.split('\n')
+    //         .map(line => line.trim())
+    //         .filter(line => line.length > 0)
+    //         .join('\n');
+    //     return cleaned;
+    // }
+
+    // Preprocess job description:
     function cleanDescription(desc) {
         if (!desc) return '';
-        let cleaned = desc.trim();
-        // Remove 'description' or 'Job description(s)' at the start (case-insensitive)
+
+        // Step 1: Normalize line endings and trim
+        let cleaned = desc.replace(/\r\n/g, '\n').trim();
+
+        // Step 2: Remove leading 'description' label
         cleaned = cleaned.replace(/^(job\s+)?descriptions?\s*[:\-]?\s*/i, '');
-        // Remove any special characters and newlines from the beginning
-        cleaned = cleaned.replace(/^[^a-zA-Z0-9\n\r]+/, '');
-        // Remove extra blank lines and trim each line
-        cleaned = cleaned.split('\n')
+
+        // Step 3: Split into lines and clean each
+        const lines = cleaned
+            .split('\n')
             .map(line => line.trim())
-            .filter(line => line.length > 0)
-            .join('\n');
-        return cleaned;
+            .filter(line => line.length > 0);
+
+        const formattedLines = [];
+
+        for (let line of lines) {
+            // Add bullet if it's a short sentence or keyword line
+            if (
+                line.length < 120 &&
+                /^[a-zA-Z0-9]/.test(line) &&
+                !line.endsWith('.') &&
+                !line.includes('. ')
+            ) {
+                // Add bullet point and end with period if not already
+                if (!line.endsWith('.')) line += '.';
+                formattedLines.push('• ' + line);
+            } else {
+                // Ensure long lines end with a period if not already
+                if (!line.endsWith('.')) line += '.';
+                formattedLines.push(line);
+            }
+        }
+
+        // Step 4: Join lines with appropriate spacing
+        let finalText = formattedLines.join('\n');
+
+        // Step 5: Add extra newlines between paragraphs (if needed)
+        finalText = finalText.replace(/(\.)(\s*•)/g, '$1\n$2'); // new line before bullet
+        finalText = finalText.replace(/([a-z])\. ([A-Z])/g, '$1.\n$2'); // break paragraphs
+
+        return finalText.trim();
     }
+
 
     // Enhanced skill extraction with context awareness
     const extractSkills = (desc) => {
@@ -1101,7 +1148,7 @@ export default function extractSkillsAndExperience(job) {
             foundSkills.add('Communication');
         }
 
-        return Array.from(foundSkills); // No limit on number of skills
+        return Array.from(foundSkills);
     };
 
     // Get job type.
@@ -1117,7 +1164,7 @@ export default function extractSkillsAndExperience(job) {
         if (lower.includes("temporary")) return "Temporary";
         if (lower.includes("freelance")) return "Freelance";
         if (lower.includes("consultant")) return "Consultant";
-        return "Full time";
+        return "Full Time";
     };
 
     // Get city
@@ -1140,6 +1187,7 @@ export default function extractSkillsAndExperience(job) {
     };
 
 
+    // Check if job is entry level or not.
     function isEntryLevelJob(title, experience) {
         const normalizedTitle = title.toLowerCase();
         const seniorityKeywords = [
@@ -1171,13 +1219,13 @@ export default function extractSkillsAndExperience(job) {
     }
 
 
+    // Catergorise job into different sectors
     function categorizeJob(title, description) {
         const normalizedTitle = (title || "").toLowerCase();
         const normalizedDescription = (description || "").toLowerCase();
 
         for (const [sector, keywords] of Object.entries(sectorKeywords)) {
             if (keywords.some(keyword =>
-                //normalizedTitle.includes(keyword) || normalizedDescription.includes(keyword)
                 normalizedTitle.includes(keyword)
             )) {
                 return sector;
@@ -1185,6 +1233,19 @@ export default function extractSkillsAndExperience(job) {
         }
 
         return null;
+    }
+
+    // Get the date posted
+    function getFormattedDateTime() {
+        const now = new Date();
+        const day = String(now.getDate()).padStart(2, '0');
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const year = now.getFullYear();
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const seconds = String(now.getSeconds()).padStart(2, '0');
+
+        return `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`;
     }
 
     return {
@@ -1197,6 +1258,6 @@ export default function extractSkillsAndExperience(job) {
         isEntryLevel: isEntryLevelJob(job.title, cleanDescription(job.description)),
         jobType: extractJobType(cleanDescription(job.description)),
         location: extractCity(job.location),
-        postedAt: new Date().toISOString().split('T')[0]
+        postedAt: getFormattedDateTime()
     };
 }

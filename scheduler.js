@@ -39,7 +39,7 @@ import runTCSScraper from "./scrapers/servicebased/tcs.js";
 import runInfosysScraper from "./scrapers/servicebased/infosys.js";
 import runWiproScraper from "./scrapers/servicebased/wipro.js";
 import runZensarJobsScraper from "./scrapers/servicebased/zensar.js";
-import runBirlaSoftScrapper from "./scrapers/servicebased/birlaSoft.js"
+import runTechMahnidraScrapper from "./scrapers/servicebased/techMahindra.js"
 
 console.log('EMAIL_RECIPIENTS:', process.env.EMAIL_RECIPIENTS);
 
@@ -129,7 +129,7 @@ ${error.stack}`;
 // ];
 
 const scrapers = [
-  { fn: runBirlaSoftScrapper, headless: true },
+  { fn: runTechMahnidraScrapper, headless: true },
 ];
 
 const runAllScrapers = async () => {
@@ -177,7 +177,8 @@ const runAllScrapers = async () => {
 
     if (allJobs.length > 0) {
       const enrichedJobs = allJobs.map(job => extractData(job));
-      await sendToBackend(enrichedJobs);
+      console.log("First enriched job=", enrichedJobs[0]);
+      //await sendToBackend(enrichedJobs);
       //console.log(`📤 Sent ${enrichedJobs.length} jobs to backend`);
     }
 

@@ -9,7 +9,7 @@ console.log("API_URL", API_URL);
 
 const MAX_RETRIES = 3;
 const INITIAL_RETRY_DELAY = 1000;
-const BATCH_SIZE = 100; // Adjust based on your backend’s limit
+const BATCH_SIZE = 100;
 
 axios.defaults.timeout = 10000;
 axios.defaults.headers.common['Content-Type'] = 'application/json';
@@ -57,9 +57,6 @@ export default async function sendToBackend(jobs) {
       } else {
         console.error('Request setup error:', error.message);
       }
-
-      // Optional: continue to next batch instead of throwing
-      // throw new Error(`Failed to send jobs: ${error.message}`);
     }
   }
 
