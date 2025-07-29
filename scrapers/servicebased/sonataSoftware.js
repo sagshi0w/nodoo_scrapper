@@ -35,17 +35,18 @@ class sonataSoftwareJobsScraper {
 
         while (pageIndex < 2) {
             // Wait for job links to load
-            await this.page.waitForSelector('a.clickable', { timeout: 10000 });
+            await this.page.waitForSelector('a[href^="https://sonataone.darwinbox.in/ms/candidate/careers/"]', { timeout: 10000 });
 
             // Collect new links
             const jobLinks = await this.page.$$eval(
-                'a.clickable',
+                'a[href^="https://sonataone.darwinbox.in/ms/candidate/careers/"]',
                 anchors => anchors.map(a => a.href)
             );
 
             for (const link of jobLinks) {
                 this.allJobLinks.push(link);
             }
+            
             console.log(`📄 Collected ${this.allJobLinks.length} unique job links so far...`);
 
             const pageNumbers = await this.page.$$eval('ul.pagination li a', links =>
