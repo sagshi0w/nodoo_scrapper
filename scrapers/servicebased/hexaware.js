@@ -55,23 +55,21 @@ class hexawareJobsScraper {
 
             console.log(`📄 Found ${this.allJobLinks.length} job links so far...`);
 
-            break;
+            // Check scroll height to decide if we're done
+            const currentHeight = await this.page.evaluate(() => document.body.scrollHeight);
 
-            // // Check scroll height to decide if we're done
-            // const currentHeight = await this.page.evaluate(() => document.body.scrollHeight);
+            if (currentHeight === previousHeight) {
+                sameHeightCount++;
+            } else {
+                sameHeightCount = 0;
+            }
 
-            // if (currentHeight === previousHeight) {
-            //     sameHeightCount++;
-            // } else {
-            //     sameHeightCount = 0;
-            // }
+            if (sameHeightCount >= 2) {
+                console.log(`✅ Finished scrolling. Total job links collected: ${this.allJobLinks.length}`);
+                break;
+            }
 
-            // if (sameHeightCount >= 2) {
-            //     console.log(`✅ Finished scrolling. Total job links collected: ${this.allJobLinks.length}`);
-            //     break;
-            // }
-
-            // previousHeight = currentHeight;
+            previousHeight = currentHeight;
         }
 
         return this.allJobLinks;
@@ -115,8 +113,8 @@ class hexawareJobsScraper {
             console.log(`📝 [${i + 1}/${this.allJobLinks.length}] Processing: ${url}`);
             const jobData = await this.extractJobDetailsFromLink(url);
             if (jobData && jobData.title) {
-                const enrichedJob = extractWiproData(jobData);
-                this.allJobs.push(enrichedJob);
+                //const enrichedJob = extractWiproData(jobData);
+                //this.allJobs.push(enrichedJob);
                 console.log(`✅ ${jobData.title}`);
             }
             await delay(1000);
