@@ -34,7 +34,7 @@ class mphasisJobsScraper {
         const seenLinks = new Set();
 
         let attemptsWithoutNewLinks = 0;
-        const maxAttemptsWithoutNew = 10;
+        const maxAttemptsWithoutNew = 20;
 
         while (attemptsWithoutNewLinks < maxAttemptsWithoutNew) {
             // Scroll by a chunk
