@@ -91,10 +91,11 @@ class mindgateSolutionsJobsScraper {
             const job = await jobPage.evaluate(() => {
                 const getText = sel => document.querySelector(sel)?.innerText.trim() || '';
                 return {
-                    title: getText('span[itemprop="title"][data-careersite-propertyid="title"]'),
+                    title: getText('h1.class="career-position-title"'),
                     company: 'Happiestminds',
-                    location: getText('span[data-careersite-propertyid="customfield5"]'),
-                    description: getText('span.jobdescription'),
+                    location: getText('ul.job-summary-list li:nth-child(1)'),
+                    experience: getText('ul.job-summary-list li:nth-child(2)'),
+                    description: getText('ul.key-responsibilities-list'),
                     url: window.location.href
                 };
             });
