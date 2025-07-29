@@ -985,6 +985,7 @@ export default function extractSkillsAndExperience(job) {
     * @returns {string} Formatted experience range or default text
     */
     const extractExperience = (desc) => {
+        if (job.experience) return job.experience;
         if (!desc) return 'Not specified';
 
         // Map number words to digits

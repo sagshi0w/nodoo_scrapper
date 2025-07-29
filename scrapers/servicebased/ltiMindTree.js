@@ -80,32 +80,19 @@ class techMahindraJobsScraper {
             await jobPage.goto(url, { waitUntil: 'networkidle2' });
             await delay(5000);
 
-            // ✅ Extract job summary using jobPage
-            const jobDetails = await jobPage.evaluate(() => {
-                const roleDescContainer = document.querySelector('.PD24');
-
-                const descriptionText = roleDescContainer?.querySelector('.description')?.innerText.trim() || "";
-                const skillsText = roleDescContainer?.querySelector('.skills')?.innerText.trim() || "";
-
-                const combinedText = `${descriptionText}\n\n${skillsText}`;
-
-                return {
-                    combinedText
-                };
-            });
-
             // ✅ Extract other job details
-            const job = await jobPage.evaluate((combinedText) => {
+            const job = await jobPage.evaluate(() => {
                 const getText = sel => document.querySelector(sel)?.innerText.trim() || '';
 
                 return {
                     title: getText('.section-title h2'),
                     company: 'LTIMindtree',
-                    location: getText('.section-title .location-text'),
-                    description: combinedText,
+                    location: getText('.section-title ul.list-icon li.location-text'),
+                    description: getText("p.desc_text_height.description"),
+                    experience: getText(".section-title ul.list-icon li:nth-child(1)"),
                     url: window.location.href
                 };
-            }, jobDetails.combinedText);
+            });
 
             await jobPage.close();
 
