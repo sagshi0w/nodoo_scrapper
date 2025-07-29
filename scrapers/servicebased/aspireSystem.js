@@ -39,7 +39,7 @@ class aspireSystemsJobsScraper {
 
             // Collect new links
             const jobLinks = await this.page.$$eval(
-                'a[data-faitracker-click-bind][hreflang="en"]',
+                'div.op-oppourtunity-title',
                 anchors => anchors.map(a => a.href)
             );
 
