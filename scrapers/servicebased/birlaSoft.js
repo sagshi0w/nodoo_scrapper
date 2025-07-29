@@ -99,6 +99,8 @@ class birlaSoftJobsScraper {
                 };
             });
 
+            console.log("Before enriching job=",job);
+
             await jobPage.close();
             return job;
         } catch (err) {
@@ -116,6 +118,7 @@ class birlaSoftJobsScraper {
             const jobData = await this.extractJobDetailsFromLink(url);
             if (jobData && jobData.title) {
                 const enrichedJob = extractWiproData(jobData);
+                console.log("After enriching job=",enrichedJob);
                 this.allJobs.push(enrichedJob);
                 console.log(`✅ ${jobData.title}`);
             }
