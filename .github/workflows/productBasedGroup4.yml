@@ -1,8 +1,8 @@
-name: ProductBased Group 3
+name: ProductBased Group 4
 
 on:
   schedule:
-    - cron: "30 4 * * *"  # Runs at 10:00 AM IST
+    - cron: "30 6 * * *"  # Runs at 12:00 PM IST
   workflow_dispatch: # Manual trigger option
 
 jobs:
@@ -39,7 +39,7 @@ jobs:
         run: npm install
 
       - name: 🏃 Run scheduler
-        run: node productBasedGroup3.js
+        run: node productBasedGroup4.js
         env:
           EMAIL_USER: ${{ secrets.MAIL_USERNAME }}
           EMAIL_PASS: ${{ secrets.MAIL_PASSWORD }}

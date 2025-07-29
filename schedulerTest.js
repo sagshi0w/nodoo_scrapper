@@ -34,7 +34,7 @@ import runUberScraper from "./scrapers/productBased/uber.js";
 import runZohoScraper from "./scrapers/productBased/zoho.js";
 
 import runInfosysScraper from "./scrapers/servicebased/infosys.js";
-import runMindgateSolutionsScrapper from "./scrapers/servicebased/mindgateSolutions.js";
+
 
 const config = {
     concurrency: 5,
@@ -118,7 +118,7 @@ ${error.stack}`;
 // ];
 
 const scrapers = [
-    { fn: runMindgateSolutionsScrapper, headless: true },
+    { fn: runZohoScraper, headless: true },
 ];
 
 const runAllScrapers = async () => {

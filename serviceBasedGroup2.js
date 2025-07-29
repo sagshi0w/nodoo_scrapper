@@ -16,6 +16,7 @@ const nodemailer = require('nodemailer');
 import runHexawareJobsScraper from "./scrapers/servicebased/hexaware.js";
 import runMphasisScrapper from "./scrapers/servicebased/mphasis.js";
 import runZensarScrapper from "./scrapers/servicebased/zensar.js";
+import runMindgateSolutionsScrapper from "./scrapers/servicebased/mindgateSolutions.js";
 
 const config = {
   concurrency: 5,
@@ -87,6 +88,7 @@ const scrapers = [
   { fn: runHexawareJobsScraper, headless: true },
   { fn: runMphasisScrapper, headless: true },
   { fn: runZensarScrapper, headless: true },
+  { fn: runMindgateSolutionsScrapper, headless: true },
 ];
 
 const runAllScrapers = async () => {

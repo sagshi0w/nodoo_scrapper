@@ -13,9 +13,7 @@ const require = createRequire(import.meta.url);
 const nodemailer = require('nodemailer');
 
 // ✅ Scrapers
-import runAtlassianScraper from "./scrapers/productBased/atlassian.js";
-import runGoldmanScraper from "./scrapers/productBased/goldmanSach.js";
-import runGoogleScraper from "./scrapers/productBased/google.js";
+import runMindgateSolutionsJobsScraper from "./scrapers/servicebased/mindgateSolutions.js";
 
 const config = {
   concurrency: 5,
@@ -84,13 +82,7 @@ ${error.stack}`;
 };
 
 const scrapers = [
-  { fn: runAtlassianScraper, headless: true },
-  { fn: runGoldmanScraper, headless: true },
-  { fn: runGoogleScraper, headless: true },
-
-  { fn: runSiemensScraper, headless: true },
-  { fn: runRazorpayScraper, headless: true },
-  { fn: runUberScraper, headless: true }
+  { fn: runMindgateSolutionsJobsScraper, headless: true },
 ];
 
 const runAllScrapers = async () => {

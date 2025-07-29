@@ -2,7 +2,7 @@ name: ServiceBased Group 1
 
 on:
   schedule:
-    - cron: "30 18 * * *" # 12:00 AM IST
+    - cron: "30 8 * * *"  # Runs at 2:00 PM IST
   workflow_dispatch: # Manual trigger option
 
 jobs:

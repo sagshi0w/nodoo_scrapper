@@ -17,9 +17,6 @@ const nodemailer = require('nodemailer');
 import runAckoScraper from "./scrapers/productBased/acko.js";
 import runAdobeScraper from "./scrapers/productBased/adobe.js"
 import runAmazonScraper from "./scrapers/productBased/amazon.js";
-import runAtlassianScraper from "./scrapers/productBased/atlassian.js";
-import runGoldmanScraper from "./scrapers/productBased/goldmanSach.js";
-import runGoogleScraper from "./scrapers/productBased/google.js";
 
 const config = {
   concurrency: 5,
@@ -91,9 +88,6 @@ const scrapers = [
   { fn: runAckoScraper, headless: true },
   { fn: runAdobeScraper, headless: true },
   { fn: runAmazonScraper, headless: true },
-  { fn: runAtlassianScraper, headless: true },
-  { fn: runGoldmanScraper, headless: true },
-  { fn: runGoogleScraper, headless: true }
 ];
 
 const runAllScrapers = async () => {
