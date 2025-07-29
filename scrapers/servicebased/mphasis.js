@@ -31,53 +31,48 @@ class mphasisJobsScraper {
 
     async collectAllJobCardLinks() {
         this.allJobLinks = [];
-        let previousHeight = 0;
-        let sameHeightCount = 0;
-        const seen = new Set();
+        const seenLinks = new Set();
 
-        while (true) {
-            // Scroll to bottom
+        let attemptsWithoutNewLinks = 0;
+        const maxAttemptsWithoutNew = 10;
+
+        while (attemptsWithoutNewLinks < maxAttemptsWithoutNew) {
+            // Scroll by a chunk
             await this.page.evaluate(() => {
                 window.scrollBy(0, window.innerHeight);
             });
 
-            await delay(5000);
+            await delay(3000);
 
-            // Extract links after scroll
-            const newLinks = await this.page.$$eval(
+            // Collect links
+            const links = await this.page.$$eval(
                 'a.job-title[href^="#detail/job/"]',
                 anchors => anchors.map(a => a.href)
             );
 
-            // Add only unique links
-            for (const link of newLinks) {
-                if (!seen.has(link)) {
+            let newLinksFound = 0;
+
+            for (const link of links) {
+                if (!seenLinks.has(link)) {
+                    seenLinks.add(link);
                     this.allJobLinks.push(link);
-                    seen.add(link);
+                    newLinksFound++;
                 }
             }
 
-            console.log(`📄 Found ${this.allJobLinks.length} job links so far...`);
+            console.log(`📄 Collected ${this.allJobLinks.length} job links so far...`);
 
-            // Check scroll height to decide if we're done
-            const currentHeight = await this.page.evaluate(() => document.body.scrollHeight);
-
-            if (currentHeight === previousHeight) {
-                sameHeightCount++;
+            if (newLinksFound === 0) {
+                attemptsWithoutNewLinks++;
             } else {
-                sameHeightCount = 0;
+                attemptsWithoutNewLinks = 0;
             }
-
-            if (sameHeightCount >= 2) {
-                console.log(`✅ Finished scrolling. Total job links collected: ${this.allJobLinks.length}`);
-                break;
-            }
-
-            previousHeight = currentHeight;
         }
 
+        console.log(`✅ Finished collecting. Total unique job links: ${this.allJobLinks.length}`);
         return this.allJobLinks;
     }
+
 
     async extractJobDetailsFromLink(url) {
         const jobPage = await this.browser.newPage();
