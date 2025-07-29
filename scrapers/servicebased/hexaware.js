@@ -84,59 +84,22 @@ class hexawareJobsScraper {
             await delay(5000);
 
             // ✅ Extract job summary using jobPage
+            // Extract other job details
             const job = await jobPage.evaluate(() => {
-                // Extract location and experience from list
-                const listItems = Array.from(document.querySelectorAll('ul > li'));
-                let location = '';
-                let experience = '';
-
-                for (const li of listItems) {
-                    if (li.querySelector('.icon-glyph-14')) {
-                        location = li.textContent.trim();
-                    } else if (li.querySelector('.icon-glyph-111')) {
-                        experience = li.textContent.trim();
-                    }
-                }
-
-                // Extract description and skills
-                const roleDescContainer = document.querySelector('.PD24');
-                const descriptionBlock = roleDescContainer?.querySelector('.description');
-                const skillsBlock = roleDescContainer?.querySelector('.skills');
-
-                let description = '';
-                if (descriptionBlock) {
-                    const textElements = descriptionBlock.querySelectorAll('div, p, span');
-                    description = Array.from(textElements)
-                        .map(el => el.innerText.trim())
-                        .filter(Boolean)
-                        .join('\n');
-                }
-
-                if (experience) {
-                    description += `\n\nExperience: ${experience}`;
-                }
-
-                // Extract job title
-                const titleEl = document.querySelector('a.job-title, h1, h2');
-                const title = titleEl ? titleEl.innerText.trim() : '';
+                const getText = sel => document.querySelector(sel)?.innerText.trim() || '';
 
                 return {
-                    title,
-                    location,
-                    description
+                    title: getText('h1.job-details__title'),
+                    company: 'Hexaware',
+                    location: getText('div.job-details__subtitle'),
+                    description: getText(".job-details__description-content"),
+                    url: window.location.href
                 };
             });
 
-            // Add dynamic URL and static company name
-            const finalJob = {
-                ...job,
-                url: jobPage.url(),
-                company: 'Hexaware'
-            };
+            console.log("job=", job);
 
-            console.log("finalJob=",finalJob);
-
-            return finalJob;
+            return job;
 
         } catch (err) {
             await jobPage.close();
@@ -190,15 +153,11 @@ const extractWiproData = (job) => {
     let cleanedDescription = job.description || '';
     if (cleanedDescription) {
         cleanedDescription = cleanedDescription
-            .replace(/about\s+phonepe\s+group\s*:/gi, '')
-            .replace(/about\s+phonepe\s*:/gi, '')
-            .replace(/culture/gi, '')
-            .replace(/job summary:?/gi, '')
-            .replace(/(\n\s*)(responsibilities|requirements|qualifications|skills|experience|education|benefits|what\s+we\s+offer|key\s+responsibilities|job\s+description|role\s+and\s+responsibilities|about\s+the\s+role|what\s+you'll\s+do|what\s+you\s+will\s+do)(\s*:?\s*\n)/gi, '\n\n$1$2$3\n\n')
-            .replace(/(\n\s*)(\d+\.\s*)(.*?)(\n)/gi, '\n\n$1$2$3$4\n')
-            .replace(/(\n\s*)(•\s*)(.*?)(\n)/gi, '\n\n$1$2$3$4\n')
             .replace(/[ \t]+$/gm, '')
+
+            // Collapse extra newlines to just double newlines
             .replace(/\n{3,}/g, '\n\n')
+
             .trim();
     }
 
