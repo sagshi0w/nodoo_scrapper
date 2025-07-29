@@ -165,6 +165,8 @@ const runAllScrapers = async () => {
 
     if (allJobs.length > 0) {
       const enrichedJobs = allJobs.map(job => extractData(job));
+
+      console.log("enrichedJobs=",enrichedJobs);
       await sendToBackend(enrichedJobs);
       //console.log(`📤 Sent ${enrichedJobs.length} jobs to backend`);
     }
