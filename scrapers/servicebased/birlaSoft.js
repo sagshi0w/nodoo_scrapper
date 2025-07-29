@@ -91,7 +91,7 @@ class birlaSoftJobsScraper {
             const job = await jobPage.evaluate(() => {
                 const getText = sel => document.querySelector(sel)?.innerText.trim() || '';
                 return {
-                    title: getText('h1.heading.job-details__title'),
+                    title: getText('span[itemprop="title"][data-careersite-propertyid="title"]'),
                     company: 'BirlaSoft',
                     location: getText('span[data-careersite-propertyid="customfield5"]'),
                     description: getText('span.jobdescription'),
