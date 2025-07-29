@@ -13,10 +13,8 @@ const require = createRequire(import.meta.url);
 const nodemailer = require('nodemailer');
 
 // ✅ Scrapers
-import runWiproScraper from "./scrapers/servicebased/wipro.js";
 import runBirlaSoftScrapper from "./scrapers/servicebased/birlaSoft.js"
 import runInfosysScraper from "./scrapers/servicebased/infosys.js";
-import runTechMahindraScraper from "./scrapers/servicebased/techMahindra.js";
 import runLTIMindtreeScrapper from "./scrapers/servicebased/ltiMindTree.js";
 import runMphasisScrapper from "./scrapers/servicebased/mphasis.js";
 import runHexawareJobsScraper from "./scrapers/servicebased/hexaware.js";

@@ -165,8 +165,6 @@ const extractTechMahindraData = (job) => {
 
     if (cleanedDescription) {
         cleanedDescription = cleanedDescription
-            .replace(/about\s+phonepe\s+group\s*:/gi, '')
-            .replace(/about\s+phonepe\s*:/gi, '')
             .replace(/job summary:?/gi, '')
 
             // Add spacing before section headers (don't remove them)
