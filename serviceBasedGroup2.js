@@ -1,6 +1,5 @@
 import moment from "moment-timezone";
 import pLimit from "p-limit";
-import axios from "axios";
 import { createRequire } from 'module';
 import fs from 'fs';
 import extractData from "./utils/extractData.js";
