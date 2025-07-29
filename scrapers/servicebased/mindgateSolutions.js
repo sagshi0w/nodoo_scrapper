@@ -90,15 +90,35 @@ class mindgateSolutionsJobsScraper {
 
             const job = await jobPage.evaluate(() => {
                 const getText = sel => document.querySelector(sel)?.innerText.trim() || '';
+
+                // Get raw values
+                const rawLocation = getText('ul.job-summary-list li:nth-child(1)');
+                const rawExperience = getText('ul.job-summary-list li:nth-child(2)');
+
+                // Clean location: remove 'Location:' prefix
+                const location = rawLocation.replace(/^Location:\s*/i, '').trim();
+
+                // Clean and convert experience
+                let experience = rawExperience.replace(/^Experience:\s*/i, '').trim();
+                if (experience.includes('+')) {
+                    const years = parseInt(experience);
+                    if (!isNaN(years)) {
+                        experience = `${years} - ${years + 2} yrs`;
+                    }
+                } else {
+                    experience = experience.replace(/Years?/i, 'yrs');
+                }
+
                 return {
                     title: getText('h1.career-position-title'),
                     company: 'Happiestminds',
-                    location: getText('ul.job-summary-list li:nth-child(1)'),
-                    experience: getText('ul.job-summary-list li:nth-child(2)'),
+                    location,
+                    experience,
                     description: getText('ul.key-responsibilities-list'),
                     url: window.location.href
                 };
             });
+
 
             console.log("Before enriching job=", job);
 
