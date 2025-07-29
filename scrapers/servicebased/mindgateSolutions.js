@@ -3,7 +3,7 @@ import fs from 'fs';
 
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
-class birlaSoftJobsScraper {
+class mindgateSolutionsJobsScraper {
     constructor(headless = true) {
         this.headless = headless;
         this.browser = null;
@@ -22,30 +22,12 @@ class birlaSoftJobsScraper {
     }
 
     async navigateToJobsPage() {
-        console.log('🌐 Navigating to BirlaSoft Careers...');
-        await this.page.goto('https://jobs.birlasoft.com/go/India/684744/', {
+        console.log('🌐 Navigating to Mindgate Solutions Careers...');
+        await this.page.goto('https://www.mindgate.solutions/career/', {
             waitUntil: 'networkidle2'
         });
         await delay(5000);
     }
-
-    // async navigateToJobsPages() {
-    //     this.allJobLinks = [];
-
-    //     const categoryUrls = [
-    //         'https://jobs.birlasoft.com/go/Data-&-Analytics/716344/',
-    //         'https://jobs.birlasoft.com/go/Digital-Engineering/716345/',
-    //         'https://jobs.birlasoft.com/go/Enterprise-Solutions/716346/',
-    //         // Add more category URLs here
-    //     ];
-
-    //     for (const url of categoryUrls) {
-    //         console.log(`🌐 Navigating to: ${url}`);
-    //         await this.page.goto(url, { waitUntil: 'networkidle2' });
-    //         await delay(5000);
-    //         await this.collectAllJobCardLinks();
-    //     }
-    // }
 
     async collectAllJobCardLinks() {
         this.allJobLinks = [];
@@ -53,11 +35,11 @@ class birlaSoftJobsScraper {
 
         while (true) {
             // Wait for job links to load
-            await this.page.waitForSelector('a.jobTitle-link', { timeout: 10000 });
+            await this.page.waitForSelector('td a.view-job', { timeout: 10000 });
 
             // Collect new links
             const jobLinks = await this.page.$$eval(
-                'a.jobTitle-link',
+                'td a.view-job',
                 anchors => anchors.map(a => a.href)
             );
 
@@ -110,7 +92,7 @@ class birlaSoftJobsScraper {
                 const getText = sel => document.querySelector(sel)?.innerText.trim() || '';
                 return {
                     title: getText('span[itemprop="title"][data-careersite-propertyid="title"]'),
-                    company: 'BirlaSoft',
+                    company: 'Happiestminds',
                     location: getText('span[data-careersite-propertyid="customfield5"]'),
                     description: getText('span.jobdescription'),
                     url: window.location.href
@@ -146,7 +128,7 @@ class birlaSoftJobsScraper {
 
     async saveResults() {
         // fs.writeFileSync('./scrappedJobs/phonepeJobs.json', JSON.stringify(this.allJobs, null, 2));
-        console.log(`💾 Saved ${this.allJobs.length} jobs to zensarJobs.json`);
+        console.log(`💾 Saved ${this.allJobs.length} jobs to MindgateSolutions.json`);
     }
 
     async close() {
@@ -200,24 +182,24 @@ const extractWiproData = (job) => {
         title: job.title?.trim() || '',
         location: job.location?.trim() || '',
         description: cleanedDescription,
-        company: 'BirlaSoft'
+        company: 'Happiestminds'
     };
 };
 
 
 // ✅ Exportable runner function
-const runBirlaSoftJobsScraper = async ({ headless = true } = {}) => {
-    const scraper = new birlaSoftJobsScraper(headless);
+const runMindgateSolutionsJobsScraper = async ({ headless = true } = {}) => {
+    const scraper = new mindgateSolutionsJobsScraper(headless);
     await scraper.run();
     return scraper.allJobs;
 };
 
-export default runBirlaSoftJobsScraper;
+export default runMindgateSolutionsJobsScraper;
 
 // ✅ CLI support: node phonepe.js --headless=false
 if (import.meta.url === `file://${process.argv[1]}`) {
     const headlessArg = process.argv.includes('--headless=false') ? false : true;
     (async () => {
-        await runBirlaSoftJobsScraper({ headless: headlessArg });
+        await runMindgateSolutionsJobsScraper({ headless: headlessArg });
     })();
 }
