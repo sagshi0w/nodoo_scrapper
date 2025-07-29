@@ -61,7 +61,7 @@ class zensarJobsScraper {
                 await showMoreButton.evaluate(el => el.scrollIntoView({ behavior: 'smooth', block: 'center' }));
 
                 // Wait for a short moment after scroll (optional)
-                 await delay(5000);
+                await delay(5000);
 
                 // Ensure it's still visible and attached
                 const isVisible = await showMoreButton.evaluate(el => {
@@ -100,7 +100,7 @@ class zensarJobsScraper {
                     title: getText('h1.heading.job-details__title'),
                     company: 'Zensar',
                     location: getText('div.job-details__subtitle.text-color-secondary'),
-                    description: getText('div.job-details__section'),
+                    description: getText('.job-details__description-content'),
                     url: window.location.href
                 };
             });
@@ -160,19 +160,24 @@ const extractWiproData = (job) => {
 
     if (cleanedDescription) {
         cleanedDescription = cleanedDescription
+            // Remove "Job Title:" or similar headers
+            .replace(/^.*job\s*title\s*:\s*/gim, '')
+
             // Remove specific single-line phrases
             .replace(/^\s*(TRENDING|BE THE FIRST TO APPLY)\s*$/gim, '')
 
-            // Format bullet points and numbered lists
+            // Format numbered and bullet lists
             .replace(/(\n\s*)(\d+\.\s*)(.*?)(\n)/gi, '\n\n$1$2$3$4\n')
-            .replace(/(\n\s*)(•\s*)(.*?)(\n)/gi, '\n\n$1$2$3$4\n')
+            .replace(/(\n\s*)(•|–|-|\*)\s*(.*?)(\n)/gi, '\n\n$1• $3$4\n')
 
-            // Trim spaces and excess newlines
+            // Remove redundant spaces and trim lines
             .replace(/[ \t]+$/gm, '')
             .replace(/\n{3,}/g, '\n\n')
+            .replace(/[ \t]+\n/g, '\n')
+            .replace(/\n[ \t]+/g, '\n')
             .trim();
 
-        // If description ends up empty, provide fallback
+        // Fallback if cleaned content is empty
         if (!cleanedDescription) {
             cleanedDescription = 'Description not available';
         }
