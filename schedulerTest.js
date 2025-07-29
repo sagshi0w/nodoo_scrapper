@@ -34,7 +34,7 @@ import runUberScraper from "./scrapers/productBased/uber.js";
 import runZohoScraper from "./scrapers/productBased/zoho.js";
 
 import runInfosysScraper from "./scrapers/servicebased/infosys.js";
-import runMphasisScrapper from "./scrapers/servicebased/mphasis.js";
+
 
 
 const config = {
@@ -119,7 +119,7 @@ ${error.stack}`;
 // ];
 
 const scrapers = [
-    { fn: runMphasisScrapper, headless: true },
+    { fn: runInfosysScraper, headless: true },
 ];
 
 const runAllScrapers = async () => {
