@@ -14,12 +14,7 @@ const require = createRequire(import.meta.url);
 const nodemailer = require('nodemailer');
 
 // ✅ Scrapers
-import runInfosysScraper from "./scrapers/servicebased/infosys.js";
-import runWiproScraper from "./scrapers/servicebased/wipro.js";
 import runTechMahindraScraper from "./scrapers/servicebased/techMahindra.js";
-import runLTIMindtreeScrapper from "./scrapers/servicebased/ltiMindTree.js";
-import runMphasisScrapper from "./scrapers/servicebased/mphasis.js";
-import runHexawareJobsScraper from "./scrapers/servicebased/hexaware.js";
 
 const config = {
   concurrency: 5,
@@ -88,12 +83,7 @@ ${error.stack}`;
 };
 
 const scrapers = [
-  { fn: runInfosysScraper, headless: true },
-  { fn: runWiproScraper, headless: true },
   { fn: runTechMahindraScraper, headless: true },
-  { fn: runLTIMindtreeScrapper, headless: true },
-  { fn: runMphasisScrapper, headless: true },
-  { fn: runHexawareJobsScraper, headless: true },
 ];
 
 const runAllScrapers = async () => {
