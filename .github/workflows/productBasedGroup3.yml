@@ -2,7 +2,7 @@ name: ProductBased Group 3
 
 on:
   schedule:
-    cron: "30 20 * * *"  # Runs at (2:00 AM IST)
+    - cron: "30 20 * * *"  # Runs at (2:00 AM IST)
   workflow_dispatch: # Manual trigger option
 
 jobs:
