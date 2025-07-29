@@ -43,7 +43,7 @@ class techMahindraJobsScraper {
                 window.scrollTo(0, document.body.scrollHeight);
             });
 
-            await delay(6000); // Wait longer for RippleHire to fetch jobs
+            await delay(4000); // Wait longer for RippleHire to fetch jobs
 
             const newLinks = await this.page.$$eval(
                 'a.job-title[href^="#detail/job/"]',
