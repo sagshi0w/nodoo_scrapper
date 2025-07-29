@@ -33,7 +33,7 @@ import runSiemensScraper from "./scrapers/productBased/siemens.js";
 import runUberScraper from "./scrapers/productBased/uber.js";
 import runZohoScraper from "./scrapers/productBased/zoho.js";
 
-import runTechMahindraScraper from "./scrapers/servicebased/techMahindra.js";
+import runLTIMindtreeScrapper from "./scrapers/servicebased/ltiMindTree.js";
 
 
 const config = {
@@ -118,7 +118,7 @@ ${error.stack}`;
 // ];
 
 const scrapers = [
-    { fn: runTechMahindraScraper, headless: true },
+    { fn: runLTIMindtreeScrapper, headless: true },
 ];
 
 const runAllScrapers = async () => {
@@ -166,6 +166,7 @@ const runAllScrapers = async () => {
 
         if (allJobs.length > 0) {
             const enrichedJobs = allJobs.map(job => extractData(job));
+            console.log("enrichedJobs=",enrichedJobs);
             await sendToBackend(enrichedJobs);
             //console.log(`📤 Sent ${enrichedJobs.length} jobs to backend`);
         }

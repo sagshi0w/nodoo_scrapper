@@ -111,6 +111,8 @@ class techMahindraJobsScraper {
             }, jobDetails.combinedText);
 
             await jobPage.close();
+
+            console.log("job=",job);
             return job;
 
         } catch (err) {
