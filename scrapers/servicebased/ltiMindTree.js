@@ -31,8 +31,8 @@ class techMahindraJobsScraper {
 
     async collectAllJobCardLinks() {
         this.allJobLinks = [];
-        let previousHeight = 0;
-        let sameHeightCount = 0;
+        // let previousHeight = 0;
+        // let sameHeightCount = 0;
 
         while (true) {
             // Scroll to bottom
@@ -55,21 +55,21 @@ class techMahindraJobsScraper {
 
             console.log(`📄 Found ${this.allJobLinks.length} job links so far...`);
 
-            // Check scroll height to decide if we're done
-            const currentHeight = await this.page.evaluate(() => document.body.scrollHeight);
+            // // Check scroll height to decide if we're done
+            // const currentHeight = await this.page.evaluate(() => document.body.scrollHeight);
 
-            if (currentHeight === previousHeight) {
-                sameHeightCount++;
-            } else {
-                sameHeightCount = 0;
-            }
+            // if (currentHeight === previousHeight) {
+            //     sameHeightCount++;
+            // } else {
+            //     sameHeightCount = 0;
+            // }
 
-            if (sameHeightCount >= 2) {
-                console.log(`✅ Finished scrolling. Total job links collected: ${this.allJobLinks.length}`);
-                break;
-            }
+            // if (sameHeightCount >= 2) {
+            //     console.log(`✅ Finished scrolling. Total job links collected: ${this.allJobLinks.length}`);
+            //     break;
+            // }
 
-            previousHeight = currentHeight;
+            // previousHeight = currentHeight;
         }
 
         return this.allJobLinks;
