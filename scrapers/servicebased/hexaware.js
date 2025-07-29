@@ -117,8 +117,8 @@ class hexawareJobsScraper {
             console.log(`📝 [${i + 1}/${this.allJobLinks.length}] Processing: ${url}`);
             const jobData = await this.extractJobDetailsFromLink(url);
             if (jobData && jobData.title) {
-                //const enrichedJob = extractWiproData(jobData);
-                //this.allJobs.push(enrichedJob);
+                const enrichedJob = extractWiproData(jobData);
+                this.allJobs.push(enrichedJob);
                 console.log(`✅ ${jobData.title}`);
             }
             await delay(1000);
