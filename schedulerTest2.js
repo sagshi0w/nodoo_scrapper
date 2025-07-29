@@ -45,7 +45,9 @@ const config = {
       service: "Gmail",
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASS,
-      recipients: ["nodooin86@gmail.com"]
+      recipients: process.env.EMAIL_RECIPIENTS
+        ? process.env.EMAIL_RECIPIENTS.split(',').map(email => email.trim())
+        : ['nodooin86@gmail.com']
     }
   }
 };
@@ -166,7 +168,7 @@ const runAllScrapers = async () => {
     if (allJobs.length > 0) {
       const enrichedJobs = allJobs.map(job => extractData(job));
 
-      console.log("enrichedJobs=",enrichedJobs);
+      console.log("enrichedJobs=", enrichedJobs);
       await sendToBackend(enrichedJobs);
       //console.log(`📤 Sent ${enrichedJobs.length} jobs to backend`);
     }
