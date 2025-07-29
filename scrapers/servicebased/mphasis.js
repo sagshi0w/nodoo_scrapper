@@ -42,7 +42,7 @@ class mphasisJobsScraper {
             });
 
             // Wait for jobs to load
-            await this.page.waitForTimeout(4000);
+            await delay(5000);
 
             // Get new links
             const newLinks = await this.page.$$eval(
