@@ -55,21 +55,23 @@ class hexawareJobsScraper {
 
             console.log(`📄 Found ${this.allJobLinks.length} job links so far...`);
 
-            // Check scroll height to decide if we're done
-            const currentHeight = await this.page.evaluate(() => document.body.scrollHeight);
+            break;
 
-            if (currentHeight === previousHeight) {
-                sameHeightCount++;
-            } else {
-                sameHeightCount = 0;
-            }
+            // // Check scroll height to decide if we're done
+            // const currentHeight = await this.page.evaluate(() => document.body.scrollHeight);
 
-            if (sameHeightCount >= 2) {
-                console.log(`✅ Finished scrolling. Total job links collected: ${this.allJobLinks.length}`);
-                break;
-            }
+            // if (currentHeight === previousHeight) {
+            //     sameHeightCount++;
+            // } else {
+            //     sameHeightCount = 0;
+            // }
 
-            previousHeight = currentHeight;
+            // if (sameHeightCount >= 2) {
+            //     console.log(`✅ Finished scrolling. Total job links collected: ${this.allJobLinks.length}`);
+            //     break;
+            // }
+
+            // previousHeight = currentHeight;
         }
 
         return this.allJobLinks;
@@ -131,6 +133,8 @@ class hexawareJobsScraper {
                 url: jobPage.url(),
                 company: 'Hexaware'
             };
+
+            console.log("finalJob=",finalJob);
 
             return finalJob;
 
