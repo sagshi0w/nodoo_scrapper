@@ -33,6 +33,7 @@ class mphasisJobsScraper {
         this.allJobLinks = [];
         let previousHeight = 0;
         let sameHeightCount = 0;
+        const seen = new Set();
 
         while (true) {
             // Scroll to bottom
@@ -50,7 +51,10 @@ class mphasisJobsScraper {
 
             // Add only unique links
             for (const link of newLinks) {
-                this.allJobLinks.push(link);
+                if (!seen.has(link)) {
+                    this.allJobLinks.push(link);
+                    seen.add(link);
+                }
             }
 
             console.log(`📄 Found ${this.allJobLinks.length} job links so far...`);
