@@ -31,24 +31,40 @@ class techMahindraJobsScraper {
 
     async collectAllJobCardLinks() {
         this.allJobLinks = [];
+        let seen = new Set();
+        let scrollAttempts = 0;
+        const maxScrolls = 20;
 
-        // Wait for the job links to be present
-        await this.page.waitForSelector('a.job-title[href^="#detail/job/"]', { timeout: 10000 });
+        while (scrollAttempts < maxScrolls) {
+            // Scroll to bottom to trigger lazy-load
+            await this.page.evaluate(() => window.scrollBy(0, window.innerHeight));
+            await delay(2000);
 
-        // Collect job links
-        const jobLinks = await this.page.$$eval(
-            'a.job-title[href^="#detail/job/"]',
-            anchors => anchors.map(a => a.href)
-        );
+            const newLinks = await this.page.$$eval(
+                'a.job-title[href^="#detail/job/"]',
+                anchors => anchors.map(a => a.href)
+            );
 
-        // Push only unique links
-        for (const link of jobLinks) {
-            this.allJobLinks.push(link);
+            let added = 0;
+            for (const link of newLinks) {
+                if (!seen.has(link)) {
+                    seen.add(link);
+                    this.allJobLinks.push(link);
+                    added++;
+                }
+            }
+
+            console.log(`🔎 Scroll ${scrollAttempts + 1}: +${added} new links, total: ${this.allJobLinks.length}`);
+
+            if (added === 0) break; // no new links → done
+
+            scrollAttempts++;
         }
 
-        console.log(`✅ Collected ${this.allJobLinks.length} unique job links.`);
+        console.log(`✅ Done. Total collected: ${this.allJobLinks.length}`);
         return this.allJobLinks;
     }
+
 
 
 
