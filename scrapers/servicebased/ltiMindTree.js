@@ -50,9 +50,7 @@ class techMahindraJobsScraper {
 
             // Add only unique links
             for (const link of newLinks) {
-                if (!this.allJobLinks.includes(link)) {
-                    this.allJobLinks.push(link);
-                }
+                this.allJobLinks.push(link);
             }
 
             console.log(`📄 Found ${this.allJobLinks.length} job links so far...`);
