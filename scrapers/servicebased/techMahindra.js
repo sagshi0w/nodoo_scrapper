@@ -33,7 +33,7 @@ class techMahindraJobsScraper {
         this.allJobLinks = [];
         let pageIndex = 1;
 
-        while (pageIndex < 52) {
+        while (pageIndex < 10) {
             // Wait for job listings container
             //await this.page.waitForSelector('div.paragraph--type--card-info-stand-tiles', { timeout: 10000 });
 
