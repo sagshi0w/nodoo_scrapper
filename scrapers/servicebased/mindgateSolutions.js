@@ -111,7 +111,7 @@ class mindgateSolutionsJobsScraper {
 
                 return {
                     title: getText('h1.career-position-title'),
-                    company: 'Happiestminds',
+                    company: 'Mindgate Solutions',
                     location,
                     experience,
                     description: getText('ul.key-responsibilities-list'),
@@ -203,7 +203,7 @@ const extractWiproData = (job) => {
         title: job.title?.trim() || '',
         location: job.location?.trim() || '',
         description: cleanedDescription,
-        company: 'Happiestminds'
+        company: 'Mindgate Solutions'
     };
 };
 
