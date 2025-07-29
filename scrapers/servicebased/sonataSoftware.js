@@ -33,7 +33,7 @@ class sonataSoftwareJobsScraper {
         this.allJobLinks = [];
         let pageIndex = 1;
 
-        while (true) {
+        while (pageIndex < 2) {
             // Wait for job links to load
             await this.page.waitForSelector('a.clickable', { timeout: 10000 });
 
