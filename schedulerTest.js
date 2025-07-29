@@ -34,6 +34,7 @@ import runUberScraper from "./scrapers/productBased/uber.js";
 import runZohoScraper from "./scrapers/productBased/zoho.js";
 
 import runInfosysScraper from "./scrapers/servicebased/infosys.js";
+import runLTIMindtreeScrapper from "./scrapers/servicebased/ltiMindTree.js";
 
 
 
@@ -119,7 +120,7 @@ ${error.stack}`;
 // ];
 
 const scrapers = [
-    { fn: runInfosysScraper, headless: true },
+    { fn: runLTIMindtreeScrapper, headless: true },
 ];
 
 const runAllScrapers = async () => {
