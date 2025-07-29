@@ -33,43 +33,45 @@ class techMahindraJobsScraper {
         this.allJobLinks = [];
         const seen = new Set();
         let previousCount = 0;
-        let sameCountTries = 0;
-        const maxTries = 5;
+        let unchangedScrolls = 0;
 
-        while (sameCountTries < maxTries) {
-            // Scroll to bottom to trigger loading
-            await this.page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
-            await delay(4000);// Wait for lazy load to complete
+        const MAX_UNCHANGED_SCROLLS = 3;
 
-            // Collect visible job links
-            const newLinks = await this.page.$$eval('a.job-title[href^="#detail/job/"]', anchors =>
-                anchors.map(a => a.href)
+        while (unchangedScrolls < MAX_UNCHANGED_SCROLLS) {
+            // Scroll to bottom
+            await this.page.evaluate(() => {
+                window.scrollTo(0, document.body.scrollHeight);
+            });
+
+            await delay(60000); // Wait longer for RippleHire to fetch jobs
+
+            const newLinks = await this.page.$$eval(
+                'a.job-title[href^="#detail/job/"]',
+                anchors => anchors.map(a => a.href)
             );
 
             let added = 0;
             for (const link of newLinks) {
-                const fullUrl = 'https://ltimindtree.ripplehire.com/candidate/' + link;
-                if (!seen.has(fullUrl)) {
-                    seen.add(fullUrl);
-                    this.allJobLinks.push(fullUrl);
+                if (!seen.has(link)) {
+                    seen.add(link);
+                    this.allJobLinks.push(link);
                     added++;
                 }
             }
 
-            console.log(`🔁 Scroll: +${added} new, total: ${this.allJobLinks.length}`);
+            console.log(`🔁 Scroll: +${added} new links, total: ${this.allJobLinks.length}`);
 
             if (this.allJobLinks.length === previousCount) {
-                sameCountTries++;
+                unchangedScrolls++;
             } else {
+                unchangedScrolls = 0;
                 previousCount = this.allJobLinks.length;
-                sameCountTries = 0;
             }
         }
 
-        console.log(`✅ Done collecting. Total job links: ${this.allJobLinks.length}`);
+        console.log(`✅ Done. Total job links collected: ${this.allJobLinks.length}`);
         return this.allJobLinks;
     }
-
 
 
     async extractJobDetailsFromLink(url) {
