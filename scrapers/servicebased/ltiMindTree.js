@@ -21,54 +21,24 @@ class techMahindraJobsScraper {
         this.page = await this.browser.newPage();
     }
 
-    async navigateToJobsPage() {
-        console.log('🌐 Navigating to LTIMindtree Careers...');
-        await this.page.goto('https://ltimindtree.ripplehire.com/candidate/?token=xviyQvbnyYZdGtozXoNm&lang=en&source=CAREERSITE#list/geo=India', {
-            waitUntil: 'networkidle2'
-        });
-        await delay(5000);
-    }
-
     async collectAllJobCardLinks() {
         this.allJobLinks = [];
-        let previousHeight = 0;
-        let sameHeightCount = 0;
 
-        while (true) {
-            // Scroll down
-            await this.page.evaluate(() => window.scrollBy(0, window.innerHeight));
-            await delay(3000);
+        // Wait for the job links to be present
+        await this.page.waitForSelector('a.job-title[href^="#detail/job/"]', { timeout: 10000 });
 
-            // Collect job links
-            const newLinks = await this.page.$$eval(
-                'a.job-title[href^="#detail/job/"]',
-                anchors => anchors.map(a => a.href)
-            );
+        // Collect job links
+        const jobLinks = await this.page.$$eval(
+            'a.job-title[href^="#detail/job/"]',
+            anchors => anchors.map(a => a.href)
+        );
 
-            // Add only new unique links
-            for (const link of newLinks) {
-                this.allJobLinks.push(link);
-            }
-
-            console.log(`📄 Found ${this.allJobLinks.length} job links so far...`);
-
-            // Detect scroll end
-            const currentHeight = await this.page.evaluate(() => document.body.scrollHeight);
-
-            if (currentHeight === previousHeight) {
-                sameHeightCount++;
-            } else {
-                sameHeightCount = 0;
-            }
-
-            if (sameHeightCount >= 2) {
-                console.log(`✅ Finished scrolling. Total job links collected: ${this.allJobLinks.length}`);
-                break;
-            }
-
-            previousHeight = currentHeight;
+        // Push only unique links
+        for (const link of jobLinks) {
+            this.allJobLinks.push(link);
         }
 
+        console.log(`✅ Collected ${this.allJobLinks.length} unique job links.`);
         return this.allJobLinks;
     }
 
