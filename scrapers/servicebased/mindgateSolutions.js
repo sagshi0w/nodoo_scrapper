@@ -91,7 +91,7 @@ class mindgateSolutionsJobsScraper {
             const job = await jobPage.evaluate(() => {
                 const getText = sel => document.querySelector(sel)?.innerText.trim() || '';
                 return {
-                    title: getText('h1.class="career-position-title"'),
+                    title: getText('h1.career-position-title'),
                     company: 'Happiestminds',
                     location: getText('ul.job-summary-list li:nth-child(1)'),
                     experience: getText('ul.job-summary-list li:nth-child(2)'),
