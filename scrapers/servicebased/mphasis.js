@@ -32,44 +32,46 @@ class mphasisJobsScraper {
     async collectAllJobCardLinks() {
         this.allJobLinks = [];
         const seenLinks = new Set();
+        let previousCount = 0;
+        let retries = 0;
 
-        let attemptsWithoutNewLinks = 0;
-        const maxAttemptsWithoutNew = 3;
-
-        while (attemptsWithoutNewLinks < maxAttemptsWithoutNew) {
-            // Scroll by a chunk
+        while (retries < 10) { // Allow a few retries in case some scrolls don't load new data
+            // Scroll manually (same as user would do with mouse)
             await this.page.evaluate(() => {
                 window.scrollBy(0, window.innerHeight);
             });
 
-            await delay(3000);
+            // Wait for jobs to load
+            await this.page.waitForTimeout(4000);
 
-            // Collect links
-            const links = await this.page.$$eval(
+            // Get new links
+            const newLinks = await this.page.$$eval(
                 'a.job-title[href^="#detail/job/"]',
                 anchors => anchors.map(a => a.href)
             );
 
-            let newLinksFound = 0;
-
-            for (const link of links) {
+            // Add only unique links
+            let added = 0;
+            for (const link of newLinks) {
                 if (!seenLinks.has(link)) {
                     seenLinks.add(link);
                     this.allJobLinks.push(link);
-                    newLinksFound++;
+                    added++;
                 }
             }
 
-            console.log(`📄 Collected ${this.allJobLinks.length} job links so far...`);
+            console.log(`📄 Scroll step: Collected ${added} new links. Total: ${this.allJobLinks.length}`);
 
-            if (newLinksFound === 0) {
-                attemptsWithoutNewLinks++;
+            // If no new links added, increment retry; otherwise reset
+            if (this.allJobLinks.length === previousCount) {
+                retries++;
             } else {
-                attemptsWithoutNewLinks = 0;
+                retries = 0;
+                previousCount = this.allJobLinks.length;
             }
         }
 
-        console.log(`✅ Finished collecting. Total unique job links: ${this.allJobLinks.length}`);
+        console.log(`✅ Finished scrolling. Total job links collected: ${this.allJobLinks.length}`);
         return this.allJobLinks;
     }
 
