@@ -50,7 +50,7 @@ const config = {
       service: "Gmail",
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASS,
-      recipients: ['nodooin86@gmail.com']
+      recipients: ["nodooin86@gmail.com"]
     }
   }
 };
