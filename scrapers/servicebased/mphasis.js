@@ -98,7 +98,7 @@ class mphasisJobsScraper {
                 };
             });
 
-            console.log("job=",job);
+            console.log("job=", job);
 
             return job;
         } catch (err) {
@@ -116,7 +116,7 @@ class mphasisJobsScraper {
             if (jobData && jobData.title) {
                 const enrichedJob = extractWiproData(jobData);
 
-                console.log("enrichedJob=",enrichedJob);
+                console.log("enrichedJob=", enrichedJob);
                 this.allJobs.push(enrichedJob);
                 //console.log(`✅ ${jobData.title}`);
             }
@@ -154,11 +154,7 @@ const extractWiproData = (job) => {
     let cleanedDescription = job.description || '';
     if (cleanedDescription) {
         cleanedDescription = cleanedDescription
-            .replace(/about\s+phonepe\s+group\s*:/gi, '')
-            .replace(/about\s+phonepe\s*:/gi, '')
-            .replace(/culture/gi, '')
-            .replace(/job summary:?/gi, '')
-            .replace(/(\n\s*)(responsibilities|requirements|qualifications|skills|experience|education|benefits|what\s+we\s+offer|key\s+responsibilities|job\s+description|role\s+and\s+responsibilities|about\s+the\s+role|what\s+you'll\s+do|what\s+you\s+will\s+do)(\s*:?\s*\n)/gi, '\n\n$1$2$3\n\n')
+            .replace(/job\s+description\s*:?/gi, '')
             .replace(/(\n\s*)(\d+\.\s*)(.*?)(\n)/gi, '\n\n$1$2$3$4\n')
             .replace(/(\n\s*)(•\s*)(.*?)(\n)/gi, '\n\n$1$2$3$4\n')
             .replace(/[ \t]+$/gm, '')
