@@ -87,7 +87,10 @@ class techMahindraJobsScraper {
                 return {
                     title: getText('.section-title h2'),
                     company: 'LTIMindtree',
-                   experience: getText('.section-title ul.list-icon li:nth-child(1)').replace(/years?/i, 'yrs'),
+                    experience: (() => {
+                        const text = getText('.section-title ul.list-icon li:nth-child(1)');
+                        return text ? text.replace(/years?/gi, 'yrs') : '';
+                    })(),
                     description: getText("p.desc_text_height.description"),
                     experience: getText(".section-title ul.list-icon li:nth-child(1)"),
                     url: window.location.href
