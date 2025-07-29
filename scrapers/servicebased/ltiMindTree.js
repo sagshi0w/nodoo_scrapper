@@ -31,44 +31,43 @@ class techMahindraJobsScraper {
 
     async collectAllJobCardLinks() {
         this.allJobLinks = [];
-        let previousHeight = 0;
-        let scrollCount = 0;
-        const maxScrolls = 1;
+        let previousCount = 0;
+        let unchangedScrolls = 0;
 
-        while (scrollCount < maxScrolls) {
+        const MAX_UNCHANGED_SCROLLS = 3;
+
+        while (unchangedScrolls < MAX_UNCHANGED_SCROLLS) {
             // Scroll to bottom
             await this.page.evaluate(() => {
                 window.scrollTo(0, document.body.scrollHeight);
             });
 
-            await delay(5000); // Wait for jobs to load
+            await delay(5000); // Wait longer for RippleHire to fetch jobs
 
             const newLinks = await this.page.$$eval(
                 'a.job-title[href^="#detail/job/"]',
                 anchors => anchors.map(a => a.href)
             );
 
-            let addedThisRound = 0;
-
+            let added = 0;
             for (const link of newLinks) {
                 this.allJobLinks.push(link);
-                addedThisRound++;
+                added++;
             }
 
-            console.log(`🔁 Scroll ${scrollCount + 1}: +${addedThisRound} new links, total: ${this.allJobLinks.length}`);
+            console.log(`🔁 Scroll: +${added} new links, total: ${this.allJobLinks.length}`);
 
-            const currentHeight = await this.page.evaluate(() => document.body.scrollHeight);
-            if (currentHeight === previousHeight) break;
-            previousHeight = currentHeight;
-            scrollCount++;
+            if (this.allJobLinks.length === previousCount) {
+                unchangedScrolls++;
+            } else {
+                unchangedScrolls = 0;
+                previousCount = this.allJobLinks.length;
+            }
         }
 
-        console.log(`✅ Finished scrolling. Total job links collected: ${this.allJobLinks.length}`);
+        console.log(`✅ Done. Total job links collected: ${this.allJobLinks.length}`);
         return this.allJobLinks;
     }
-
-
-
 
 
     async extractJobDetailsFromLink(url) {
