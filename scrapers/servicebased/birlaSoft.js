@@ -33,7 +33,7 @@ class birlaSoftJobsScraper {
         this.allJobLinks = [];
         let pageIndex = 1;
 
-        while (true) {
+        while (pageIndex < 2) {
             // Wait for job links to load
             await this.page.waitForSelector('a.jobTitle-link', { timeout: 10000 });
 
