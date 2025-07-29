@@ -17,6 +17,7 @@ const nodemailer = require('nodemailer');
 import runBirlaSoftScrapper from "./scrapers/servicebased/birlaSoft.js"
 import runTechMahindraScraper from "./scrapers/servicebased/techMahindra.js";
 import runWiproScraper from "./scrapers/servicebased/wipro.js";
+import runLTIMindtreeScrapper from "./scrapers/servicebased/ltiMindTree.js";
 
 const config = {
   concurrency: 5,
@@ -88,6 +89,7 @@ const scrapers = [
   { fn: runBirlaSoftScrapper, headless: true },
   { fn: runTechMahindraScraper, headless: true },
   { fn: runWiproScraper, headless: true },
+  { fn: runLTIMindtreeScrapper, headless: true },
 ];
 
 const runAllScrapers = async () => {
