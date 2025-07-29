@@ -23,17 +23,35 @@ class birlaSoftJobsScraper {
 
     async navigateToJobsPage() {
         console.log('🌐 Navigating to BirlaSoft Careers...');
-        await this.page.goto('https://jobs.birlasoft.com/go/Data-&-Analytics/716344/', {
+        await this.page.goto('https://jobs.birlasoft.com/go/India/684744/', {
             waitUntil: 'networkidle2'
         });
         await delay(5000);
     }
 
+    // async navigateToJobsPages() {
+    //     this.allJobLinks = [];
+
+    //     const categoryUrls = [
+    //         'https://jobs.birlasoft.com/go/Data-&-Analytics/716344/',
+    //         'https://jobs.birlasoft.com/go/Digital-Engineering/716345/',
+    //         'https://jobs.birlasoft.com/go/Enterprise-Solutions/716346/',
+    //         // Add more category URLs here
+    //     ];
+
+    //     for (const url of categoryUrls) {
+    //         console.log(`🌐 Navigating to: ${url}`);
+    //         await this.page.goto(url, { waitUntil: 'networkidle2' });
+    //         await delay(5000);
+    //         await this.collectAllJobCardLinks();
+    //     }
+    // }
+
     async collectAllJobCardLinks() {
         this.allJobLinks = [];
         let pageIndex = 1;
 
-        while (pageIndex < 2) {
+        while (true) {
             // Wait for job links to load
             await this.page.waitForSelector('a.jobTitle-link', { timeout: 10000 });
 
@@ -99,7 +117,7 @@ class birlaSoftJobsScraper {
                 };
             });
 
-            console.log("Before enriching job=",job);
+            console.log("Before enriching job=", job);
 
             await jobPage.close();
             return job;
@@ -118,7 +136,7 @@ class birlaSoftJobsScraper {
             const jobData = await this.extractJobDetailsFromLink(url);
             if (jobData && jobData.title) {
                 const enrichedJob = extractWiproData(jobData);
-                console.log("After enriching job=",enrichedJob);
+                console.log("After enriching job=", enrichedJob);
                 this.allJobs.push(enrichedJob);
                 console.log(`✅ ${jobData.title}`);
             }
