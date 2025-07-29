@@ -110,6 +110,8 @@ class techMahindraJobsScraper {
             }, jobSummary);
 
             await jobPage.close();
+
+            console.log('job=', job);
             return job;
         } catch (err) {
             await jobPage.close();
@@ -124,7 +126,7 @@ class techMahindraJobsScraper {
             console.log(`📝 [${i + 1}/${this.allJobLinks.length}] Processing: ${url}`);
             const jobData = await this.extractJobDetailsFromLink(url);
             if (jobData && jobData.title) {
-                const enrichedJob = extractWiproData(jobData);
+                const enrichedJob = extractTechMahindraData(jobData);
                 this.allJobs.push(enrichedJob);
                 console.log(`✅ ${jobData.title}`);
             }
@@ -156,20 +158,34 @@ class techMahindraJobsScraper {
     }
 }
 
-const extractWiproData = (job) => {
+const extractTechMahindraData = (job) => {
     if (!job) return job;
+
     let cleanedDescription = job.description || '';
+
     if (cleanedDescription) {
         cleanedDescription = cleanedDescription
             .replace(/about\s+phonepe\s+group\s*:/gi, '')
             .replace(/about\s+phonepe\s*:/gi, '')
-            .replace(/culture/gi, '')
             .replace(/job summary:?/gi, '')
-            .replace(/(\n\s*)(responsibilities|requirements|qualifications|skills|experience|education|benefits|what\s+we\s+offer|key\s+responsibilities|job\s+description|role\s+and\s+responsibilities|about\s+the\s+role|what\s+you'll\s+do|what\s+you\s+will\s+do)(\s*:?\s*\n)/gi, '\n\n$1$2$3\n\n')
-            .replace(/(\n\s*)(\d+\.\s*)(.*?)(\n)/gi, '\n\n$1$2$3$4\n')
-            .replace(/(\n\s*)(•\s*)(.*?)(\n)/gi, '\n\n$1$2$3$4\n')
+
+            // Add spacing before section headers (don't remove them)
+            .replace(
+                /(\n?\s*)(responsibilities|requirements|qualifications|skills|experience|education|benefits|what\s+we\s+offer|key\s+responsibilities|job\s+description|role\s+and\s+responsibilities|about\s+the\s+role|what\s+you(?:'|’)ll\s+do|what\s+you\s+will\s+do)(\s*:?\s*\n)/gi,
+                '\n\n$2$3'
+            )
+
+            // Add spacing before numbered or bullet list items
+            .replace(/(\n?\s*)(\d+\.\s+)(.*?)(?=\n|$)/g, '\n\n$2$3')
+            .replace(/(\n?\s*)(•\s+)(.*?)(?=\n|$)/g, '\n\n$2$3')
+
+            // Remove trailing spaces
             .replace(/[ \t]+$/gm, '')
+
+            // Collapse 3+ newlines to just 2
             .replace(/\n{3,}/g, '\n\n')
+
+            // Trim start/end
             .trim();
     }
 
@@ -178,9 +194,10 @@ const extractWiproData = (job) => {
         title: job.title?.trim() || '',
         location: job.location?.trim() || '',
         description: cleanedDescription,
-        company: 'Tech Mahindra'
+        company: 'Tech Mahindra',
     };
 };
+
 
 // ✅ Exportable runner function
 const runTechMahindraScraper = async ({ headless = true } = {}) => {
