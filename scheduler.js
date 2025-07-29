@@ -127,7 +127,7 @@ ${error.stack}`;
 // ];
 
 const scrapers = [
-  { fn: runTechMahnidraScrapper, headless: true },
+  { fn: runWiproScraper, headless: true },
 ];
 
 const runAllScrapers = async () => {

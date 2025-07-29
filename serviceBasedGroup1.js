@@ -15,7 +15,6 @@ const nodemailer = require('nodemailer');
 
 // ✅ Scrapers
 import runTechMahindraScraper from "./scrapers/servicebased/techMahindra.js";
-import runWiproScraper from "./scrapers/servicebased/wipro.js";
 
 const config = {
   concurrency: 5,
@@ -83,7 +82,6 @@ ${error.stack}`;
 
 const scrapers = [
   { fn: runTechMahindraScraper, headless: true },
-  { fn: runWiproScraper, headless: true },
 ];
 
 const runAllScrapers = async () => {
