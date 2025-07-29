@@ -34,9 +34,7 @@ import runUberScraper from "./scrapers/productBased/uber.js";
 import runZohoScraper from "./scrapers/productBased/zoho.js";
 
 import runInfosysScraper from "./scrapers/servicebased/infosys.js";
-import runSonataSoftScrapper from "./scrapers/servicebased/sonataSoftware.js";
-
-
+import runZensarScrapper from "./scrapers/servicebased/zensar.js";
 
 const config = {
     concurrency: 5,
@@ -120,7 +118,7 @@ ${error.stack}`;
 // ];
 
 const scrapers = [
-    { fn: runSonataSoftScrapper, headless: true },
+    { fn: runZensarScrapper, headless: true },
 ];
 
 const runAllScrapers = async () => {
