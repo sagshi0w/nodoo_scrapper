@@ -21,6 +21,14 @@ class techMahindraJobsScraper {
         this.page = await this.browser.newPage();
     }
 
+    async navigateToJobsPage() {
+        console.log('🌐 Navigating to LTIMindtree Careers...');
+        await this.page.goto('https://ltimindtree.ripplehire.com/candidate/?token=xviyQvbnyYZdGtozXoNm&lang=en&source=CAREERSITE#list/geo=India', {
+            waitUntil: 'networkidle2'
+        });
+        await delay(5000);
+    }
+
     async collectAllJobCardLinks() {
         this.allJobLinks = [];
 
@@ -41,6 +49,7 @@ class techMahindraJobsScraper {
         console.log(`✅ Collected ${this.allJobLinks.length} unique job links.`);
         return this.allJobLinks;
     }
+
 
 
     async extractJobDetailsFromLink(url) {
