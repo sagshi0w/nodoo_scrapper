@@ -1084,22 +1084,23 @@ export default function extractSkillsAndExperience(job) {
         const formattedLines = [];
 
         for (let line of lines) {
-            // Add bullet if it's a short sentence or keyword line
-            if (
-                line.length < 120 &&
+            const isBulletCandidate =
                 /^[a-zA-Z0-9]/.test(line) &&
-                !line.endsWith('.') &&
-                !line.includes('. ')
-            ) {
-                // Add bullet point and end with period if not already
+                !line.includes('. ') &&
+                /^[a-z]/.test(line.trim()) &&
+                !line.endsWith('.');
+
+            if (isBulletCandidate) {
+                line = line.trim();
                 if (!line.endsWith('.')) line += '.';
                 formattedLines.push('• ' + line);
             } else {
-                // Ensure long lines end with a period if not already
+                line = line.trim();
                 if (!line.endsWith('.')) line += '.';
                 formattedLines.push(line);
             }
         }
+
 
         // Step 4: Join lines with appropriate spacing
         let finalText = formattedLines.join('\n');
