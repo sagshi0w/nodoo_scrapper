@@ -32,6 +32,7 @@ class eClerxJobsScraper {
     async collectAllJobCardLinks() {
         this.allJobLinks = [];
         let pageIndex = 1;
+        const seenLinks = new Set();
 
         while (true) {
             // Wait for job links to load
@@ -44,7 +45,10 @@ class eClerxJobsScraper {
             );
 
             for (const link of jobLinks) {
-                this.allJobLinks.push(link);
+                if (!seenLinks.has(link)) {
+                    seenLinks.add(link);
+                    this.allJobLinks.push(link);
+                }
             }
 
             console.log(`📄 Collected ${this.allJobLinks.length} unique job links so far...`);
@@ -158,6 +162,9 @@ const extractWiproData = (job) => {
 
     if (cleanedDescription) {
         cleanedDescription = cleanedDescription
+            // Remove "Job Summary" heading and similar section titles
+            .replace(/\n\s*Job Summary\s*\n/gi, '\n')
+
             // Format bullet points and numbered lists with proper spacing
             .replace(/(\n\s*)(\d+\.\s+)(.*?)(\n)/gi, '\n\n$1$2$3$4\n\n')
             .replace(/(\n\s*)([•\-]\s+)(.*?)(\n)/gi, '\n\n$1$2$3$4\n\n')
