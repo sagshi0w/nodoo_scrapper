@@ -39,7 +39,7 @@ class aspireSystemsJobsScraper {
 
             // Collect new links
             const jobLinks = await this.page.$$eval(
-                'div.op-oppourtunity-title',
+                'div.op-job-apply-bt',
                 anchors => anchors.map(a => a.href)
             );
 
