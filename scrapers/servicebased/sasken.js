@@ -3,7 +3,7 @@ import fs from 'fs';
 
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
-class eClerxJobsScraper {
+class saskenJobsScraper {
     constructor(headless = true) {
         this.headless = headless;
         this.browser = null;
@@ -202,18 +202,18 @@ const extractWiproData = (job) => {
 
 
 // ✅ Exportable runner function
-const runeClerxJobsScraper = async ({ headless = true } = {}) => {
-    const scraper = new eClerxJobsScraper(headless);
+const runSaskenJobsScraper = async ({ headless = true } = {}) => {
+    const scraper = new saskenJobsScraper(headless);
     await scraper.run();
     return scraper.allJobs;
 };
 
-export default runeClerxJobsScraper;
+export default runSaskenJobsScraper;
 
 // ✅ CLI support: node phonepe.js --headless=false
 if (import.meta.url === `file://${process.argv[1]}`) {
     const headlessArg = process.argv.includes('--headless=false') ? false : true;
     (async () => {
-        await runeClerxJobsScraper({ headless: headlessArg });
+        await runSaskenJobsScraper({ headless: headlessArg });
     })();
 }
