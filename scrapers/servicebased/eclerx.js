@@ -169,7 +169,7 @@ const extractWiproData = (job) => {
             // Clean up spaces and newlines
             .replace(/[ \t]+$/gm, '')
             .replace(/\n{3,}/g, '\n\n')
-            .replace(/(\S)\n(\S)/g, '$1\n\n$2')d
+            .replace(/(\S)\n(\S)/g, '$1\n\n$2')
             .trim();
 
         // Add final newline if content exists
