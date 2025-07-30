@@ -87,10 +87,6 @@ const scrapers = [
   { fn: runAtlassianScraper, headless: true },
   { fn: runGoldmanScraper, headless: true },
   { fn: runGoogleScraper, headless: true },
-
-  { fn: runSiemensScraper, headless: true },
-  { fn: runRazorpayScraper, headless: true },
-  { fn: runUberScraper, headless: true }
 ];
 
 const runAllScrapers = async () => {

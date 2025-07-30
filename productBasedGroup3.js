@@ -13,8 +13,6 @@ const require = createRequire(import.meta.url);
 const nodemailer = require('nodemailer');
 
 // ✅ Scrapers
-import runSiemensScraper from "./scrapers/productBased/siemens.js";
-
 import runGrowwScraper from "./scrapers/productBased/groww.js";
 import runPaypalScraper from "./scrapers/productBased/paypal.js";
 import runPhonepeScraper from "./scrapers/productBased/phonepe.js";
@@ -86,8 +84,6 @@ ${error.stack}`;
 };
 
 const scrapers = [
-  { fn: runSiemensScraper, headless: true },
-
   { fn: runGrowwScraper, headless: true },
   { fn: runPhonepeScraper, headless: true },
   { fn: runPaypalScraper, headless: true },
