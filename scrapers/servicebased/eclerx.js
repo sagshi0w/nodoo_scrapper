@@ -95,7 +95,7 @@ class aspireSystemsJobsScraper {
                     title: getText('h1[data-bind*="job.title"]'),
                     company: 'eClerx',
                     location: getText('span[data-bind*="primaryLocation"]'),
-                    description: getText('div.job-details__section'),
+                    description: getText('.job-details__description-content.basic-formatter[data-bind*="job.description"]'),
                     url: window.location.href
                 };
             });
