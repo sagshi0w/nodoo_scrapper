@@ -94,7 +94,7 @@ class aspireSystemsJobsScraper {
                 return {
                     title: getText('h1.heading job-details__title'),
                     company: 'eClerx',
-                    location: getText('span.html: primaryLocation'),
+                    location: getText('span[data-bind*="primaryLocation"]'),
                     experience: getText('h1.heading job-details__title'),
                     description: getText('div.job-details__section'),
                     url: window.location.href
