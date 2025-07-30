@@ -92,10 +92,9 @@ class aspireSystemsJobsScraper {
             const job = await jobPage.evaluate(() => {
                 const getText = sel => document.querySelector(sel)?.innerText.trim() || '';
                 return {
-                    title: getText('h1.heading job-details__title'),
+                    title: getText('h1[data-bind*="job.title"]'),
                     company: 'eClerx',
                     location: getText('span[data-bind*="primaryLocation"]'),
-                    experience: getText('h1.heading job-details__title'),
                     description: getText('div.job-details__section'),
                     url: window.location.href
                 };
@@ -160,24 +159,30 @@ const extractWiproData = (job) => {
 
     if (cleanedDescription) {
         cleanedDescription = cleanedDescription
-            // Remove specific single-line phrases
-            .replace(/^\s*(TRENDING|BE THE FIRST TO APPLY)\s*$/gim, '')
+            // Format bullet points and numbered lists with proper spacing
+            .replace(/(\n\s*)(\d+\.\s+)(.*?)(\n)/gi, '\n\n$1$2$3$4\n\n')
+            .replace(/(\n\s*)([•\-]\s+)(.*?)(\n)/gi, '\n\n$1$2$3$4\n\n')
 
-            // Format bullet points and numbered lists
-            .replace(/(\n\s*)(\d+\.\s*)(.*?)(\n)/gi, '\n\n$1$2$3$4\n')
-            .replace(/(\n\s*)(•\s*)(.*?)(\n)/gi, '\n\n$1$2$3$4\n')
+            // Ensure consistent spacing after sentences
+            .replace(/([.!?])\s+/g, '$1  ')
 
-            // Trim spaces and excess newlines
+            // Clean up spaces and newlines
             .replace(/[ \t]+$/gm, '')
             .replace(/\n{3,}/g, '\n\n')
+            .replace(/(\S)\n(\S)/g, '$1\n\n$2')d
             .trim();
 
-        // If description ends up empty, provide fallback
-        if (!cleanedDescription) {
-            cleanedDescription = 'Description not available';
+        // Add final newline if content exists
+        if (cleanedDescription && !cleanedDescription.endsWith('\n')) {
+            cleanedDescription += '\n';
+        }
+
+        // Fallback for empty result
+        if (!cleanedDescription.trim()) {
+            cleanedDescription = 'Description not available\n';
         }
     } else {
-        cleanedDescription = 'Description not available';
+        cleanedDescription = 'Description not available\n';
     }
 
     return {
