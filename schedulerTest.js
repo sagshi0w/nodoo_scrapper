@@ -35,6 +35,7 @@ import runZohoScraper from "./scrapers/productBased/zoho.js";
 
 import runInfosysScraper from "./scrapers/servicebased/infosys.js";
 import runAspireSystemScraper from "./scrapers/servicebased/aspireSystem.js"
+import runEclerxScraper from "./scrapers/servicebased/eclerx.js"
 
 
 const config = {
@@ -119,7 +120,7 @@ ${error.stack}`;
 // ];
 
 const scrapers = [
-    { fn: runAspireSystemScraper, headless: true },
+    { fn: runEclerxScraper, headless: true },
 ];
 
 const runAllScrapers = async () => {

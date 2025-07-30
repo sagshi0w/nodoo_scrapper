@@ -23,7 +23,7 @@ class aspireSystemsJobsScraper {
 
     async navigateToJobsPage() {
         console.log('🌐 Navigating to Aspire Systems Careers...');
-        await this.page.goto('https://www.aspiresys.com/openings', {
+        await this.page.goto('https://fa-ewji-saasfaprod1.fa.ocs.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX_1/jobs?lastSelectedFacet=LOCATIONS&location=Mumbai%2C+Maharashtra%2C+India&locationId=300000038336751&locationLevel=city&mode=location&selectedLocationsFacet=300000000467203', {
             waitUntil: 'networkidle2'
         });
         await delay(5000);
@@ -39,13 +39,14 @@ class aspireSystemsJobsScraper {
 
             // Collect new links
             const jobLinks = await this.page.$$eval(
-                'div.op-job-apply-bt',
+                'a.job-list-item__link',
                 anchors => anchors.map(a => a.href)
             );
 
             for (const link of jobLinks) {
                 this.allJobLinks.push(link);
             }
+
             console.log(`📄 Collected ${this.allJobLinks.length} unique job links so far...`);
 
             const pageNumbers = await this.page.$$eval('ul.pagination li a', links =>
