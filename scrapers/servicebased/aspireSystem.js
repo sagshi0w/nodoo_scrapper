@@ -35,7 +35,7 @@ class aspireSystemsJobsScraper {
 
         while (true) {
             // Wait for job links to load
-            //await this.page.waitForSelector('a[data-faitracker-click-bind][hreflang="en"]', { timeout: 10000 });
+            await this.page.waitForSelector('div.op-job-apply-bt', { timeout: 10000 });
 
             // Collect new links
             const jobLinks = await this.page.$$eval(
