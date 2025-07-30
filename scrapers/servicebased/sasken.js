@@ -22,8 +22,8 @@ class eClerxJobsScraper {
     }
 
     async navigateToJobsPage() {
-        console.log('🌐 Navigating to eClerx Careers...');
-        await this.page.goto('https://fa-ewji-saasfaprod1.fa.ocs.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX_1/jobs?lastSelectedFacet=LOCATIONS&location=Mumbai%2C+Maharashtra%2C+India&locationId=300000038336751&locationLevel=city&mode=location&selectedLocationsFacet=300000000467203', {
+        console.log('🌐 Navigating to Sasken Careers...');
+        await this.page.goto('https://careers.sasken.com/go/India-Jobs/598144/', {
             waitUntil: 'networkidle2'
         });
         await delay(5000);
@@ -39,7 +39,7 @@ class eClerxJobsScraper {
 
             // Collect new links
             const jobLinks = await this.page.$$eval(
-                'a.job-list-item__link',
+                'a.jobTitle-link',
                 anchors => anchors.map(a => a.href)
             );
 
@@ -92,10 +92,9 @@ class eClerxJobsScraper {
             const job = await jobPage.evaluate(() => {
                 const getText = sel => document.querySelector(sel)?.innerText.trim() || '';
                 return {
-                    title: getText('h1[data-bind*="job.title"]'),
-                    company: 'eClerx',
-                    location: getText('span[data-bind*="primaryLocation"]'),
-                    description: getText('.job-details__description-content.basic-formatter[data-bind*="job.description"]'),
+                    title: getText('h1 > span[itemprop="title"]'),
+                    company: 'Sasken Technologies Limited',
+                    description: getText('span[itemprop="description"].rtltextaligneligible'),
                     url: window.location.href
                 };
             });
@@ -190,7 +189,7 @@ const extractWiproData = (job) => {
         title: job.title?.trim() || '',
         location: job.location?.trim() || '',
         description: cleanedDescription,
-        company: 'eClerx'
+        company: 'Sasken Technologies Limited'
     };
 };
 
