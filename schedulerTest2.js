@@ -119,7 +119,7 @@ ${error.stack}`;
 // ];
 
 const scrapers = [
-  { fn: runBirlaSoftScrapper, headless: true },
+  // { fn: runBirlaSoftScrapper, headless: true },
 ];
 
 const runAllScrapers = async () => {

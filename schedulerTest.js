@@ -121,7 +121,7 @@ ${error.stack}`;
 // ];
 
 const scrapers = [
-    { fn: runSaskenScraper, headless: true },
+    // { fn: runSaskenScraper, headless: true },
 ];
 
 const runAllScrapers = async () => {

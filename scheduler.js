@@ -129,7 +129,7 @@ ${error.stack}`;
 // ];
 
 const scrapers = [
-  { fn: runWiproScraper, headless: true },
+  // { fn: runWiproScraper, headless: true },
 ];
 
 const runAllScrapers = async () => {
