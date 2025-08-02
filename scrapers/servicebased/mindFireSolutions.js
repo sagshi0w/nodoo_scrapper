@@ -158,7 +158,7 @@ const extractWiproData = (job) => {
     if (!job) return job;
 
     let cleanedDescription = job.description || 'Not specified';
-    let experience = null;
+    let experience = job.experience || 'Not specified';
     let location = null;
 
     if (cleanedDescription) {
@@ -172,11 +172,9 @@ const extractWiproData = (job) => {
         cleanedDescription = cleanedDescription.replace(/^About the Job\s*[:\-]?\s*\n?/im, '');
 
         // 3. Extract experience in years
-        const expMatch = cleanedDescription.match(
-            /(?:minimum|at least|over)?\s*(\d{1,2})\s*(?:\+)?\s*(?:years|yrs)[^a-z]/i
-        );
-        if (expMatch) {
-            const minExp = parseInt(expMatch[1], 10);
+        // Format experience: "10" → "10 - 12 yrs"
+        if (!isNaN(experience)) {
+            const minExp = parseInt(experience, 10);
             const maxExp = minExp + 2;
             experience = `${minExp} - ${maxExp} yrs`;
         }
