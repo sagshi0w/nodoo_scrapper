@@ -35,7 +35,7 @@ class nousInfosystemsScraper {
 
         let pageIndex = 1;
 
-        while (pageIndex < 15) {
+        while (true && pageIndex < 15) {
             const url = `https://www.nousinfosystems.com/careers/job-openings?paged=${pageIndex}`;
             console.log(`🌐 Navigating to ${url}`);
             await this.page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
