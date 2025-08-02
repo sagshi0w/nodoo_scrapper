@@ -16,6 +16,7 @@ const nodemailer = require('nodemailer');
 import runMindgateSolutionsJobsScraper from "./scrapers/servicebased/mindgateSolutions.js";
 import runeClerxScrapper from "./scrapers/servicebased/eclerx.js"
 import runSaskenScrapper from "./scrapers/servicebased/sasken.js"
+import runInfiniteComputerSolutionsJobsScraper from "./scrapers/servicebased/infiniteComputerSolutions.js"
 
 const config = {
   concurrency: 5,
@@ -87,6 +88,7 @@ const scrapers = [
   { fn: runMindgateSolutionsJobsScraper, headless: true },
   { fn: runeClerxScrapper, headless: true },
   { fn: runSaskenScrapper, headless: true },
+  { fn: runInfiniteComputerSolutionsJobsScraper, headless: true },
 ];
 
 const runAllScrapers = async () => {
