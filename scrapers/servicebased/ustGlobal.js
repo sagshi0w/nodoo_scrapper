@@ -112,10 +112,10 @@ class ustGlobalJobsScraper {
                 }
 
                 return {
-                    title: getText('h2.section-title'),
+                    title: getText('.section-title h2'),
                     company: 'UST Global',
                     location: getText('li.location-text'),
-                    description: getText('p.desc_text_height description'),
+                    description: getText('p.desc_text_height.description'),
                     url: window.location.href
                 };
             });
