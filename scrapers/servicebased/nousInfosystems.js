@@ -31,14 +31,13 @@ class nousInfosystemsScraper {
 
     async collectAllJobCardLinks() {
         this.allJobLinks = [];
-        let pageIndex = 1;
         const seenLinks = new Set();
 
         while (true) {
             // Wait for job links to load
-            //await this.page.waitForSelector('div.op-job-apply-bt', { timeout: 10000 });
+            await this.page.waitForSelector('a[href*="/careers/job-openings/"]', { timeout: 10000 });
 
-            // Collect new links
+            // Collect links
             const jobLinks = await this.page.$$eval(
                 'a[href*="/careers/job-openings/"]',
                 anchors => anchors.map(a => a.href)
@@ -53,22 +52,25 @@ class nousInfosystemsScraper {
 
             console.log(`📄 Collected ${this.allJobLinks.length} unique job links so far...`);
 
-            const nextButton = await this.page.$('a.next.page-numbers'); // or adjust selector if needed
-            if (!nextButton) {
+            // Check if "Next" button exists
+            const hasNext = await this.page.$('a.next.page-numbers');
+            if (!hasNext) {
                 console.log('✅ No more pages left. Done.');
                 break;
             }
 
             console.log('➡️ Clicking next button');
+
+            // Click it via selector directly instead of using a stale node handle
             await Promise.all([
-                nextButton.click(),
+                this.page.click('a.next.page-numbers'),
                 this.page.waitForNavigation({ waitUntil: 'networkidle2' }),
             ]);
-
         }
 
-        return this.allJobLinks;;
+        return this.allJobLinks;
     }
+
 
 
     async extractJobDetailsFromLink(url) {
