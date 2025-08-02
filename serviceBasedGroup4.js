@@ -13,10 +13,6 @@ const require = createRequire(import.meta.url);
 const nodemailer = require('nodemailer');
 
 // ✅ Scrapers
-import runMindgateSolutionsJobsScraper from "./scrapers/servicebased/mindgateSolutions.js";
-import runeClerxScrapper from "./scrapers/servicebased/eclerx.js"
-import runSaskenScrapper from "./scrapers/servicebased/sasken.js"
-import runInfiniteComputerSolutionsJobsScraper from "./scrapers/servicebased/infiniteComputerSolutions.js"
 import runUstGlobalJobsScraper from "./scrapers/servicebased/ustGlobal.js"
 
 const config = {
@@ -86,10 +82,6 @@ ${error.stack}`;
 };
 
 const scrapers = [
-  { fn: runMindgateSolutionsJobsScraper, headless: true },
-  { fn: runeClerxScrapper, headless: true },
-  { fn: runSaskenScrapper, headless: true },
-  { fn: runInfiniteComputerSolutionsJobsScraper, headless: true },
   { fn: runUstGlobalJobsScraper, headless: true },
 ];
 
