@@ -112,7 +112,7 @@ class nousInfosystemsScraper {
                 }
 
                 return {
-                    title: getText('h2'),
+                    title: getText('.page-content > h2'),
                     company: 'Nous Infosystems',
                     description: getText('div.awsm-job-content'),
                     url: window.location.href
