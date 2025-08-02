@@ -164,8 +164,11 @@ const extractWiproData = (job) => {
             /(?:minimum|at least|over)?\s*(\d{1,2})\s*(?:\+)?\s*(?:years|yrs)[^a-z]/i
         );
         if (expMatch) {
-            experience = parseInt(expMatch[1], 10);
+            const minExp = parseInt(expMatch[1], 10);
+            const maxExp = minExp + 2;
+            experience = `${minExp} - ${maxExp} yrs`;
         }
+
 
         // Extract location (basic guess: look for "Location: ...")
         const locationMatch = cleanedDescription.match(/location\s*[:\-]\s*(.+?)(?:[\n\r]|$)/i);
