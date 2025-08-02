@@ -23,7 +23,7 @@ class ibsSoftwareJobsScraper {
 
     async navigateToJobsPage() {
         console.log('🌐 Navigating to IBS Software Careers...');
-        await this.page.goto('https://sjobs.brassring.com/TGNewUI/Search/Home/Home?partnerid=26656&siteid=5008#home', {
+        await this.page.goto('https://fa-etbm-saasfaprod1.fa.ocs.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX_1/jobs?location=India&locationId=300000000434308&locationLevel=country&mode=location&sortBy=POSTING_DATES_DESC', {
             waitUntil: 'networkidle2'
         });
         await delay(5000);
