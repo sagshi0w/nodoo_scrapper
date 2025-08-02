@@ -93,12 +93,7 @@ class infiniteComputerSolutionsJobsScraper {
             await delay(5000);
             //await jobPage.waitForSelector('div.job__description.body', { timeout: 10000 });
 
-            const jobLocation = await jobPage.$$eval(
-                    'p.position3InJobDetails',
-                    nodes => nodes[1]?.textContent.trim() || ''
-                );
-
-            const job = await jobPage.evaluate((jobLocation) => {
+            const job = await jobPage.evaluate(() => {
                 const getText = sel => document.querySelector(sel)?.innerText.trim() || '';
 
                 function removeUntilAfterJobSummary(text) {
@@ -119,12 +114,11 @@ class infiniteComputerSolutionsJobsScraper {
                 return {
                     title: getText('h1.jobtitleInJobDetails'),
                     company: 'Infinite Computer Solutions',
-                    location: jobLocation,
+                    location: "Not Specified",
                     description: removeUntilAfterJobSummary(getText('div[ng-repeat*="jobDetailFields.JobDetailQuestions"] p.answer.jobdescriptionInJobDetails')),
                     url: window.location.href
                 };
-            },[jobLocation]);
-
+            });
 
             console.log("Before enriching job=", job);
 
