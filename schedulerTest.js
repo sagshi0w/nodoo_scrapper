@@ -37,6 +37,7 @@ import runInfosysScraper from "./scrapers/servicebased/infosys.js";
 import runAspireSystemScraper from "./scrapers/servicebased/aspireSystem.js"
 import runEclerxScraper from "./scrapers/servicebased/eclerx.js"
 import runSaskenScraper from "./scrapers/servicebased/sasken.js"
+import runIBSSoftwareJobsScraper from "./scrapers/servicebased/tavant.js"
 import runTavantJobsScraper from "./scrapers/servicebased/tavant.js"
 
 
@@ -122,7 +123,7 @@ ${error.stack}`;
 // ];
 
 const scrapers = [
-    { fn: runTavantJobsScraper, headless: true },
+     { fn: runTavantJobsScraper, headless: true },
 ];
 
 const runAllScrapers = async () => {
@@ -170,7 +171,7 @@ const runAllScrapers = async () => {
 
         if (allJobs.length > 0) {
             const enrichedJobs = allJobs.map(job => extractData(job));
-            console.log("enrichedJobs=", enrichedJobs);
+            console.log("enrichedJobs=",enrichedJobs);
             //await sendToBackend(enrichedJobs);
             //console.log(`📤 Sent ${enrichedJobs.length} jobs to backend`);
         }
