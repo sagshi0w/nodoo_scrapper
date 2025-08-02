@@ -53,7 +53,7 @@ class nousInfosystemsScraper {
 
             console.log(`📄 Collected ${this.allJobLinks.length} unique job links so far...`);
 
-            const pageNumbers = await this.page.$$eval('ul.page-numbers_', links =>
+            const pageNumbers = await this.page.$$eval('ul.page-numbers', links =>
                 links
                     .map(a => ({
                         text: a.textContent.trim(),
@@ -191,6 +191,7 @@ const extractWiproData = (job) => {
             .replace(/Location:.*\n?/i, '')
             .replace(/Experience:.*\n?/i, '')
             .replace(/Opening:\s*\n?.*/i, '')
+            .replace(/Published\s*Date:\s*\n?.*/i, '')
             .replace(/Job Description:\s*/i, '')
             .replace(/\n{3,}/g, '\n\n')
             .trim();
