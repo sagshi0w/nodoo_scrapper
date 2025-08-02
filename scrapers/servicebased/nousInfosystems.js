@@ -177,26 +177,25 @@ const extractWiproData = (job) => {
     let cleanedDescription = job.description || '';
     let location = '';
     let experience = '';
-    let openings = '';
 
     if (cleanedDescription) {
-        // Extract metadata using regex
+        // Extract metadata
         const locationMatch = cleanedDescription.match(/Location:\s*(.*)/i);
         const experienceMatch = cleanedDescription.match(/Experience:\s*(.*)/i);
 
         if (locationMatch) location = locationMatch[1].trim();
         if (experienceMatch) experience = experienceMatch[1].trim();
 
-        // Remove the matched lines from description
+        // Remove metadata from description
         cleanedDescription = cleanedDescription
             .replace(/Location:.*\n?/i, '')
             .replace(/Experience:.*\n?/i, '')
-            .replace(/Opening:.*\n?/i, '')
-            .replace(/Job Description:\s*/i, '') // Remove just the heading
-            .replace(/\n{3,}/g, '\n\n') // Collapse excessive newlines
+            .replace(/Opening:\s*\n?.*/i, '')
+            .replace(/Job Description:\s*/i, '')
+            .replace(/\n{3,}/g, '\n\n')
             .trim();
 
-        if (!cleanedDescription.endsWith('\n') && cleanedDescription) {
+        if (cleanedDescription && !cleanedDescription.endsWith('\n')) {
             cleanedDescription += '\n';
         }
 
@@ -215,7 +214,6 @@ const extractWiproData = (job) => {
         description: cleanedDescription,
     };
 };
-
 
 
 // ✅ Exportable runner function
