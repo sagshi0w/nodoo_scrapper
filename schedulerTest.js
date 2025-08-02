@@ -37,7 +37,7 @@ import runInfosysScraper from "./scrapers/servicebased/infosys.js";
 import runAspireSystemScraper from "./scrapers/servicebased/aspireSystem.js"
 import runEclerxScraper from "./scrapers/servicebased/eclerx.js"
 import runSaskenScraper from "./scrapers/servicebased/sasken.js"
-import runUstGlobalJobsScraper from "./scrapers/servicebased/ustGlobal.js"
+import runIBSSoftwareJobsScraper from "./scrapers/servicebased/ibsSoftware.js"
 
 
 const config = {
@@ -122,7 +122,7 @@ ${error.stack}`;
 // ];
 
 const scrapers = [
-     { fn: runUstGlobalJobsScraper, headless: true },
+     { fn: runIBSSoftwareJobsScraper, headless: true },
 ];
 
 const runAllScrapers = async () => {
