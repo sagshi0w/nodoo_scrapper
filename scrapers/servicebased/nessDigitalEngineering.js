@@ -37,7 +37,7 @@ class NessDigitalEngineeringJobsScraper {
         while (true) {
             // Collect new links
             const jobLinks = await this.page.$$eval(
-                'a[href*="/jobs/"]',
+                'h2.heading-5.space-none > a',
                 anchors => anchors.map(a => a.href)
             );
 
