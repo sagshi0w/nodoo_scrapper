@@ -1138,20 +1138,25 @@ export default function extractSkillsAndExperience(job) {
     };
 
     // Get job type.
-    const extractJobType = (desc) => {
+    const extractJobType = (desc, experience) => {
         if (!desc) return "Not specified";
         const lower = desc.toLowerCase();
 
+        if (experience <= 1 && (lower.includes("internship") || lower.includes("intern"))) {
+            return "Internship";
+        }
+
         if (lower.includes("full time") || lower.includes("full-time")) return "Full Time";
         if (lower.includes("part time") || lower.includes("part-time")) return "Part Time";
-        if (lower.includes("internship") || lower.includes("intern")) return "Internship";
         if (lower.includes("contract")) return "Contract";
         if (lower.includes("permanent")) return "Permanent";
         if (lower.includes("temporary")) return "Temporary";
         if (lower.includes("freelance")) return "Freelance";
         if (lower.includes("consultant")) return "Consultant";
-        return "Full Time";
+
+        return "Full Time"; // default fallback
     };
+
 
     // Get city
     const extractCity = (location) => {
@@ -1230,7 +1235,7 @@ export default function extractSkillsAndExperience(job) {
         experience: extractExperience(cleanDescription(job.description)),
         sector: categorizeJob(job.title, cleanDescription(job.description)),
         isEntryLevel: isEntryLevelJob(job.title, cleanDescription(job.description)),
-        jobType: extractJobType(cleanDescription(job.description)),
+        jobType: extractJobType(cleanDescription(job.description), extractExperience(cleanDescription(job.description))),
         location: extractCity(job.location),
         postedAt: getISOTimestamp()
     };
