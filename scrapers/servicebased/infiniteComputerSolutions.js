@@ -114,7 +114,7 @@ class infiniteComputerSolutionsJobsScraper {
                 return {
                     title: getText('h1.jobtitleInJobDetails'),
                     company: 'Infinite Computer Solutions',
-                    location: getText('div[ng-repeat*="jobDetailFields.JobDetailQuestions"] p.position3InJobDetails'),
+                    location: getText('p.position3InJobDetails'),
                     description: removeUntilAfterJobSummary(getText('div[ng-repeat*="jobDetailFields.JobDetailQuestions"] p.answer.jobdescriptionInJobDetails')),
                     url: window.location.href
                 };
