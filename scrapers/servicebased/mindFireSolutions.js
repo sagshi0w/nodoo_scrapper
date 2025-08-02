@@ -157,35 +157,52 @@ class MindFireSolutionsJobsScraper {
 const extractWiproData = (job) => {
     if (!job) return job;
 
-    let cleanedDescription = job.description || 'Not specified';
-    let experience = job.experience || 'Not specified';
+    let cleanedDescription = job.description || '';
+    let experience = null;
     let location = null;
 
-    if (cleanedDescription) {
-        // 1. Remove "Current Openings", "Experience", "Apply" sections entirely (header + content)
-        cleanedDescription = cleanedDescription.replace(
-            /(Current Openings|Experience|Apply)\s*[:\-]?\s*\n(?:.*\n)*?(?=\n[A-Z][^\n]*\n|$)/gi,
-            ''
+    // Extract experience from job.experience field or fallback from description
+    if (typeof job.experience === 'number' || /^\d+$/.test(job.experience)) {
+        const minExp = parseInt(job.experience, 10);
+        const maxExp = minExp + 2;
+        experience = `${minExp} - ${maxExp} yrs`;
+    } else {
+        const expMatch = cleanedDescription.match(
+            /(?:minimum|at least|over)?\s*(\d{1,2})\s*(?:\+)?\s*(?:years|yrs)\b/i
         );
-
-        // 2. Remove just the heading "About the Job", keep the content
-        cleanedDescription = cleanedDescription.replace(/^About the Job\s*[:\-]?\s*\n?/im, '');
-
-        // 3. Extract experience in years
-        // Format experience: "10" → "10 - 12 yrs"
-        if (!isNaN(experience)) {
-            const minExp = parseInt(experience, 10);
+        if (expMatch) {
+            const minExp = parseInt(expMatch[1], 10);
             const maxExp = minExp + 2;
             experience = `${minExp} - ${maxExp} yrs`;
         }
+    }
 
-        // 4. Extract location (basic guess: "Location: <place>")
-        const locationMatch = cleanedDescription.match(/location\s*[:\-]\s*(.+?)(?:[\n\r]|$)/i);
-        if (locationMatch) {
-            location = locationMatch[1].trim();
-        }
+    if (cleanedDescription) {
+        // Remove "Current Openings" block including job title, experience, location, apply
+        cleanedDescription = cleanedDescription.replace(
+            /Current Openings[\s\S]*?(?:Apply\.?\s*)?(?:\n{2,}|\s*$)/gi,
+            ''
+        );
 
-        // 5. Clean formatting
+        // Remove lines that start with "Experience"
+        cleanedDescription = cleanedDescription.replace(
+            /^.*\bexperience\b\s*[:\-]\s*\d+\s*[-–]?\s*\d*\s*(?:years|yrs)?.*$/gim,
+            ''
+        );
+
+        // Also remove in-line "Experience : 0 - 1 yrs" patterns
+        cleanedDescription = cleanedDescription.replace(
+            /\bexperience\s*[:\-]?\s*\d+\s*[-–]?\s*\d*\s*(?:years|yrs)?\.?/gi,
+            ''
+        );
+
+        // Remove standalone "Apply"
+        cleanedDescription = cleanedDescription.replace(/^\s*Apply\.?\s*$/gim, '');
+
+        // Remove "About the Job" heading
+        cleanedDescription = cleanedDescription.replace(/^About the Job\s*/i, '');
+
+        // Clean bullet points and formatting
         cleanedDescription = cleanedDescription
             .replace(/(\n\s*)(\d+\.\s+)(.*?)(\n)/gi, '\n\n$1$2$3$4\n\n')
             .replace(/(\n\s*)([•\-]\s+)(.*?)(\n)/gi, '\n\n$1$2$3$4\n\n')
@@ -202,6 +219,12 @@ const extractWiproData = (job) => {
         if (!cleanedDescription.trim()) {
             cleanedDescription = 'Description not available\n';
         }
+
+        // Try to extract location from text if still not available
+        const locationMatch = cleanedDescription.match(/location\s*[:\-]\s*(.+?)(?:[\n\r]|$)/i);
+        if (locationMatch) {
+            location = locationMatch[1].trim();
+        }
     } else {
         cleanedDescription = 'Description not available\n';
     }
@@ -214,9 +237,6 @@ const extractWiproData = (job) => {
         experience: experience || 'Not specified',
     };
 };
-
-
-
 
 // ✅ Exportable runner function
 const runMindFireSolutionsJobsScraper = async ({ headless = true } = {}) => {
