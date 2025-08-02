@@ -33,30 +33,49 @@ class nousInfosystemsScraper {
         this.allJobLinks = [];
         const seenLinks = new Set();
 
-        while (true) {
-            // Wait for job links to load
-            await this.page.waitForSelector('a[href*="/careers/job-openings/"]', { timeout: 20000 });
+        let pageIndex = 1;
 
-            // Collect links
+        while (pageIndex < 15) {
+            const url = `https://www.nousinfosystems.com/careers/job-openings?paged=${pageIndex}`;
+            console.log(`🌐 Navigating to ${url}`);
+            await this.page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
+
+            // Wait for job links to load
+            try {
+                await this.page.waitForSelector('a[href*="/careers/job-openings/"]', { timeout: 10000 });
+            } catch (err) {
+                console.log('🚫 No job links found, assuming end of listings.');
+                break;
+            }
+
+            // Collect job links
             const jobLinks = await this.page.$$eval(
                 'a[href*="/careers/job-openings/"]',
                 anchors => anchors.map(a => a.href)
             );
 
+            let newLinksAdded = false;
             for (const link of jobLinks) {
                 if (!seenLinks.has(link)) {
                     seenLinks.add(link);
                     this.allJobLinks.push(link);
+                    newLinksAdded = true;
                 }
             }
 
-            console.log(`📄 Collected ${this.allJobLinks.length} unique job links so far...`);
+            console.log(`✅ Page ${pageIndex}: Collected ${jobLinks.length} links, total unique: ${this.allJobLinks.length}`);
 
-            break;
+            if (!newLinksAdded) {
+                console.log('🎉 No new links found. Finishing up...');
+                break;
+            }
+
+            pageIndex++;
         }
 
         return this.allJobLinks;
     }
+
 
 
 
