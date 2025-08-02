@@ -112,9 +112,9 @@ class ibsSoftwareJobsScraper {
                 }
 
                 return {
-                    title: getText('h1.heading job-details__title'),
+                    title: getText('.job-details__title'),
                     company: 'IBS Software',
-                    description: getText('div.job-details__description-content basic-formatter'),
+                    description: getText('.job-details__description-content'),
                     url: window.location.href
                 };
             });
