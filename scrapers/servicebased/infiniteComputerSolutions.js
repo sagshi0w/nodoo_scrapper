@@ -179,20 +179,8 @@ const extractWiproData = (job) => {
 
     if (cleanedDescription) {
         cleanedDescription = cleanedDescription
-            // Remove "Job Summary" heading and similar section titles
-            .replace(/\n\s*Job Summary\s*\n/gi, '\n')
-
-            // Format bullet points and numbered lists with proper spacing
-            .replace(/(\n\s*)(\d+\.\s+)(.*?)(\n)/gi, '\n\n$1$2$3$4\n\n')
-            .replace(/(\n\s*)([•\-]\s+)(.*?)(\n)/gi, '\n\n$1$2$3$4\n\n')
-
-            // Ensure consistent spacing after sentences
-            .replace(/([.!?])\s+/g, '$1  ')
-
-            // Clean up spaces and newlines
-            .replace(/[ \t]+$/gm, '')
+            // Collapse multiple blank lines to max 1
             .replace(/\n{3,}/g, '\n\n')
-            .replace(/(\S)\n(\S)/g, '$1\n\n$2')
             .trim();
 
         // Add final newline if content exists
