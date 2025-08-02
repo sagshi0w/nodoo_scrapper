@@ -53,32 +53,17 @@ class nousInfosystemsScraper {
 
             console.log(`📄 Collected ${this.allJobLinks.length} unique job links so far...`);
 
-            const pageNumbers = await this.page.$$eval('ul.page-numbers', links =>
-                links
-                    .map(a => ({
-                        text: a.textContent.trim(),
-                        href: a.getAttribute('href'),
-                    }))
-                    .filter(a => /^\d+$/.test(a.text))
-            );
-
-            // Try to click "See more results" button
-            // Check if "Show More Results" button exists and is visible
-            const nextPage = pageNumbers.find(p => Number(p.text) === pageIndex + 1);
-
-            if (!nextPage) {
+            const nextButton = await this.page.$('a.next.page-numbers'); // or adjust selector if needed
+            if (!nextButton) {
                 console.log('✅ No more pages left. Done.');
                 break;
             }
 
-            // Click the next page
-            console.log(`➡️ Clicking page ${pageIndex + 1}`);
+            console.log('➡️ Clicking next button');
             await Promise.all([
-                this.page.click(`ul.page-numbers li a[title="Page ${pageIndex + 1}"]`),
+                nextButton.click(),
                 this.page.waitForNavigation({ waitUntil: 'networkidle2' }),
             ]);
-
-            pageIndex++;
 
         }
 
@@ -183,7 +168,10 @@ const extractWiproData = (job) => {
         const experienceMatch = cleanedDescription.match(/Experience:\s*(.*)/i);
 
         if (locationMatch) location = locationMatch[1].trim();
-        if (experienceMatch) experience = experienceMatch[1].trim();
+
+        if (experienceMatch) {
+            experience = experienceMatch[1].trim().replace(/years?/gi, 'yrs');
+        }
 
         // Remove metadata from description
         cleanedDescription = cleanedDescription
