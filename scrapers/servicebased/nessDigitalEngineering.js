@@ -36,10 +36,8 @@ class NessDigitalEngineeringJobsScraper {
 
         while (true) {
             // Collect new links
-            await this.page.waitForSelector('h2.heading-5.space-none > a');
-
             const jobLinks = await this.page.$$eval(
-                'h2.heading-5.space-none > a',
+                '#search-jobs-in-country-india > div.page-container.fadeIn > div.template-content > div.page-details-wrapper > div.padded-v-xlarge > div.row > div.medium-8.large-9.columns > section > div > div.jobs-section__inner > div.jobs-section__list.space-medium > div:nth-child(5) > div > div.large-6.columns > h2 > a',
                 anchors => anchors.map(a => a.href)
             );
 
