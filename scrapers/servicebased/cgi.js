@@ -92,7 +92,7 @@ class CGIIndiaJobsScraper {
             const job = await jobPage.evaluate(() => {
                 const getText = sel => document.querySelector(sel)?.innerText.trim() || '';
                 return {
-                    title: getText('h1'),
+                    title: getText('section.job-desc header h1'),
                     company: 'CGI India',
                     description: getText('div.job-posting-content'),
                     url: window.location.href
