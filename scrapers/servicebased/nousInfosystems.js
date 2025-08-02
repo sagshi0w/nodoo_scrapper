@@ -32,8 +32,9 @@ class nousInfosystemsScraper {
     async collectAllJobCardLinks() {
         this.allJobLinks = [];
         const seenLinks = new Set();
+        let pageNumvber = 1;
 
-        while (true) {
+        while (pageNumvber < 11) {
             // Wait for job links to load
             await this.page.waitForSelector('a[href*="/careers/job-openings/"]', { timeout: 10000 });
 
@@ -53,19 +54,21 @@ class nousInfosystemsScraper {
             console.log(`📄 Collected ${this.allJobLinks.length} unique job links so far...`);
 
             // Check if "Next" button exists
-            const hasNext = await this.page.$('a.next.page-numbers');
-            if (!hasNext) {
-                console.log('✅ No more pages left. Done.');
-                break;
-            }
+            // const hasNext = await this.page.$('a.next.page-numbers');
+            // if (!hasNext) {
+            //     console.log('✅ No more pages left. Done.');
+            //     break;
+            // }
 
-            console.log('➡️ Clicking next button');
+            // console.log('➡️ Clicking next button');
 
-            // Click it via selector directly instead of using a stale node handle
-            await Promise.all([
-                this.page.click('a.next.page-numbers'),
-                this.page.waitForNavigation({ waitUntil: 'networkidle2' }),
-            ]);
+            // // Click it via selector directly instead of using a stale node handle
+            // await Promise.all([
+            //     this.page.click('a.next.page-numbers'),
+            //     this.page.waitForNavigation({ waitUntil: 'networkidle2' }),
+            // ]);
+
+            pageNumvber++
         }
 
         return this.allJobLinks;
