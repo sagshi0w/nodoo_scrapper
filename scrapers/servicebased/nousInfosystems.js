@@ -173,20 +173,33 @@ class nousInfosystemsScraper {
 
 const extractWiproData = (job) => {
     if (!job) return job;
+
     let cleanedDescription = job.description || '';
+    let location = '';
+    let experience = '';
+    let openings = '';
 
     if (cleanedDescription) {
+        // Extract metadata using regex
+        const locationMatch = cleanedDescription.match(/Location:\s*(.*)/i);
+        const experienceMatch = cleanedDescription.match(/Experience:\s*(.*)/i);
+
+        if (locationMatch) location = locationMatch[1].trim();
+        if (experienceMatch) experience = experienceMatch[1].trim();
+
+        // Remove the matched lines from description
         cleanedDescription = cleanedDescription
-            // Collapse multiple blank lines to max 1
-            .replace(/\n{3,}/g, '\n\n')
+            .replace(/Location:.*\n?/i, '')
+            .replace(/Experience:.*\n?/i, '')
+            .replace(/Opening:.*\n?/i, '')
+            .replace(/Job Description:\s*/i, '') // Remove just the heading
+            .replace(/\n{3,}/g, '\n\n') // Collapse excessive newlines
             .trim();
 
-        // Add final newline if content exists
-        if (cleanedDescription && !cleanedDescription.endsWith('\n')) {
+        if (!cleanedDescription.endsWith('\n') && cleanedDescription) {
             cleanedDescription += '\n';
         }
 
-        // Fallback for empty result
         if (!cleanedDescription.trim()) {
             cleanedDescription = 'Description not available\n';
         }
@@ -197,10 +210,12 @@ const extractWiproData = (job) => {
     return {
         ...job,
         title: job.title?.trim() || '',
-        location: job.location?.trim() || '',
+        location: location || job.location?.trim() || '',
+        experience,
         description: cleanedDescription,
     };
 };
+
 
 
 // ✅ Exportable runner function
