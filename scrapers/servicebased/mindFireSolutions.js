@@ -156,12 +156,22 @@ class MindFireSolutionsJobsScraper {
 
 const extractWiproData = (job) => {
     if (!job) return job;
-    let cleanedDescription = job.description || '';
+
+    let cleanedDescription = job.description || 'Not specified';
     let experience = null;
     let location = null;
 
     if (cleanedDescription) {
-        // Extract experience in years
+        // 1. Remove "Current Openings", "Experience", "Apply" sections entirely (header + content)
+        cleanedDescription = cleanedDescription.replace(
+            /(Current Openings|Experience|Apply)\s*[:\-]?\s*\n(?:.*\n)*?(?=\n[A-Z][^\n]*\n|$)/gi,
+            ''
+        );
+
+        // 2. Remove just the heading "About the Job", keep the content
+        cleanedDescription = cleanedDescription.replace(/^About the Job\s*[:\-]?\s*\n?/im, '');
+
+        // 3. Extract experience in years
         const expMatch = cleanedDescription.match(
             /(?:minimum|at least|over)?\s*(\d{1,2})\s*(?:\+)?\s*(?:years|yrs)[^a-z]/i
         );
@@ -171,14 +181,13 @@ const extractWiproData = (job) => {
             experience = `${minExp} - ${maxExp} yrs`;
         }
 
-
-        // Extract location (basic guess: look for "Location: ...")
+        // 4. Extract location (basic guess: "Location: <place>")
         const locationMatch = cleanedDescription.match(/location\s*[:\-]\s*(.+?)(?:[\n\r]|$)/i);
         if (locationMatch) {
             location = locationMatch[1].trim();
         }
 
-        // Clean formatting
+        // 5. Clean formatting
         cleanedDescription = cleanedDescription
             .replace(/(\n\s*)(\d+\.\s+)(.*?)(\n)/gi, '\n\n$1$2$3$4\n\n')
             .replace(/(\n\s*)([•\-]\s+)(.*?)(\n)/gi, '\n\n$1$2$3$4\n\n')
@@ -204,9 +213,10 @@ const extractWiproData = (job) => {
         title: job.title?.trim() || '',
         location: location || job.location?.trim() || '',
         description: cleanedDescription,
-        experience: experience || 'Not specified'
+        experience: experience || 'Not specified',
     };
 };
+
 
 
 
