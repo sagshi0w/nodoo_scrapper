@@ -3,7 +3,7 @@ import fs from 'fs';
 
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
-class tavantScraper {
+class nousInfosystemsScraper {
     constructor(headless = true) {
         this.headless = headless;
         this.browser = null;
@@ -22,8 +22,8 @@ class tavantScraper {
     }
 
     async navigateToJobsPage() {
-        console.log('🌐 Navigating to Tavant Careers...');
-        await this.page.goto('https://xoriant.taleo.net/careersection/ex/jobsearch.ftl?lang=en&portal=101430233#', {
+        console.log('🌐 Navigating to Nous Infosystems Careers...');
+        await this.page.goto('https://www.nousinfosystems.com/careers/job-openings?paged=1', {
             waitUntil: 'networkidle2'
         });
         await delay(5000);
@@ -40,7 +40,7 @@ class tavantScraper {
 
             // Collect new links
             const jobLinks = await this.page.$$eval(
-                'a.result-list-button',
+                'a[href*="/careers/job-openings/"]',
                 anchors => anchors.map(a => a.href)
             );
 
@@ -53,7 +53,7 @@ class tavantScraper {
 
             console.log(`📄 Collected ${this.allJobLinks.length} unique job links so far...`);
 
-            const pageNumbers = await this.page.$$eval('ul.pagination li a', links =>
+            const pageNumbers = await this.page.$$eval('ul.page-numbers_', links =>
                 links
                     .map(a => ({
                         text: a.textContent.trim(),
@@ -112,10 +112,9 @@ class tavantScraper {
                 }
 
                 return {
-                    title: getText('.section-title h2'),
-                    company: 'Tavant',
-                    location: getText('li.location-text'),
-                    description: getText('p.desc_text_height.description'),
+                    title: getText('.page-content.h2'),
+                    company: 'Nous Infosystems',
+                    description: getText('div.awsm-job-content'),
                     url: window.location.href
                 };
             });
@@ -205,18 +204,18 @@ const extractWiproData = (job) => {
 
 
 // ✅ Exportable runner function
-const runTavantJobsScraper = async ({ headless = true } = {}) => {
-    const scraper = new tavantScraper(headless);
+const runNousInfosystemsJobScraper = async ({ headless = true } = {}) => {
+    const scraper = new nousInfosystemsScraper(headless);
     await scraper.run();
     return scraper.allJobs;
 };
 
-export default runTavantJobsScraper;
+export default runNousInfosystemsJobScraper;
 
 // ✅ CLI support: node phonepe.js --headless=false
 if (import.meta.url === `file://${process.argv[1]}`) {
     const headlessArg = process.argv.includes('--headless=false') ? false : true;
     (async () => {
-        await runTavantJobsScraper({ headless: headlessArg });
+        await runNousInfosystemsJobScraper({ headless: headlessArg });
     })();
 }

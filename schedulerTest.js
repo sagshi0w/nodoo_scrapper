@@ -37,9 +37,8 @@ import runInfosysScraper from "./scrapers/servicebased/infosys.js";
 import runAspireSystemScraper from "./scrapers/servicebased/aspireSystem.js"
 import runEclerxScraper from "./scrapers/servicebased/eclerx.js"
 import runSaskenScraper from "./scrapers/servicebased/sasken.js"
-import runIBSSoftwareJobsScraper from "./scrapers/servicebased/tavant.js"
-import runTavantJobsScraper from "./scrapers/servicebased/tavant.js"
-
+import runIBSSoftwareJobsScraper from "./scrapers/servicebased/nousInfosystems.js"
+import runNousInfosystemsJobsScraper from "./scrapers/servicebased/nousInfosystems.js"
 
 const config = {
     concurrency: 5,
@@ -123,7 +122,7 @@ ${error.stack}`;
 // ];
 
 const scrapers = [
-     { fn: runTavantJobsScraper, headless: true },
+     { fn: runNousInfosystemsJobsScraper, headless: true },
 ];
 
 const runAllScrapers = async () => {

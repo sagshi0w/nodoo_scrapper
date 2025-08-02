@@ -1050,22 +1050,6 @@ export default function extractSkillsAndExperience(job) {
         return 'Not specified';
     };
 
-    // Preprocess job description: remove 'description' at start, trim spaces, remove blank lines
-    // function cleanDescription(desc) {
-    //     if (!desc) return '';
-    //     let cleaned = desc.trim();
-    //     // Remove 'description' or 'Job description(s)' at the start (case-insensitive)
-    //     cleaned = cleaned.replace(/^(job\s+)?descriptions?\s*[:\-]?\s*/i, '');
-    //     // Remove any special characters and newlines from the beginning
-    //     cleaned = cleaned.replace(/^[^a-zA-Z0-9\n\r]+/, '');
-    //     // Remove extra blank lines and trim each line
-    //     cleaned = cleaned.split('\n')
-    //         .map(line => line.trim())
-    //         .filter(line => line.length > 0)
-    //         .join('\n');
-    //     return cleaned;
-    // }
-
     // Preprocess job description:
     function cleanDescription(desc) {
         if (!desc) return '';
@@ -1189,7 +1173,6 @@ export default function extractSkillsAndExperience(job) {
     };
 
 
-    // Check if job is entry level or not.
     function isEntryLevelJob(title, experience) {
         const normalizedTitle = title.toLowerCase();
         const seniorityKeywords = [
@@ -1204,22 +1187,21 @@ export default function extractSkillsAndExperience(job) {
             return false;
         }
 
-        // No experience info or explicitly "not specified" → assume entry level
+        // If no experience info or explicitly "not specified", assume entry level
         if (!experience || experience.trim().toLowerCase() === "not specified") {
             return true;
         }
 
-        // Extract year range like "0-1", "1-2", "1-3", etc.
-        const match = experience.match(/(\d+)(?:\s*-\s*(\d+))?/);
+        // Match experience like "0-2", "1-2", "0 to 2", "2 years", etc.
+        const match = experience.match(/(\d+)(?:\s*[-to]{1,3}\s*(\d+))?/i);
         if (!match) return false;
 
         const min = parseInt(match[1], 10);
         const max = match[2] ? parseInt(match[2], 10) : min;
 
-        // ✅ Entry-level if experience starts at 0 or 1 year
-        return min <= 1;
+        // ✅ Entry-level only if both min and max are within 0–2
+        return min >= 0 && max <= 2;
     }
-
 
     // Catergorise job into different sectors
     function categorizeJob(title, description) {
