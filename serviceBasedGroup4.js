@@ -18,6 +18,7 @@ import runIBSSoftwareJobsScraper from "./scrapers/servicebased/ibsSoftware.js"
 import runNousInfosystemsJobsScraper from "./scrapers/servicebased/nousInfosystems.js"
 import runNTTDataJobsScraper from "./scrapers/servicebased/nttData.js"
 import runCGIJobsScraper from "./scrapers/servicebased/cgi.js"
+import runMindFireSolutionsJobsScraper from "./scrapers/servicebased/mindFireSolutions.js"
 
 const config = {
   concurrency: 5,
@@ -91,6 +92,7 @@ const scrapers = [
   { fn: runNousInfosystemsJobsScraper, headless: true },
   { fn: runNTTDataJobsScraper, headless: true },
   { fn: runCGIJobsScraper, headless: true },
+  { fn: runMindFireSolutionsJobsScraper, headless: true },
 ];
 
 const runAllScrapers = async () => {
