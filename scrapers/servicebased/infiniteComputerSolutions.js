@@ -98,18 +98,19 @@ class infiniteComputerSolutionsJobsScraper {
 
                 function removeUntilAfterJobSummary(text) {
                     const lines = text.split('\n');
-                    const startIndex = lines.findIndex(line =>
+
+                    // Find index of the line that contains "Job Summary:"
+                    const summaryIndex = lines.findIndex(line =>
                         line.trim().toLowerCase().startsWith('job summary:')
                     );
 
-                    if (startIndex === -1) {
-                        return text; // "Job Summary:" not found
-                    }
+                    // If not found, return original
+                    if (summaryIndex === -1) return text;
 
-                    // Return everything AFTER the "Job Summary:" line
-                    return lines.slice(startIndex + 1).join('\n').trim();
+                    // Return lines AFTER the "Job Summary:" line
+                    return lines.slice(summaryIndex + 1).join('\n').trim();
                 }
-                
+
                 return {
                     title: getText('h1.jobtitleInJobDetails'),
                     company: 'Infinite Computer Solutions',
