@@ -17,6 +17,7 @@ import runUstGlobalJobsScraper from "./scrapers/servicebased/ustGlobal.js"
 import runIBSSoftwareJobsScraper from "./scrapers/servicebased/ibsSoftware.js"
 import runNousInfosystemsJobsScraper from "./scrapers/servicebased/nousInfosystems.js"
 import runNTTDataJobsScraper from "./scrapers/servicebased/nttData.js"
+import runCGIJobsScraper from "./scrapers/servicebased/cgi.js"
 
 const config = {
   concurrency: 5,
@@ -89,6 +90,7 @@ const scrapers = [
   { fn: runIBSSoftwareJobsScraper, headless: true },
   { fn: runNousInfosystemsJobsScraper, headless: true },
   { fn: runNTTDataJobsScraper, headless: true },
+  { fn: runCGIJobsScraper, headless: true },
 ];
 
 const runAllScrapers = async () => {
