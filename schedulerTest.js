@@ -39,7 +39,7 @@ import runEclerxScraper from "./scrapers/servicebased/eclerx.js"
 import runSaskenScraper from "./scrapers/servicebased/sasken.js"
 import runIBSSoftwareJobsScraper from "./scrapers/servicebased/nousInfosystems.js"
 import runNousInfosystemsJobsScraper from "./scrapers/servicebased/nousInfosystems.js"
-import runTrigentJobsScraper from "./scrapers/servicebased/trigent.js"
+import runNessDigitalEngineeringJobsScraper from "./scrapers/servicebased/nessDigitalEngineering.js"
 
 const config = {
     concurrency: 5,
@@ -108,7 +108,7 @@ ${error.stack}`;
 };
 
 const scrapers = [
-     { fn: runTrigentJobsScraper, headless: true },
+     { fn: runNessDigitalEngineeringJobsScraper, headless: true },
 ];
 
 const runAllScrapers = async () => {

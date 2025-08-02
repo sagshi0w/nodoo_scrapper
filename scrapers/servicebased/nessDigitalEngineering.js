@@ -3,7 +3,7 @@ import fs from 'fs';
 
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
-class TrigentJobsScraper {
+class NessDigitalEngineeringJobsScraper {
     constructor(headless = true) {
         this.headless = headless;
         this.browser = null;
@@ -22,8 +22,8 @@ class TrigentJobsScraper {
     }
 
     async navigateToJobsPage() {
-        console.log('🌐 Navigating to Trigent Careers...');
-        await this.page.goto('https://trigent.com/current-jobs/', {
+        console.log('🌐 Navigating to Ness Digital Engineering Careers...');
+        await this.page.goto('https://ness-usa.ttcportals.com/search/jobs/in/country/india', {
             waitUntil: 'networkidle2'
         });
         await delay(5000);
@@ -37,7 +37,7 @@ class TrigentJobsScraper {
         while (true) {
             // Collect new links
             const jobLinks = await this.page.$$eval(
-                'a.card-content--top',
+                'a[href*="/jobs/"]',
                 anchors => anchors.map(a => a.href)
             );
 
@@ -93,24 +93,26 @@ class TrigentJobsScraper {
             const job = await jobPage.evaluate(() => {
                 const getText = sel => document.querySelector(sel)?.innerText.trim() || '';
 
-                const getLocation = () => {
-                    const items = Array.from(document.querySelectorAll('.elementor-icon-list-text'));
-                    const locationItem = items.find(item =>
-                        item.innerText.toLowerCase().includes('location')
-                    );
-                    return locationItem?.innerText.replace('Location:', '').trim() || '';
-                };
+                function getLocation() {
+                    const p = document.querySelector('p');
+                    if (!p) return '';
+                    const match = p.innerText.match(/Location:\s*(.*)/);
+                    return match ? match[1].split('\n')[0].trim() : '';
+                }
+
+                function getDescription() {
+                    const descEl = document.querySelector('.padded-v-medium.space-medium');
+                    return descEl?.innerText.trim() || 'Description not available.';
+                }
 
                 return {
-                    title: getText('h1.post-title'),
-                    company: 'Trigent',
+                    title: getText('h1'),
+                    company: 'Ness Digital Engineering',
                     location: getLocation(),
-                    description: getText('#main > div > div > div > div.elementor-element.elementor-element-99a4cd0.e-con-full.thegem-e-con-layout-elementor.e-flex.e-con.e-child'),
+                    description: getDescription(),
                     url: window.location.href
                 };
             });
-
-
 
             console.log("Before enriching job=", job);
 
@@ -141,7 +143,7 @@ class TrigentJobsScraper {
 
     async saveResults() {
         // fs.writeFileSync('./scrappedJobs/phonepeJobs.json', JSON.stringify(this.allJobs, null, 2));
-        console.log(`💾 Saved ${this.allJobs.length} jobs to MindgateSolutions.json`);
+        console.log(`💾 Saved ${this.allJobs.length} jobs to NessDigitalEngineeringJobs.json`);
     }
 
     async close() {
@@ -172,10 +174,6 @@ const extractWiproData = (job) => {
         cleanedDescription = cleanedDescription
             // Remove "Job Summary" heading and similar section titles
             .replace(/\n\s*Job Overview\s*\n/gi, '\n')
-
-            // Format bullet points and numbered lists with proper spacing
-            .replace(/(\n\s*)(\d+\.\s+)(.*?)(\n)/gi, '\n\n$1$2$3$4\n\n')
-            .replace(/(\n\s*)([•\-]\s+)(.*?)(\n)/gi, '\n\n$1$2$3$4\n\n')
 
             // Ensure consistent spacing after sentences
             .replace(/([.!?])\s+/g, '$1  ')
@@ -209,18 +207,18 @@ const extractWiproData = (job) => {
 
 
 // ✅ Exportable runner function
-const runTrigentJobsScraper = async ({ headless = true } = {}) => {
-    const scraper = new TrigentJobsScraper(headless);
+const runNessDigitalEngineeringJobsScraper = async ({ headless = true } = {}) => {
+    const scraper = new NessDigitalEngineeringJobsScraper(headless);
     await scraper.run();
     return scraper.allJobs;
 };
 
-export default runTrigentJobsScraper;
+export default runNessDigitalEngineeringJobsScraper;
 
 // ✅ CLI support: node phonepe.js --headless=false
 if (import.meta.url === `file://${process.argv[1]}`) {
     const headlessArg = process.argv.includes('--headless=false') ? false : true;
     (async () => {
-        await runTrigentJobsScraper({ headless: headlessArg });
+        await runNessDigitalEngineeringJobsScraper({ headless: headlessArg });
     })();
 }
