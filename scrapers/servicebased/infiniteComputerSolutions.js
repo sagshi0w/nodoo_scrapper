@@ -22,7 +22,7 @@ class infiniteComputerSolutionsJobsScraper {
     }
 
     async navigateToJobsPage() {
-        console.log('🌐 Navigating to Sasken Careers...');
+        console.log('🌐 Navigating to Infinite Computer Solutions Careers...');
         await this.page.goto('https://sjobs.brassring.com/TGNewUI/Search/Home/Home?partnerid=26656&siteid=5008#home', {
             waitUntil: 'networkidle2'
         });
@@ -95,10 +95,26 @@ class infiniteComputerSolutionsJobsScraper {
 
             const job = await jobPage.evaluate(() => {
                 const getText = sel => document.querySelector(sel)?.innerText.trim() || '';
+
+                function removeUntilAfterJobSummary(text) {
+                    const lines = text.split('\n');
+                    const startIndex = lines.findIndex(line =>
+                        line.trim().toLowerCase().startsWith('job summary:')
+                    );
+
+                    if (startIndex === -1) {
+                        return text; // "Job Summary:" not found
+                    }
+
+                    // Return everything AFTER the "Job Summary:" line
+                    return lines.slice(startIndex + 1).join('\n').trim();
+                }
+                
                 return {
-                    title: getText('h1 > span[itemprop="title"]'),
+                    title: getText('h1.jobtitleInJobDetails'),
                     company: 'Infinite Computer Solutions',
-                    description: getText('span[itemprop="description"].rtltextaligneligible'),
+                    location: getText('p.position3InJobDetails'),
+                    description: removeUntilAfterJobSummary(getText('p.jobdescriptionInJobDetails')),
                     url: window.location.href
                 };
             });
@@ -133,7 +149,7 @@ class infiniteComputerSolutionsJobsScraper {
 
     async saveResults() {
         // fs.writeFileSync('./scrappedJobs/phonepeJobs.json', JSON.stringify(this.allJobs, null, 2));
-        console.log(`💾 Saved ${this.allJobs.length} jobs to MindgateSolutions.json`);
+        console.log(`💾 Saved ${this.allJobs.length} jobs to InfiniteComputerSolutions.json`);
     }
 
     async close() {
