@@ -39,6 +39,7 @@ import runEclerxScraper from "./scrapers/servicebased/eclerx.js"
 import runSaskenScraper from "./scrapers/servicebased/sasken.js"
 import runIBSSoftwareJobsScraper from "./scrapers/servicebased/nousInfosystems.js"
 import runNousInfosystemsJobsScraper from "./scrapers/servicebased/nousInfosystems.js"
+import runTrigentJobsScraper from "./scrapers/servicebased/trigent.js"
 
 const config = {
     concurrency: 5,
@@ -106,23 +107,8 @@ ${error.stack}`;
     }
 };
 
-// const scrapers = [
-//   { fn: runAckoScraper, headless: true },
-//   { fn: runAmazonScraper, headless: true },
-//   
-//   
-//   
-//   
-// 
-//   { fn: runAdobeScraper, headless: true },
-//   { fn: runClearTaxScraper, headless: true },
-//   { fn: runFlipkartScraper, headless: true },
-//   { fn: runFreshworksScraper, headless: true },
-//   { fn: runZohoScraper, headless: true },
-// ];
-
 const scrapers = [
-     { fn: runNousInfosystemsJobsScraper, headless: true },
+     { fn: runTrigentJobsScraper, headless: true },
 ];
 
 const runAllScrapers = async () => {
