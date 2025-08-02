@@ -174,21 +174,50 @@ class ibsSoftwareJobsScraper {
 const extractWiproData = (job) => {
     if (!job) return job;
     let cleanedDescription = job.description || '';
+    let extractedLocation = job.location || '';
+    let extractedExperience = job.experience || '';
 
     if (cleanedDescription) {
-        cleanedDescription = cleanedDescription
-            // Collapse multiple blank lines to max 1
-            .replace(/\n{3,}/g, '\n\n')
-            .trim();
+        // Check for unwanted map/footer block — common keywords or phrases
+        const unwantedFooterDetected = cleanedDescription.includes('© MapTiler') ||
+            cleanedDescription.includes('OpenStreetMap contributors') ||
+            cleanedDescription.includes('Use two fingers to move the map') ||
+            cleanedDescription.includes('Copy to Clipboard');
 
-        // Add final newline if content exists
-        if (cleanedDescription && !cleanedDescription.endsWith('\n')) {
-            cleanedDescription += '\n';
-        }
-
-        // Fallback for empty result
-        if (!cleanedDescription.trim()) {
+        if (unwantedFooterDetected) {
             cleanedDescription = 'Description not available\n';
+        } else {
+            // Extract 'Location:'
+            const locationMatch = cleanedDescription.match(/^.*Location:\s*(.*)$/im);
+            if (locationMatch) {
+                extractedLocation = locationMatch[1].trim();
+            }
+
+            // Extract 'Experience:' or 'Years of Experience:'
+            const experienceMatch = cleanedDescription.match(/^.*(?:Years of\s+)?Experience:\s*(.*)$/im);
+            if (experienceMatch) {
+                extractedExperience = experienceMatch[1].trim();
+            }
+
+            // Remove heading lines
+            cleanedDescription = cleanedDescription
+                .replace(/^.*Job\s*Title:.*\n?/im, '')
+                .replace(/^.*Location:.*\n?/im, '')
+                .replace(/^.*(?:Years of\s+)?Experience:.*\n?/im, '')
+                .replace(/^.*Job\s*Description.*\n?/im, '');
+
+            // Collapse multiple blank lines
+            cleanedDescription = cleanedDescription.replace(/\n{3,}/g, '\n\n').trim();
+
+            // Add final newline if needed
+            if (cleanedDescription && !cleanedDescription.endsWith('\n')) {
+                cleanedDescription += '\n';
+            }
+
+            // Fallback if empty
+            if (!cleanedDescription.trim()) {
+                cleanedDescription = 'Description not available\n';
+            }
         }
     } else {
         cleanedDescription = 'Description not available\n';
@@ -197,10 +226,13 @@ const extractWiproData = (job) => {
     return {
         ...job,
         title: job.title?.trim() || '',
-        location: job.location?.trim() || '',
+        location: extractedLocation,
+        experience: extractedExperience,
         description: cleanedDescription,
     };
 };
+
+
 
 
 // ✅ Exportable runner function
