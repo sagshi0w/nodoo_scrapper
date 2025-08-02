@@ -92,14 +92,24 @@ class TrigentJobsScraper {
 
             const job = await jobPage.evaluate(() => {
                 const getText = sel => document.querySelector(sel)?.innerText.trim() || '';
+
+                const getLocation = () => {
+                    const items = Array.from(document.querySelectorAll('.elementor-icon-list-text'));
+                    const locationItem = items.find(item =>
+                        item.innerText.toLowerCase().includes('location')
+                    );
+                    return locationItem?.innerText.replace('Location:', '').trim() || '';
+                };
+
                 return {
                     title: getText('h1.post-title'),
                     company: 'Trigent',
-                    location: getText('.elementor-icon-list-item .elementor-icon-list-text'),
-                    description: getText('.elementor.elementor-1'),
+                    location: getLocation(),
+                    description: getText('#main > div > div > div > div.elementor-element.elementor-element-99a4cd0.e-con-full.thegem-e-con-layout-elementor.e-flex.e-con.e-child'),
                     url: window.location.href
                 };
             });
+
 
 
             console.log("Before enriching job=", job);
