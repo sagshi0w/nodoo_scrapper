@@ -16,6 +16,7 @@ const nodemailer = require('nodemailer');
 import runUstGlobalJobsScraper from "./scrapers/servicebased/ustGlobal.js"
 import runIBSSoftwareJobsScraper from "./scrapers/servicebased/ibsSoftware.js"
 import runNousInfosystemsJobsScraper from "./scrapers/servicebased/nousInfosystems.js"
+import runNTTDataJobsScraper from "./scrapers/servicebased/nttData.js"
 
 const config = {
   concurrency: 5,
@@ -87,6 +88,7 @@ const scrapers = [
   { fn: runUstGlobalJobsScraper, headless: true },
   { fn: runIBSSoftwareJobsScraper, headless: true },
   { fn: runNousInfosystemsJobsScraper, headless: true },
+  { fn: runNTTDataJobsScraper, headless: true },
 ];
 
 const runAllScrapers = async () => {

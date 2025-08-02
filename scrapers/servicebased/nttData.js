@@ -60,7 +60,7 @@ class NttDataJobsScraper {
             "Rourkela", "Bilaspur", "Anantapur", "Silchar", "Kochi", "Thiruvananthapuram"
         ];
 
-        while (start < 10) {
+        while (start < 1000) {
             const url = `https://nttdata.eightfold.ai/careers?pid=563327923692371&sort_by=hot&start=${start}`;
 
             console.log(`🌐 Navigating to Page ${pageCount} -> ${url}`);
