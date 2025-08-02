@@ -36,7 +36,7 @@ class nousInfosystemsScraper {
 
         while (pageNumvber < 11) {
             // Wait for job links to load
-            await this.page.waitForSelector('a[href*="/careers/job-openings/"]', { timeout: 10000 });
+            await this.page.waitForSelector('a[href*="/careers/job-openings/"]', { timeout: 20000 });
 
             // Collect links
             const jobLinks = await this.page.$$eval(
