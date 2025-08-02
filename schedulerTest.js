@@ -40,6 +40,7 @@ import runSaskenScraper from "./scrapers/servicebased/sasken.js"
 import runIBSSoftwareJobsScraper from "./scrapers/servicebased/nousInfosystems.js"
 import runNousInfosystemsJobsScraper from "./scrapers/servicebased/nousInfosystems.js"
 import runNTTDataJobsScraper from "./scrapers/servicebased/nttData.js"
+import runCGIJobsScraper from "./scrapers/servicebased/cgi.js"
 
 const config = {
     concurrency: 5,
@@ -108,7 +109,7 @@ ${error.stack}`;
 };
 
 const scrapers = [
-     { fn: runNTTDataJobsScraper, headless: true },
+     { fn: runCGIJobsScraper, headless: true },
 ];
 
 const runAllScrapers = async () => {
