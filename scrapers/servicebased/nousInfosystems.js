@@ -35,7 +35,6 @@ class nousInfosystemsScraper {
 
         while (true) {
             // Wait for job links to load
-            this.page.waitForNavigation({ waitUntil: 'networkidle2' }),
             await this.page.waitForSelector('a[href*="/careers/job-openings/"]', { timeout: 20000 });
 
             // Collect links
