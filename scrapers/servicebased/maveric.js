@@ -3,7 +3,7 @@ import fs from 'fs';
 
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
-class ZycusJobsScraper {
+class MavericJobsScraper {
     constructor(headless = true) {
         this.headless = headless;
         this.browser = null;
@@ -23,7 +23,7 @@ class ZycusJobsScraper {
 
     async navigateToJobsPage() {
         console.log('🌐 Navigating to Zycus Careers...');
-        await this.page.goto('https://zycus.sensehq.com/careers/jobs?page=0&pageSize=50&department=&location=&title=&sortBy=&orderBy=ASC&minExp=0&maxExp=100&jobType=&workplaceType=', {
+        await this.page.goto('https://career44.sapsf.com/career?company=mavericsys&career%5fns=job%5flisting%5fsummary&navBarLevel=JOB%5fSEARCH&_s.crb=sD0JLHfvAsQ5R9GZANmkiBrJcFuhAwESzS7q8b1Ppkw%3d', {
             waitUntil: 'networkidle2'
         });
         await delay(5000);
@@ -39,7 +39,7 @@ class ZycusJobsScraper {
 
             // Collect new links
             const jobLinks = await this.page.$$eval(
-                'a.chakra-button css-38ykxg',
+                'a.jobTitle',
                 anchors => anchors.map(a => a.href)
             );
 
@@ -92,11 +92,9 @@ class ZycusJobsScraper {
             const job = await jobPage.evaluate(() => {
                 const getText = sel => document.querySelector(sel)?.innerText.trim() || '';
                 return {
-                    title: getText('p.JobDetails_job_title__2xaK6'),
-                    company: 'Mindfire Solutions',
-                    location: getText('p.JobDetails_text_muted__2YlRe'),
-                    experience: getText('p.JobDetails_jobExp__ZmBE0'),
-                    description: getText('div.JobDetails_subcontainer__1oVbA'),
+                    title: getText('h1.candidateProfileTitle'),
+                    company: 'Maveric Systems',
+                    description: getText('div.sfpanel_wrapper'),
                     url: window.location.href
                 };
             });
@@ -227,7 +225,7 @@ const extractWiproData = (job) => {
     return {
         ...job,
         title: job.title?.trim() || '',
-        location: location || job.location?.trim() || '',
+        location: location || job.location?.trim() || 'Not specified',
         description: cleanedDescription,
         experience: experience || 'Not specified',
     };
@@ -235,18 +233,18 @@ const extractWiproData = (job) => {
 
 
 // ✅ Exportable runner function
-const runZycusJobsScraper = async ({ headless = true } = {}) => {
-    const scraper = new ZycusJobsScraper(headless);
+const runMavericJobsScraper = async ({ headless = true } = {}) => {
+    const scraper = new MavericJobsScraper(headless);
     await scraper.run();
     return scraper.allJobs;
 };
 
-export default runZycusJobsScraper;
+export default runMavericJobsScraper;
 
 // ✅ CLI support: node phonepe.js --headless=false
 if (import.meta.url === `file://${process.argv[1]}`) {
     const headlessArg = process.argv.includes('--headless=false') ? false : true;
     (async () => {
-        await runZycusJobsScraper({ headless: headlessArg });
+        await runMavericJobsScraper({ headless: headlessArg });
     })();
 }

@@ -42,7 +42,7 @@ import runNousInfosystemsJobsScraper from "./scrapers/servicebased/nousInfosyste
 import runNTTDataJobsScraper from "./scrapers/servicebased/nttData.js"
 import runCGIJobsScraper from "./scrapers/servicebased/cgi.js"
 import runMindFireSolutionsJobsScraper from "./scrapers/servicebased/mindFireSolutions.js"
-import runZycusJobsScraper from "./scrapers/servicebased/zycus.js"
+import runMavericJobsScraper from "./scrapers/servicebased/maveric.js"
 
 const config = {
     concurrency: 5,
@@ -111,7 +111,7 @@ ${error.stack}`;
 };
 
 const scrapers = [
-    { fn: runZycusJobsScraper, headless: true },
+    { fn: runMavericJobsScraper, headless: true },
 ];
 
 const runAllScrapers = async () => {
