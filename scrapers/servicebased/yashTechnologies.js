@@ -70,8 +70,8 @@ class YashTechnologiesJobsScraper {
             // Click the next page
             console.log(`➡️ Clicking page ${pageIndex + 1}`);
             await Promise.all([
-                this.page.click(`ul.pagination li a[title="Page ${pageIndex + 1}"]`),
-                this.page.waitForNavigation({ waitUntil: 'networkidle2' }),
+                //this.page.click(`ul.pagination li a[title="Page ${pageIndex + 1}"]`),
+                //this.page.waitForNavigation({ waitUntil: 'networkidle2' }),
             ]);
 
             pageIndex++;
