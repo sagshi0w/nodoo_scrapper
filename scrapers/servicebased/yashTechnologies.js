@@ -32,6 +32,7 @@ class YashTechnologiesJobsScraper {
     async collectAllJobCardLinks() {
         this.allJobLinks = [];
         let pageIndex = 1;
+        const existingLinks = new Set();
 
         while (true) {
             // Wait for job links to load
@@ -42,9 +43,12 @@ class YashTechnologiesJobsScraper {
                 'a.jobTitle-link',
                 anchors => anchors.map(a => a.href)
             );
-
+            
             for (const link of jobLinks) {
-                this.allJobLinks.push(link);
+                if (!existingLinks.has(link)) {
+                    existingLinks.add(link);
+                    this.allJobLinks.push(link);
+                }
             }
 
             console.log(`📄 Collected ${this.allJobLinks.length} unique job links so far...`);
