@@ -22,7 +22,7 @@ class MavericJobsScraper {
     }
 
     async navigateToJobsPage() {
-        console.log('🌐 Navigating to Zycus Careers...');
+        console.log('🌐 Navigating to Maveric Systems Careers...');
         await this.page.goto('https://career44.sapsf.com/career?company=mavericsys&career%5fns=job%5flisting%5fsummary&navBarLevel=JOB%5fSEARCH&_s.crb=sD0JLHfvAsQ5R9GZANmkiBrJcFuhAwESzS7q8b1Ppkw%3d', {
             waitUntil: 'networkidle2'
         });
@@ -92,7 +92,7 @@ class MavericJobsScraper {
             const job = await jobPage.evaluate(() => {
                 const getText = sel => document.querySelector(sel)?.innerText.trim() || '';
                 return {
-                    title: getText('h1.candidateProfileTitle'),
+                    title: getText('#candidateProfileTitle'),
                     company: 'Maveric Systems',
                     description: getText('div.sfpanel_wrapper'),
                     url: window.location.href
