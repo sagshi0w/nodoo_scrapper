@@ -22,8 +22,8 @@ class ZycusJobsScraper {
     }
 
     async navigateToJobsPage() {
-        console.log('🌐 Navigating to Mindfire solutions Careers...');
-        await this.page.goto('https://apply.mindfiresolutions.com/', {
+        console.log('🌐 Navigating to Zycus Careers...');
+        await this.page.goto('https://zycus.sensehq.com/careers/jobs?page=0&pageSize=50&department=&location=&title=&sortBy=&orderBy=ASC&minExp=0&maxExp=100&jobType=&workplaceType=', {
             waitUntil: 'networkidle2'
         });
         await delay(5000);
@@ -39,7 +39,7 @@ class ZycusJobsScraper {
 
             // Collect new links
             const jobLinks = await this.page.$$eval(
-                'a.JobOpenings_openings_row__26eaA',
+                'a.chakra-button css-38ykxg',
                 anchors => anchors.map(a => a.href)
             );
 
