@@ -19,6 +19,7 @@ import runNousInfosystemsJobsScraper from "./scrapers/servicebased/nousInfosyste
 import runNTTDataJobsScraper from "./scrapers/servicebased/nttData.js"
 import runCGIJobsScraper from "./scrapers/servicebased/cgi.js"
 import runMindFireSolutionsJobsScraper from "./scrapers/servicebased/mindFireSolutions.js"
+import runMavericJobsScraper from "./scrapers/servicebased/maveric.js"
 
 const config = {
   concurrency: 5,
@@ -93,6 +94,7 @@ const scrapers = [
   { fn: runNTTDataJobsScraper, headless: true },
   { fn: runCGIJobsScraper, headless: true },
   { fn: runMindFireSolutionsJobsScraper, headless: true },
+  { fn: runMavericJobsScraper, headless: true },
 ];
 
 const runAllScrapers = async () => {
