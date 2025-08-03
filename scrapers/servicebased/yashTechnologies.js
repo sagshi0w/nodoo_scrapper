@@ -160,49 +160,73 @@ const extractWiproData = (job) => {
     let experience = null;
     let location = null;
 
-    // Extract experience from job.experience field
+    const expPatterns = [
+        /\b(\d{1,2})\s*\+\s*(?:years|yrs|yr)\b/i,
+        /\bminimum\s*(\d{1,2})\s*(?:years|yrs|yr)\b/i,
+        /\bmin(?:imum)?\s*(\d{1,2})\s*(?:years|yrs|yr)\b/i,
+        /\b(\d{1,2})\s*(?:to|–|-|–)\s*(\d{1,2})\s*(?:years|yrs|yr)\b/i,
+        /\b(?:at least|over)\s*(\d{1,2})\s*(?:years|yrs|yr)\b/i,
+        /\b(\d{1,2})\s*(?:years|yrs|yr)\s+experience\b/i,
+        /\bexperience\s*(?:of)?\s*(\d{1,2})\s*(?:years|yrs|yr)\b/i,
+        /\bexperience\s*(?:required)?\s*[:\-]?\s*(\d{1,2})\s*(?:[-to]+)?\s*(\d{1,2})?\s*(?:years|yrs|yr)?/i,
+    ];
+
+    // Step 1: Try job.experience field
     if (typeof job.experience === 'number' || /^\d+$/.test(job.experience)) {
         const minExp = parseInt(job.experience, 10);
         const maxExp = minExp + 2;
         experience = `${minExp} - ${maxExp} yrs`;
     }
 
+    // Step 2: Parse from description if needed
+    if (!experience && cleanedDescription) {
+        for (const pattern of expPatterns) {
+            const match = cleanedDescription.match(pattern);
+            if (match) {
+                const min = match[1];
+                const max = match[2];
+
+                if (min && max) {
+                    experience = `${min} - ${max} yrs`;
+                } else if (min && !max) {
+                    const estMax = parseInt(min) + 2;
+                    experience = `${min} - ${estMax} yrs`;
+                }
+                break;
+            }
+        }
+    }
+
+    // Step 3: Clean description
     if (cleanedDescription) {
-        // Remove block starting from "Current Openings" up to and including "Apply"
         cleanedDescription = cleanedDescription.replace(
             /Current Openings[\s\S]*?(?:Apply\.?\s*)?(?=\n{2,}|$)/gi,
             ''
         );
 
-        // Remove lines or blocks with "Experience"
         cleanedDescription = cleanedDescription.replace(
             /^.*\bexperience\b\s*[:\-]?\s*\d+\s*[-–]?\s*\d*\s*(?:years|yrs)?\.?.*$/gim,
             ''
         );
 
-        // Remove any leftover inline experience mentions
         cleanedDescription = cleanedDescription.replace(
             /\bexperience\s*[:\-]?\s*\d+\s*[-–]?\s*\d*\s*(?:years|yrs)?\.?/gi,
             ''
         );
 
-        // Remove "Apply" lines or links
         cleanedDescription = cleanedDescription.replace(/^\s*Apply\.?\s*$/gim, '');
         cleanedDescription = cleanedDescription.replace(/\bApply\b[:\-]?.*/gi, '');
 
-        // Remove "About the Job" and surrounding fluff
         cleanedDescription = cleanedDescription.replace(
             /About the Job[\s\S]*?(?=(\n{2,}|Responsibilities|Skills|Qualifications|Requirements|$))/i,
             ''
         );
 
-        // Extract location from description if still not present
         const locationMatch = cleanedDescription.match(/location\s*[:\-]\s*(.+?)(?:[\n\r]|$)/i);
         if (locationMatch) {
             location = locationMatch[1].trim();
         }
 
-        // Clean formatting
         cleanedDescription = cleanedDescription
             .replace(/(\n\s*)(\d+\.\s+)(.*?)(\n)/gi, '\n\n$1$2$3$4\n\n')
             .replace(/(\n\s*)([•\-]\s+)(.*?)(\n)/gi, '\n\n$1$2$3$4\n\n')
@@ -225,13 +249,12 @@ const extractWiproData = (job) => {
 
     return {
         ...job,
-        title: job.title?.trim() || '',
-        location: location || job.location?.trim() || 'Not specified',
+        title: job.title?.trim(),
+        location: location || job.location?.trim(),
         description: cleanedDescription,
-        experience: experience || 'Not specified',
+        experience: experience,
     };
 };
-
 
 // ✅ Exportable runner function
 const runYashTechnologiesJobsScraper = async ({ headless = true } = {}) => {
