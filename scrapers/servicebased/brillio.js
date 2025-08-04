@@ -181,7 +181,7 @@ const extractWiproData = (job) => {
         experience = `${minExp} - ${maxExp} yrs`;
     }
 
-    // Step 2: Parse from description if needed
+    // Step 2: Parse experience from description
     if (!experience && cleanedDescription) {
         for (const pattern of expPatterns) {
             const match = cleanedDescription.match(pattern);
@@ -227,13 +227,23 @@ const extractWiproData = (job) => {
         cleanedDescription = 'Description not available\n';
     }
 
+    // Step 4: Extract city from location string
+    if (job.location) {
+        const cityMatch = job.location.match(/^([^,\n]+)/);
+        if (cityMatch) {
+            location = cityMatch[1].trim();
+        }
+    }
+
     return {
         ...job,
         title: job.title?.trim(),
         experience,
-        location: location || job.location?.trim(),
+        location,
+        description: cleanedDescription,
     };
 };
+
 
 // ✅ Exportable runner function
 const runBrillioJobsScraper = async ({ headless = true } = {}) => {
