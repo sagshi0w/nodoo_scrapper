@@ -40,6 +40,7 @@ import runInfosysScraper from "./scrapers/servicebased/infosys.js";
 import runWiproScraper from "./scrapers/servicebased/wipro.js";
 import runZensarJobsScraper from "./scrapers/servicebased/zensar.js";
 import runTechMahnidraScrapper from "./scrapers/servicebased/techMahindra.js"
+import runBrillioScrapper from "./scrapers/servicebased/brillio.js"
 
 console.log('EMAIL_RECIPIENTS:', process.env.EMAIL_RECIPIENTS);
 
@@ -129,7 +130,7 @@ ${error.stack}`;
 // ];
 
 const scrapers = [
-  // { fn: runWiproScraper, headless: true },
+   { fn: runBrillioScrapper, headless: true },
 ];
 
 const runAllScrapers = async () => {
@@ -178,7 +179,7 @@ const runAllScrapers = async () => {
     if (allJobs.length > 0) {
       const enrichedJobs = allJobs.map(job => extractData(job));
       console.log("Enriched jobs=", enrichedJobs);
-      await sendToBackend(enrichedJobs);
+      //await sendToBackend(enrichedJobs);
       //console.log(`📤 Sent ${enrichedJobs.length} jobs to backend`);
     }
 
