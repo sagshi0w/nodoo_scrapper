@@ -230,6 +230,7 @@ const extractWiproData = (job) => {
     return {
         ...job,
         title: job.title?.trim(),
+        experience,
         location: location || job.location?.trim(),
     };
 };
