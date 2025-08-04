@@ -20,6 +20,8 @@ import runNTTDataJobsScraper from "./scrapers/servicebased/nttData.js"
 import runCGIJobsScraper from "./scrapers/servicebased/cgi.js"
 import runMindFireSolutionsJobsScraper from "./scrapers/servicebased/mindFireSolutions.js"
 import runMavericJobsScraper from "./scrapers/servicebased/maveric.js"
+import runSynechronJobsScraper from "./scrapers/servicebased/synechron.js"
+import runBrillioScrapper from "./scrapers/servicebased/brillio.js"
 
 const config = {
   concurrency: 5,
@@ -95,6 +97,8 @@ const scrapers = [
   { fn: runCGIJobsScraper, headless: true },
   { fn: runMindFireSolutionsJobsScraper, headless: true },
   { fn: runMavericJobsScraper, headless: true },
+  { fn: runSynechronJobsScraper, headless: true },
+  { fn: runBrillioScrapper, headless: true },
 ];
 
 const runAllScrapers = async () => {

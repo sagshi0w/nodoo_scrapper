@@ -227,6 +227,13 @@ const extractWiproData = (job) => {
         cleanedDescription = 'Description not available\n';
     }
 
+    if (job.title && cleanedDescription.startsWith(job.title)) {
+        const index = cleanedDescription.indexOf('Primary Skills');
+        if (index !== -1) {
+            cleanedDescription = cleanedDescription.slice(index + 'Primary Skills'.length).trimStart();
+        }
+    }
+
     // Step 4: Extract city from location string
     if (job.location) {
         const cityMatch = job.location.match(/^([^,\n]+)/);
