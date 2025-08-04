@@ -44,6 +44,7 @@ import runCGIJobsScraper from "./scrapers/servicebased/cgi.js"
 import runMindFireSolutionsJobsScraper from "./scrapers/servicebased/mindFireSolutions.js"
 import runMavericJobsScraper from "./scrapers/servicebased/maveric.js"
 import runYashTechnologiesJobsScraper from "./scrapers/servicebased/yashTechnologies.js"
+import runSynechronJobsScraper from "./scrapers/servicebased/synechron.js"
 
 const config = {
     concurrency: 5,
@@ -112,7 +113,7 @@ ${error.stack}`;
 };
 
 const scrapers = [
-    { fn: runYashTechnologiesJobsScraper, headless: true },
+    { fn: runSynechronJobsScraper, headless: true },
 ];
 
 const runAllScrapers = async () => {
