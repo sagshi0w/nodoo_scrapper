@@ -228,9 +228,12 @@ const extractWiproData = (job) => {
     }
 
     if (job.title && cleanedDescription.startsWith(job.title)) {
-        const index = cleanedDescription.indexOf('Primary Skills');
-        if (index !== -1) {
-            cleanedDescription = cleanedDescription.slice(index + 'Primary Skills'.length).trimStart();
+        const match = cleanedDescription.match(/Primary Skills\s*[:\-–]?\s*/i);
+        if (match) {
+            const index = match.index;
+            if (index > 0) {
+                cleanedDescription = cleanedDescription.slice(index).trimStart();
+            }
         }
     }
 
