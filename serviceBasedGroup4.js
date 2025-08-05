@@ -98,7 +98,7 @@ const scrapers = [
   { fn: runMindFireSolutionsJobsScraper, headless: true },
   { fn: runMavericJobsScraper, headless: true },
   { fn: runSynechronJobsScraper, headless: true },
-  // { fn: runBrillioScrapper, headless: true },
+  { fn: runBrillioScrapper, headless: true },
 ];
 
 const runAllScrapers = async () => {
