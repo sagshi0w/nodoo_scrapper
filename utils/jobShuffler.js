@@ -1,4 +1,4 @@
-function shuffleJobsAvoidStackingSameCompany(jobs) {
+export default function shuffleJobsAvoidStackingSameCompany(jobs) {
   if (!Array.isArray(jobs)) return [];
 
   // Group jobs by company
@@ -63,7 +63,3 @@ function shuffleArray(arr) {
     [arr[i], arr[j]] = [arr[j], arr[i]];
   }
 }
-
-module.exports = {
-  shuffleJobsAvoidStackingSameCompany,
-};
