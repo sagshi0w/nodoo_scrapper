@@ -4,6 +4,7 @@ import { createRequire } from 'module';
 import fs from 'fs';
 import extractData from "./utils/extractData.js";
 import sendToBackend from "./utils/sendToBackend.js";
+import shuffleJobsAvoidStackingSameCompany from "./utils/jobShuffler";
 import dotenv from 'dotenv';
 
 // Load environment variables
@@ -134,8 +135,8 @@ const runAllScrapers = async () => {
 
     if (allJobs.length > 0) {
       const enrichedJobs = allJobs.map(job => extractData(job));
-      await sendToBackend(enrichedJobs);
-      //console.log(`📤 Sent ${enrichedJobs.length} jobs to backend`);
+      const shuffledJobs = shuffleJobsAvoidStackingSameCompany(enrichedJobs);
+      await sendToBackend(shuffledJobs);
     }
 
     const endTime = moment().tz("Asia/Kolkata");
