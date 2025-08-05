@@ -5,7 +5,7 @@ import { createRequire } from 'module';
 import fs from 'fs';
 import extractData from "./utils/extractData.js";
 import sendToBackend from "./utils/sendToBackend.js";
-import shuffleJobsAvoidStackingSameCompany  from "./utils/jobShuffler";
+import shuffleJobsAvoidStackingSameCompany  from "./utils/jobShuffler.js";
 import dotenv from 'dotenv';
 
 // Load environment variables
