@@ -99,7 +99,7 @@ class QuinnoxJobsScraper {
                     title: getText('h1.role'),
                     company: 'Quinnox',
                     location: getText('span.location'),
-                    description: getText('div[data-id="319a802d"]'),
+                    description: getText('div[data-id="4cc67f1c"]'),
                     url: window.location.href
                 };
             });
