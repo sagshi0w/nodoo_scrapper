@@ -3,7 +3,7 @@ import fs from 'fs';
 
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
-class QuinnoxJobsScraper {
+class InfogainJobsScraper {
     constructor(headless = true) {
         this.headless = headless;
         this.browser = null;
@@ -22,7 +22,7 @@ class QuinnoxJobsScraper {
     }
 
     async navigateToJobsPage() {
-        console.log('🌐 Navigating to Quinnox Careers...');
+        console.log('🌐 Navigating to Infogain Careers...');
         await this.page.goto('https://www.quinnox.com/career/#products', {
             waitUntil: 'networkidle2'
         });
@@ -96,10 +96,11 @@ class QuinnoxJobsScraper {
             const job = await jobPage.evaluate(() => {
                 const getText = sel => document.querySelector(sel)?.innerText.trim() || '';
                 return {
-                    title: getText('h1.role'),
-                    company: 'Quinnox',
-                    location: getText('span.location'),
-                    description: getText('div[data-id="319a802d"]'),
+                    title: getText('h5.pt-3').split(/\bwith\b/i)[0].trim(),
+                    company: 'Infogain',
+                    experience: getText('ul.list-unstyled border-bottom-blue'),
+                    location: 'India',
+                    description: getText('div.career_job_desc'),
                     url: window.location.href
                 };
             });
@@ -203,19 +204,6 @@ const extractWiproData = (job) => {
     // Step 3: Clean description
     if (cleanedDescription) {
         // Remove entire Job Title and Job Location lines
-        cleanedDescription = cleanedDescription.replace(
-            /^\s*Job\s*Title\s*:.*$/gim,
-            ''
-        ).replace(
-            /^\s*Job\s*Location\s*:.*$/gim,
-            ''
-        );
-
-        // Remove just the "Job Description" label but keep its content
-        cleanedDescription = cleanedDescription.replace(
-            /^\s*Job\s*Description\s*:?\s*/gim,
-            ''
-        );
 
         // Clean extra blank lines
         cleanedDescription = cleanedDescription.replace(/\n{2,}/g, '\n');
@@ -262,18 +250,18 @@ const extractWiproData = (job) => {
 
 
 // ✅ Exportable runner function
-const runQuinnoxJobsScraper = async ({ headless = true } = {}) => {
-    const scraper = new QuinnoxJobsScraper(headless);
+const runInfogainJobsScraper = async ({ headless = true } = {}) => {
+    const scraper = new InfogainJobsScraper(headless);
     await scraper.run();
     return scraper.allJobs;
 };
 
-export default runQuinnoxJobsScraper;
+export default runInfogainJobsScraper;
 
 // ✅ CLI support: node phonepe.js --headless=false
 if (import.meta.url === `file://${process.argv[1]}`) {
     const headlessArg = process.argv.includes('--headless=false') ? false : true;
     (async () => {
-        await runQuinnoxJobsScraper({ headless: headlessArg });
+        await runInfogainJobsScraper({ headless: headlessArg });
     })();
 }
