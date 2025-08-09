@@ -23,7 +23,7 @@ class InfogainJobsScraper {
 
     async navigateToJobsPage() {
         console.log('🌐 Navigating to Infogain Careers...');
-        await this.page.goto('https://www.quinnox.com/career/#products', {
+        await this.page.goto('https://www.infogain.com/careers/listing/', {
             waitUntil: 'networkidle2'
         });
         await delay(5000);
