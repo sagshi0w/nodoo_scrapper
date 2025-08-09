@@ -74,7 +74,7 @@ const runAmazonScraper = async ({ headless = true } = {}) => {
                     return {
                         title: tx('h1.title'),
                         company: 'Amazon',
-                        location: tx('ul.association-content'),
+                        location: tx('ul.association-content') || 'India',
                         description: tx('#job-detail-body > div > div.col-12.col-md-7.col-lg-8.col-xl-9 > div > div:nth-child(2)'),
                         url: window.location.href
                     };

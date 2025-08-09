@@ -45,6 +45,7 @@ import runMindFireSolutionsJobsScraper from "./scrapers/servicebased/mindFireSol
 import runMavericJobsScraper from "./scrapers/servicebased/maveric.js"
 import runYashTechnologiesJobsScraper from "./scrapers/servicebased/yashTechnologies.js"
 import runSynechronJobsScraper from "./scrapers/servicebased/synechron.js"
+import runQuinnoxJobsScraper from "./scrapers/servicebased/quinnox.js"
 
 const config = {
     concurrency: 5,
@@ -113,7 +114,7 @@ ${error.stack}`;
 };
 
 const scrapers = [
-    { fn: runSynechronJobsScraper, headless: true },
+    { fn: runQuinnoxJobsScraper, headless: true },
 ];
 
 const runAllScrapers = async () => {

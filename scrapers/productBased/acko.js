@@ -169,7 +169,7 @@ const extractAckoData = (job) => {
     return {
         ...job,
         title: cleanedTitle,
-        location: cleanedLocation,
+        location: cleanedLocation || 'India',
         description: cleanedDescription,
         company: 'Acko',
         scrapedAt: new Date().toISOString()

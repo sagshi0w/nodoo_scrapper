@@ -1172,7 +1172,7 @@ export default function extractSkillsAndExperience(job) {
 
     // Get city
     const extractCity = (location) => {
-        if (!location) return "Not specified";
+        if (!location || location.trim().toLowerCase() === "not specified") return "India";
 
         // Normalize known aliases before matching
         let lowerLoc = location.toLowerCase();
@@ -1186,7 +1186,7 @@ export default function extractSkillsAndExperience(job) {
             }
         }
 
-        return "Not specified";
+        return "India";
     };
 
 

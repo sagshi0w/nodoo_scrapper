@@ -81,7 +81,7 @@ class AdobeJobsScraper {
                 return {
                     title: getText('h1.job-title'),
                     company: 'Adobe',
-                    location: getText('.job-info[data-ph-at-job-location-text]'),
+                    location: getText('.job-info[data-ph-at-job-location-text]') || 'India',
                     description: getText('body > main > div.body-wrapper.ph-page-container > div > div.job-page-external > div > div > div.col-lg-8.col-md-8.col-sm-12 > section:nth-child(2) > div > section.job-description.au-target.phw-widget-ctr-nd'),
                 };
             });
