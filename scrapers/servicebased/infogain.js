@@ -40,7 +40,7 @@ class InfogainJobsScraper {
 
             // Collect new links
             const jobLinks = await this.page.$$eval(
-                'a.blue-button',
+                'td.jobDescription-table-data',
                 anchors => anchors.map(a => a.href)
             );
 
