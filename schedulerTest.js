@@ -47,7 +47,7 @@ import runYashTechnologiesJobsScraper from "./scrapers/servicebased/yashTechnolo
 import runSynechronJobsScraper from "./scrapers/servicebased/synechron.js"
 import runQuinnoxJobsScraper from "./scrapers/servicebased/quinnox.js"
 import runInfogainJobsScraper from "./scrapers/servicebased/infogain.js"
-import runAspireSystemJobsScraper from "./scrapers/servicebased/aspireSystem.js"
+import runThreeiInfotechJobsScraper from "./scrapers/servicebased/threeiInfotech.js"
 
 const config = {
     concurrency: 5,
@@ -116,7 +116,7 @@ ${error.stack}`;
 };
 
 const scrapers = [
-    { fn: runAspireSystemJobsScraper, headless: true },
+    { fn: runThreeiInfotechJobsScraper, headless: true },
 ];
 
 const runAllScrapers = async () => {

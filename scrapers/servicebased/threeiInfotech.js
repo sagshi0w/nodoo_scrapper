@@ -3,7 +3,7 @@ import fs from 'fs';
 
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
-class AspireSystemsJobsScraper {
+class ThreeiInfotechJobsScraper {
     constructor(headless = true) {
         this.headless = headless;
         this.browser = null;
@@ -22,8 +22,8 @@ class AspireSystemsJobsScraper {
     }
 
     async navigateToJobsPage() {
-        console.log('🌐 Navigating to Aspire Systems Careers...');
-        await this.page.goto('https://www.aspiresys.com/openings', {
+        console.log('🌐 Navigating to 3i Infotech Careers...');
+        await this.page.goto('https://www.3i-infotech.com/careers/', {
             waitUntil: 'networkidle2'
         });
         await delay(5000);
@@ -40,7 +40,7 @@ class AspireSystemsJobsScraper {
 
             // Collect new links
             const jobLinks = await this.page.$$eval(
-                'a[data-designation][data-city][data-tag]',
+                'a.awsm-job-more',
                 anchors => anchors.map(a => a.href)
             );
 
@@ -96,11 +96,9 @@ class AspireSystemsJobsScraper {
             const job = await jobPage.evaluate(() => {
                 const getText = sel => document.querySelector(sel)?.innerText.trim() || '';
                 return {
-                    title: getText('h5.pt-3').split(/\bwith\b/i)[0].trim(),
-                    company: 'Infogain',
-                    experience: getText('ul.list-unstyled border-bottom-blue'),
-                    location: 'India',
-                    description: getText('div.career_job_desc'),
+                    title: getText('h1.entry-title awsm-jobs-single-title'),
+                    company: '3i Infotech',
+                    description: getText('div.awsm-job-entry-content.entry-content'),
                     url: window.location.href
                 };
             });
@@ -250,18 +248,18 @@ const extractWiproData = (job) => {
 
 
 // ✅ Exportable runner function
-const runAspireSystemsJobsScraper = async ({ headless = true } = {}) => {
-    const scraper = new AspireSystemsJobsScraper(headless);
+const runThreeiInfotechJobsScraper = async ({ headless = true } = {}) => {
+    const scraper = new ThreeiInfotechJobsScraper(headless);
     await scraper.run();
     return scraper.allJobs;
 };
 
-export default runAspireSystemsJobsScraper;
+export default runThreeiInfotechJobsScraper;
 
 // ✅ CLI support: node phonepe.js --headless=false
 if (import.meta.url === `file://${process.argv[1]}`) {
     const headlessArg = process.argv.includes('--headless=false') ? false : true;
     (async () => {
-        await runAspireSystemsJobsScraper({ headless: headlessArg });
+        await runThreeiInfotechJobsScraper({ headless: headlessArg });
     })();
 }
