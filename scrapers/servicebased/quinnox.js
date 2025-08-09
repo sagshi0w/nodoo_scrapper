@@ -202,7 +202,26 @@ const extractWiproData = (job) => {
 
     // Step 3: Clean description
     if (cleanedDescription) {
-        if (cleanedDescription && !cleanedDescription.endsWith('\n')) {
+        // Remove entire Job Title and Job Location lines
+        cleanedDescription = cleanedDescription.replace(
+            /^\s*Job\s*Title\s*:.*$/gim,
+            ''
+        ).replace(
+            /^\s*Job\s*Location\s*:.*$/gim,
+            ''
+        );
+
+        // Remove just the "Job Description" label but keep its content
+        cleanedDescription = cleanedDescription.replace(
+            /^\s*Job\s*Description\s*:?\s*/gim,
+            ''
+        );
+
+        // Clean extra blank lines
+        cleanedDescription = cleanedDescription.replace(/\n{2,}/g, '\n');
+
+        // Ensure newline at end
+        if (!cleanedDescription.endsWith('\n')) {
             cleanedDescription += '\n';
         }
 
@@ -212,6 +231,7 @@ const extractWiproData = (job) => {
     } else {
         cleanedDescription = 'Description not available\n';
     }
+
 
     if (job.title && cleanedDescription.startsWith(job.title)) {
         const match = cleanedDescription.match(/Primary Skills\s*[:\-–]?\s*/i);
