@@ -201,7 +201,8 @@ const extractWiproData = (job) => {
 
     // Step 3: Clean description
     if (cleanedDescription) {
-        // Remove entire Job Title and Job Location lines
+        // Remove the word "Job Description:" (case-insensitive, optional colon and spaces)
+        cleanedDescription = cleanedDescription.replace(/\bJob\s*Description\s*:?\s*/gi, '');
 
         // Clean extra blank lines
         cleanedDescription = cleanedDescription.replace(/\n{2,}/g, '\n');
@@ -217,6 +218,7 @@ const extractWiproData = (job) => {
     } else {
         cleanedDescription = 'Description not available\n';
     }
+
 
 
     if (job.title && cleanedDescription.startsWith(job.title)) {
