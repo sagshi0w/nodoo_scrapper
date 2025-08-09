@@ -40,7 +40,7 @@ class InfogainJobsScraper {
 
             // Collect new links
             const jobLinks = await this.page.$$eval(
-                'a[data-tag="TH210725_95071"]',
+                'a[data-designation][data-city][data-tag]',
                 anchors => anchors.map(a => a.href)
             );
 
