@@ -96,7 +96,7 @@ class ThreeiInfotechJobsScraper {
             const job = await jobPage.evaluate(() => {
                 const getText = sel => document.querySelector(sel)?.innerText.trim() || '';
                 return {
-                    title: getText('h1.entry-title awsm-jobs-single-title'),
+                    title: getText('h1.entry-title.awsm-jobs-single-title'),
                     company: '3i Infotech',
                     description: getText('div.awsm-job-entry-content.entry-content'),
                     url: window.location.href
