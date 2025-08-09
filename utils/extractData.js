@@ -1248,7 +1248,7 @@ export default function extractSkillsAndExperience(job) {
         sector: categorizeJob(job.title, cleanDescription(job.description)),
         isEntryLevel: isEntryLevelJob(job.title, cleanDescription(job.description)),
         jobType: extractJobType(cleanDescription(job.description), extractExperience(cleanDescription(job.description))),
-        location: extractCity(job.location),
+        location: extractCity(job.location) || 'India',
         postedAt: getISOTimestamp()
     };
 }
