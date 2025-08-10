@@ -96,7 +96,7 @@ class ThoughtFocusJobsScraper {
             const job = await jobPage.evaluate(() => {
                 const getText = sel => document.querySelector(sel)?.innerText.trim() || '';
                 return {
-                    title: getText('h2.font-large-5.font-weight-normal.m-0.kch-text-heading'),
+                    title: getText('h1.font-large-5.font-weight-normal.m-0.kch-text-heading'),
                     company: 'ThoughtFocus',
                     location: getText('div.d-flex.align-items-center.pr-4.pb-3'),
                     description: getText('div.job-description-container.ql-editor'),
