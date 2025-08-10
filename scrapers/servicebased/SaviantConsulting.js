@@ -3,7 +3,7 @@ import fs from 'fs';
 
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
-class VirtusaJobsScraper {
+class SaviantConsultingJobsScraper {
     constructor(headless = true) {
         this.headless = headless;
         this.browser = null;
@@ -22,8 +22,8 @@ class VirtusaJobsScraper {
     }
 
     async navigateToJobsPage() {
-        console.log('🌐 Navigating to Virtusa Careers...');
-        await this.page.goto('https://www.virtusa.com/careers/job-search#India#Pune', {
+        console.log('🌐 Navigating to Saviant Consulting Careers...');
+        await this.page.goto('https://www.saviantconsulting.com/current-openings.aspx', {
             waitUntil: 'networkidle2'
         });
         await delay(5000);
@@ -40,7 +40,7 @@ class VirtusaJobsScraper {
 
             // Collect new links
             const jobLinks = await this.page.$$eval(
-                'a.job_position',
+                'h4.job-title > a',
                 anchors => anchors.map(a => a.href)
             );
 
@@ -95,11 +95,26 @@ class VirtusaJobsScraper {
 
             const job = await jobPage.evaluate(() => {
                 const getText = sel => document.querySelector(sel)?.innerText.trim() || '';
+
+                const container = document.querySelector('div.col-md-9.col-sm-8');
+
+                // Get all description paragraphs (skip first <p>)
+                const descParagraphs = Array.from(container.querySelectorAll('p:not(:first-of-type)'));
+
+                // Get all ordered lists
+                const olLists = Array.from(container.querySelectorAll('ol'));
+
+                // Combine all text
+                const descriptionText = [
+                    ...descParagraphs.map(p => p.textContent.trim()),
+                    ...olLists.map(ol => ol.textContent.trim())
+                ].join('\n\n');
+
                 return {
-                    title: getText('div.heroBanner--text.jobTitle > h1 > b'),
-                    company: 'Virtusa',
-                    location: getText('div.heroBanner--text.jobLocation > div.heroBanner--author'),
-                    description: getText('div.jobDetails section'),
+                    title: getText('div.col-md-9.col-sm-8 > h1.h3.bottom-25'),
+                    company: 'Saviant Consulting',
+                    location: getText('div.col-md-9.col-sm-8 > p:nth-of-type(1)'),
+                    description: descriptionText,
                     url: window.location.href
                 };
             });
@@ -256,18 +271,18 @@ const extractWiproData = (job) => {
 
 
 // ✅ Exportable runner function
-const runVirtusaJobsScraper = async ({ headless = true } = {}) => {
-    const scraper = new VirtusaJobsScraper(headless);
+const runSaviantConsultingJobsScraper = async ({ headless = true } = {}) => {
+    const scraper = new SaviantConsultingJobsScraper(headless);
     await scraper.run();
     return scraper.allJobs;
 };
 
-export default runVirtusaJobsScraper;
+export default runSaviantConsultingJobsScraper;
 
 // ✅ CLI support: node phonepe.js --headless=false
 if (import.meta.url === `file://${process.argv[1]}`) {
     const headlessArg = process.argv.includes('--headless=false') ? false : true;
     (async () => {
-        await runVirtusaJobsScraper({ headless: headlessArg });
+        await runSaviantConsultingJobsScraper({ headless: headlessArg });
     })();
 }

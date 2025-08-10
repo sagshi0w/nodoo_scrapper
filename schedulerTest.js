@@ -56,7 +56,7 @@ import runNetSolutionsJobsScraper from "./scrapers/servicebased/netSolutions.js"
 import runWNSJobsScraper from "./scrapers/servicebased/WNS.js"
 import runThoughtFocusJobsScraper from "./scrapers/servicebased/ThoughtFocus.js"
 import runTezoJobsScraper from "./scrapers/servicebased/tezo.js"
-import runVirtusaJobsScraper from "./scrapers/servicebased/Virtusa.js"
+import runSaviantConsultingJobsScraper from "./scrapers/servicebased/SaviantConsulting.js"
 
 
 
@@ -129,7 +129,7 @@ ${error.stack}`;
 };
 
 const scrapers = [
-    { fn: runVirtusaJobsScraper, headless: true },
+    { fn: runSaviantConsultingJobsScraper, headless: true },
 ];
 
 const runAllScrapers = async () => {
