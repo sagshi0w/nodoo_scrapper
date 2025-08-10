@@ -40,7 +40,7 @@ class VirtusaJobsScraper {
 
             // Collect new links
             const jobLinks = await this.page.$$eval(
-                'div.info__section--item > a.job_position',
+                'a.job_position',
                 anchors => anchors.map(a => a.href)
             );
 
