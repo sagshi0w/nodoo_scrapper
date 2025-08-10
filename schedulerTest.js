@@ -60,10 +60,11 @@ import runSaviantConsultingJobsScraper from "./scrapers/servicebased/SaviantCons
 
 import runTextbookJobsScraper from "./scrapers/productBased/textbook.js"
 import runKhanAcademyJobsScraper from "./scrapers/productBased/khanAcademy.js"
+import runPractoJobsScraper from "./scrapers/productBased/practo.js"
+
+
+
 import runTataMgJobsScraper from "./scrapers/productBased/tata1mg.js"
-
-
-
 import runGlobalLogicJobsScraper from "./scrapers/servicebased/GlobalLogic.js"
 
 const config = {
@@ -133,7 +134,7 @@ ${error.stack}`;
 };
 
 const scrapers = [
-    { fn: runTataMgJobsScraper, headless: true },
+    { fn: runPractoJobsScraper, headless: true },
 ];
 
 const runAllScrapers = async () => {

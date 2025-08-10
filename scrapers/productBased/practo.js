@@ -1,5 +1,5 @@
-const puppeteer = require('puppeteer');
-const fs = require('fs');
+import puppeteer from 'puppeteer';
+import fs from 'fs';
 
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
@@ -8,8 +8,8 @@ class PractoJobsScraper {
         this.headless = headless;
         this.browser = null;
         this.page = null;
+        this.allJobLinks = [];
         this.allJobs = [];
-        this.jobLinks = [];
     }
 
     async initialize() {
@@ -19,99 +19,147 @@ class PractoJobsScraper {
             defaultViewport: this.headless ? { width: 1920, height: 1080 } : null
         });
         this.page = await this.browser.newPage();
-        await this.page.setUserAgent(
-            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-        );
     }
 
     async navigateToJobsPage() {
-        console.log('🌐 Navigating to Practo Careers page...');
+        console.log('🌐 Navigating to Practo Careers...');
         await this.page.goto('https://practo.app.param.ai/jobs/', {
-            waitUntil: 'networkidle2',
-            timeout: 60000
+            waitUntil: 'networkidle2'
         });
         await delay(5000);
     }
 
     async collectAllJobCardLinks() {
-        console.log('📋 Collecting job links...');
+        this.allJobLinks = [];
+        let pageIndex = 1;
+        const existingLinks = new Set();
 
-        const jobUrls = await this.page.evaluate(() => {
-            return Array.from(document.querySelectorAll('a[href^="/jobs/"]'))
-                .map(a => a.href.startsWith("http") ? a.href : `https://practo.app.param.ai${a.getAttribute("href")}`);
-        });
+        while (true) {
+            // Wait for job links to load
+            //await this.page.waitForSelector('div.op-job-apply-bt', { timeout: 10000 });
 
-        this.jobLinks.push(...jobUrls);
-        console.log(`✅ Total jobs found: ${this.jobLinks.length}`);
+            // Collect new links
+            const jobLinks = await this.page.$$eval(
+                'a[href^="/jobs/"]',
+                anchors => anchors.map(a => a.href)
+            );
+
+            for (const link of jobLinks) {
+                if (!existingLinks.has(link)) {
+                    existingLinks.add(link);
+                    this.allJobLinks.push(link);
+                }
+            }
+
+            console.log(`📄 Collected ${this.allJobLinks.length} unique job links so far...`);
+
+            const pageNumbers = await this.page.$$eval('ul.pagination li a', links =>
+                links
+                    .map(a => ({
+                        text: a.textContent.trim(),
+                        href: a.getAttribute('href'),
+                    }))
+                    .filter(a => /^\d+$/.test(a.text)) // Only page numbers
+            );
+
+            // Try to click "See more results" button
+            // Check if "Show More Results" button exists and is visible
+            const nextPage = pageNumbers.find(p => Number(p.text) === pageIndex + 1);
+
+            if (!nextPage) {
+                console.log('✅ No more pages left. Done.');
+                break;
+            }
+
+            // Click the next page
+            console.log(`➡️ Clicking page ${pageIndex + 1}`);
+            await Promise.all([
+                //this.page.click(`ul.pagination li a[title="Page ${pageIndex + 1}"]`),
+                //this.page.waitForNavigation({ waitUntil: 'networkidle2' }),
+            ]);
+
+            pageIndex++;
+
+        }
+
+        return this.allJobLinks;;
     }
+
 
     async extractJobDetailsFromLink(url) {
         const jobPage = await this.browser.newPage();
         try {
-            await jobPage.goto(url, { waitUntil: 'networkidle2', timeout: 60000 });
-            await jobPage.waitForSelector('div.text-3xl.font-bold.tracking-tight', { timeout: 10000 });
+            await jobPage.goto(url, { waitUntil: 'networkidle2' });
+            await delay(5000);
+            //await jobPage.waitForSelector('div.job__description.body', { timeout: 10000 });
 
-            const jobData = await jobPage.evaluate(() => {
+            const job = await jobPage.evaluate(() => {
                 const getText = sel => document.querySelector(sel)?.innerText.trim() || '';
-                const getRichText = sel => document.querySelector(sel)?.innerHTML.trim() || '';
 
-                const title = getText('div.text-3xl.sm\\:text-4xl.md\\:text-5xl.lg\\:text-6xl.font-bold');
-                const description = getRichText('div.ql-editor');
+                const infoBlocks = document.querySelectorAll('div.w-full > div.space-y-2');
 
-                const jobDetails = {};
-                const blocks = document.querySelectorAll('div.w-full.lg\\:w-40 > div.space-y-2');
-                blocks.forEach(block => {
-                    const label = block.querySelector('div.text-sm')?.innerText.trim();
-                    const value = block.querySelector('span.value')?.innerText.trim();
+                let location = '';
+                let experience = '';
 
-                    if (label && value) {
-                        if (label.includes('Job ID')) jobDetails.jobId = value;
-                        else if (label.includes('Job Type')) jobDetails.jobType = value;
-                        else if (label.includes('Job Location')) jobDetails.location = value;
-                        else if (label.includes('Experience')) jobDetails.experience = value;
+                infoBlocks.forEach(block => {
+                    const label = block.querySelector('div.text-sm.font-medium')?.innerText.trim();
+                    const value = block.querySelector('span.value')?.innerText.trim() || '';
+
+                    if (label === 'Job Location') {
+                        location = value;
+                    }
+
+                    if (label === 'Experience') {
+                        experience = value;
                     }
                 });
 
                 return {
-                    title,
-                    location: jobDetails.location || '',
-                    description,
-                    jobId: jobDetails.jobId || '',
-                    jobType: jobDetails.jobType || '',
-                    experience: jobDetails.experience || '',
+                    title: getText('div.text-3xl'),
+                    company: 'Practo',
+                    location: location,
+                    experience: experience,
+                    description: getText('div.ql-editor'),
                     url: window.location.href
                 };
             });
 
+            console.log("Before enriching job=", job);
+
             await jobPage.close();
-            return jobData;
+            return job;
         } catch (err) {
             await jobPage.close();
-            console.warn(`⚠️ Failed to extract from ${url}:`, err.message);
-            return { title: '', location: '', description: '', url };
+            console.warn(`❌ Failed to scrape ${url}: ${err.message}`);
+            return null;
         }
     }
 
-    async processAllJobs() {
-        for (let i = 0; i < this.jobLinks.length; i++) {
-            console.log(`📝 Processing job ${i + 1}/${this.jobLinks.length}`);
-            const jobData = await this.extractJobDetailsFromLink(this.jobLinks[i]);
 
-            if (jobData.title) {
-                this.allJobs.push(jobData);
+    async processAllJobs() {
+        for (let i = 0; i < this.allJobLinks.length; i++) {
+            const url = this.allJobLinks[i];
+            console.log(`📝 [${i + 1}/${this.allJobLinks.length}] Processing: ${url}`);
+            const jobData = await this.extractJobDetailsFromLink(url);
+            if (jobData && jobData.title) {
+                const enrichedJob = extractWiproData(jobData);
+                console.log("After enriching job=", enrichedJob);
+                this.allJobs.push(enrichedJob);
                 console.log(`✅ ${jobData.title}`);
             }
+            await delay(1000);
         }
     }
 
     async saveResults() {
-        fs.writeFileSync('practoJobs.json', JSON.stringify(this.allJobs, null, 2));
-        console.log(`💾 Saved ${this.allJobs.length} jobs to practoJobs.json`);
+        // fs.writeFileSync('./scrappedJobs/phonepeJobs.json', JSON.stringify(this.allJobs, null, 2));
+        console.log(`💾 Saved ${this.allJobs.length} jobs to YashTechnologies.json`);
     }
 
     async close() {
         await this.browser.close();
     }
+
 
     async run() {
         try {
@@ -128,20 +176,118 @@ class PractoJobsScraper {
     }
 }
 
+const extractWiproData = (job) => {
+    if (!job) return job;
+
+    let cleanedDescription = job.description || '';
+    let experience = null;
+    let location = null;
+
+    const expPatterns = [
+        /\b(\d{1,2})\s*\+\s*(?:years|yrs|yr)\b/i,
+        /\bminimum\s*(\d{1,2})\s*(?:years|yrs|yr)\b/i,
+        /\bmin(?:imum)?\s*(\d{1,2})\s*(?:years|yrs|yr)\b/i,
+        /\b(\d{1,2})\s*(?:to|–|-|–)\s*(\d{1,2})\s*(?:years|yrs|yr)\b/i,
+        /\b(?:at least|over)\s*(\d{1,2})\s*(?:years|yrs|yr)\b/i,
+        /\b(\d{1,2})\s*(?:years|yrs|yr)\s+experience\b/i,
+        /\bexperience\s*(?:of)?\s*(\d{1,2})\s*(?:years|yrs|yr)\b/i,
+        /\bexperience\s*(?:required)?\s*[:\-]?\s*(\d{1,2})\s*(?:[-to]+)?\s*(\d{1,2})?\s*(?:years|yrs|yr)?/i,
+    ];
+
+    // Step 1: Try job.experience field
+    if (typeof job.experience === 'number' || /^\d+$/.test(job.experience)) {
+        const minExp = parseInt(job.experience, 10);
+        const maxExp = minExp + 2;
+        experience = `${minExp} - ${maxExp} yrs`;
+    }
+
+    // Step 2: Parse experience from description
+    if (!experience && cleanedDescription) {
+        for (const pattern of expPatterns) {
+            const match = cleanedDescription.match(pattern);
+            if (match) {
+                const min = match[1];
+                const max = match[2];
+
+                if (min && max) {
+                    experience = `${min} - ${max} yrs`;
+                } else if (min && !max) {
+                    const estMax = parseInt(min) + 2;
+                    experience = `${min} - ${estMax} yrs`;
+                }
+                break;
+            }
+        }
+    }
+
+    // Step 3: Clean description
+    if (cleanedDescription) {
+        cleanedDescription = cleanedDescription.replace(
+            /(Current Openings|Job Summary)[\s\S]*?(?:Apply\.?\s*)?(?=\n{2,}|$)/gi,
+            ''
+        );
+
+        cleanedDescription = cleanedDescription
+            .replace(/(\n\s*)(\d+\.\s+)(.*?)(\n)/gi, '\n\n$1$2$3$4\n\n')
+            .replace(/(\n\s*)([•\-]\s+)(.*?)(\n)/gi, '\n\n$1$2$3$4\n\n')
+            .replace(/([.!?])\s+/g, '$1  ')
+            .replace(/[ \t]+$/gm, '')
+            .replace(/\n{3,}/g, '\n\n')
+            .replace(/(\S)\n(\S)/g, '$1\n\n$2')
+            .trim();
+
+        if (cleanedDescription && !cleanedDescription.endsWith('\n')) {
+            cleanedDescription += '\n';
+        }
+
+        if (!cleanedDescription.trim()) {
+            cleanedDescription = 'Description not available\n';
+        }
+    } else {
+        cleanedDescription = 'Description not available\n';
+    }
+
+    if (job.title && cleanedDescription.startsWith(job.title)) {
+        const match = cleanedDescription.match(/Primary Skills\s*[:\-–]?\s*/i);
+        if (match) {
+            const index = match.index;
+            if (index > 0) {
+                cleanedDescription = cleanedDescription.slice(index).trimStart();
+            }
+        }
+    }
+
+    // Step 4: Extract city from location string
+    if (job.location) {
+        const cityMatch = job.location.match(/^([^,\n]+)/);
+        if (cityMatch) {
+            location = cityMatch[1].trim();
+        }
+    }
+
+    return {
+        ...job,
+        title: job.title?.trim(),
+        experience,
+        location,
+        description: cleanedDescription,
+    };
+};
+
+
 // ✅ Exportable runner function
-async function runPractoScraper({ headless = true } = {}) {
+const runPractoJobsScraper = async ({ headless = true } = {}) => {
     const scraper = new PractoJobsScraper(headless);
     await scraper.run();
     return scraper.allJobs;
-}
+};
 
-module.exports = runPractoScraper;
+export default runPractoJobsScraper;
 
-// ✅ CLI support
-if (require.main === module) {
-    const args = process.argv.slice(2);
-    const headless = !args.includes('--headless=false');
+// ✅ CLI support: node phonepe.js --headless=false
+if (import.meta.url === `file://${process.argv[1]}`) {
+    const headlessArg = process.argv.includes('--headless=false') ? false : true;
     (async () => {
-        await runPractoScraper({ headless });
+        await runPractoJobsScraper({ headless: headlessArg });
     })();
 }
