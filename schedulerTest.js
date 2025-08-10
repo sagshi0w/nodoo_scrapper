@@ -61,6 +61,7 @@ import runSaviantConsultingJobsScraper from "./scrapers/servicebased/SaviantCons
 import runTextbookJobsScraper from "./scrapers/productBased/textbook.js"
 import runKhanAcademyJobsScraper from "./scrapers/productBased/khanAcademy.js"
 import runPractoJobsScraper from "./scrapers/productBased/practo.js"
+import runNaviJobsScraper from "./scrapers/productBased/navi.js"
 
 
 
@@ -134,7 +135,7 @@ ${error.stack}`;
 };
 
 const scrapers = [
-    { fn: runPractoJobsScraper, headless: true },
+    { fn: runNaviJobsScraper, headless: true },
 ];
 
 const runAllScrapers = async () => {
