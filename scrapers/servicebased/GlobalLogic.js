@@ -40,7 +40,7 @@ class GlobalLogicJobsScraper {
 
             // Collect new links
             const jobLinks = await this.page.$$eval(
-                'div.career_filter_result.bhavin123 > a.job_box',
+                'a.job_box',
                 anchors => anchors.map(a => a.href)
             );
 
