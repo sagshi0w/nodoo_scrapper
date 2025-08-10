@@ -58,6 +58,8 @@ import runThoughtFocusJobsScraper from "./scrapers/servicebased/ThoughtFocus.js"
 import runTezoJobsScraper from "./scrapers/servicebased/tezo.js"
 import runSaviantConsultingJobsScraper from "./scrapers/servicebased/SaviantConsulting.js"
 
+import runTextbookJobsScraper from "./scrapers/productBased/textbook.js"
+
 
 
 import runGlobalLogicJobsScraper from "./scrapers/servicebased/GlobalLogic.js"
@@ -129,7 +131,7 @@ ${error.stack}`;
 };
 
 const scrapers = [
-    { fn: runSaviantConsultingJobsScraper, headless: true },
+    { fn: runTextbookJobsScraper, headless: true },
 ];
 
 const runAllScrapers = async () => {
