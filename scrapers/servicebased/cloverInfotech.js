@@ -96,10 +96,11 @@ class CLoverInfotechJobsScraper {
             const job = await jobPage.evaluate(() => {
                 const getText = sel => document.querySelector(sel)?.innerText.trim() || '';
                 return {
-                    title: getText('h2.white-header'),
-                    company: 'Brillio',
-                    location: getText('p.green'),
-                    description: getText('div._detail-content'),
+                    title: getText('h3.elementor-heading-title.elementor-size-default'),
+                    company: 'Clover Infotech',
+                    // location: getText('.elementor-text-editor.elementor-clearfix > p:nth-of-type(2)'),
+                    // experience: getText('.elementor-text-editor.elementor-clearfix > p:nth-of-type(2)'),
+                    description: getText('.elementor-text-editor.elementor-clearfix'),
                     url: window.location.href
                 };
             });
