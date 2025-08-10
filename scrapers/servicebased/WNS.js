@@ -99,7 +99,7 @@ class WNSJobsScraper {
                     title: getText('h1.job-title'),
                     company: 'WNS Vuram',
                     location: getText('li.jobLocation'),
-                    description: getText('div.description'),
+                    description: getText('#st-jobDescription'),
                     url: window.location.href
                 };
             });
