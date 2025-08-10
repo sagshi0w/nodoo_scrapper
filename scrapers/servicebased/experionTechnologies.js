@@ -37,6 +37,7 @@ class ExperionTechnologiesJobsScraper {
         while (true) {
             // Wait for job links to load
             //await this.page.waitForSelector('div.op-job-apply-bt', { timeout: 10000 });
+            await delay(1000);
 
             // Collect new links
             const jobLinks = await this.page.$$eval(
