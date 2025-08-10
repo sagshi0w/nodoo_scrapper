@@ -40,7 +40,7 @@ class TatamgJobsScraper {
 
             // Collect new links
             const jobLinks = await this.page.$$eval(
-                'div.footer a.db-btn.style-secondary.action-btn',
+                'div.footer a',
                 anchors => anchors.map(a => a.href)
             );
 
