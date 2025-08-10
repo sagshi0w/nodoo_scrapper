@@ -40,7 +40,7 @@ class NetSolutionsJobsScraper {
 
             // Collect new links
             const jobLinks = await this.page.$$eval(
-                '.job-list a[href^="https://www.netsolutions.com/careers/job-description"]',
+                'li.col-xs-12 > a',
                 anchors => anchors.map(a => a.href)
             );
 
