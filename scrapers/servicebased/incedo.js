@@ -152,6 +152,38 @@ class IncodeJobsScraper {
     }
 }
 
+function extractExperience(description) {
+    if (!description) return null;
+
+    const patterns = [
+        /(\d+)\s*-\s*(\d+)\s*(?:years|yrs)?/i,                    // 3-5 years
+        /(\d+)\+\s*(?:years|yrs)?/i,                              // 5+ years
+        /experience\s*[:\-]?\s*(\d+)\s*(?:years|yrs)?/i,          // Experience: 4 years
+        /(\d+)\s*(?:years|yrs)\s*experience/i,                    // 4 years experience
+        /minimum\s*(\d+)\s*(?:years|yrs)?/i,                      // minimum 3 years
+        /at least\s*(\d+)\s*(?:years|yrs)?/i,                     // at least 5 years
+        /(\d+)\s*(?:years|yrs)\s*relevant/i,                      // 3 years relevant
+        /relevant\s*experience\s*[:\-]?\s*(\d+)\s*(?:years|yrs)?/i // relevant experience: 4 years
+    ];
+
+    for (const regex of patterns) {
+        const match = description.match(regex);
+        if (match) {
+            if (match.length === 3) {
+                // Range like "3-5"
+                return `${match[1]} - ${match[2]} yrs`;
+            } else if (match.length >= 2) {
+                const minExp = parseInt(match[1], 10);
+                const maxExp = minExp + 2;
+                return `${minExp} - ${maxExp} yrs`;
+            }
+        }
+    }
+
+    return 'Not Specified';
+}
+
+
 const extractWiproData = (job) => {
     if (!job) return job;
 
@@ -222,12 +254,14 @@ const extractWiproData = (job) => {
         cleanedDescription = 'Description not available\n';
     }
 
+    
+
     return {
         ...job,
         title: job.title?.replace('Career Opportunities:', '').trim() || '',
         location: location || job.location?.trim() || 'India',
         description: cleanedDescription,
-        experience: experience || 'Not specified',
+        experience: extractExperience(cleanedDescription)
     };
 };
 
