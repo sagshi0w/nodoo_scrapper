@@ -40,7 +40,7 @@ class KhanAcademyIndiaJobsScraper {
 
             // Collect new links
             const jobLinks = await this.page.$$eval(
-                '.job-list-wrap.job_list > a',
+                'a._1klyn0y',
                 anchors => anchors.map(a => a.href)
             );
 
@@ -96,10 +96,10 @@ class KhanAcademyIndiaJobsScraper {
             const job = await jobPage.evaluate(() => {
                 const getText = sel => document.querySelector(sel)?.innerText.trim() || '';
                 return {
-                    title: getText('h2.white-header'),
-                    company: 'Brillio',
-                    location: getText('p.green'),
-                    description: getText('div._detail-content'),
+                    title: getText('div.job__title'),
+                    company: 'Khan Academy India',
+                    location: getText('div.job__location'),
+                    description: getText('div.job__description.body'),
                     url: window.location.href
                 };
             });
