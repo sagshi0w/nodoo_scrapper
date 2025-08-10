@@ -201,19 +201,12 @@ const extractWiproData = (job) => {
 
     // Step 3: Clean description
     if (cleanedDescription) {
-        cleanedDescription = cleanedDescription.replace(
-            /(Experience)[\s\S]*?(?:Apply\.?\s*)?(?=\n{2,}|$)/gi,
-            ''
-        );
+        cleanedDescription = cleanedDescription.replace(/Experience[\s\S]*?(?=(Job Purpose|$))/i, '');
 
-        cleanedDescription = cleanedDescription
-            .replace(/(\n\s*)(\d+\.\s+)(.*?)(\n)/gi, '\n\n$1$2$3$4\n\n')
-            .replace(/(\n\s*)([•\-]\s+)(.*?)(\n)/gi, '\n\n$1$2$3$4\n\n')
-            .replace(/([.!?])\s+/g, '$1  ')
-            .replace(/[ \t]+$/gm, '')
-            .replace(/\n{3,}/g, '\n\n')
-            .replace(/(\S)\n(\S)/g, '$1\n\n$2')
-            .trim();
+        // Also remove everything starting from 'Job Purpose'
+        cleanedDescription = cleanedDescription.replace(/Job Purpose[\s\S]*/i, '');
+
+        cleanedDescription = cleanedDescription.trim();
 
         if (cleanedDescription && !cleanedDescription.endsWith('\n')) {
             cleanedDescription += '\n';
@@ -237,11 +230,10 @@ const extractWiproData = (job) => {
     }
 
     // Step 4: Extract city from location string
-    if (job.location) {
-        const cityMatch = job.location.match(/^([^,\n]+)/);
-        if (cityMatch) {
-            location = cityMatch[1].trim();
-        }
+    const regex = /work location:\s*([^\n,.]+)/i;
+    const match = cleanedDescription.match(regex);
+    if (match) {
+        location = match[1].trim();
     }
 
     return {
