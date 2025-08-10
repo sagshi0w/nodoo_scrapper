@@ -19,6 +19,8 @@ import runAckoScraper from "./scrapers/productBased/acko.js";
 import runAdobeScraper from "./scrapers/productBased/adobe.js"
 import runAmazonScraper from "./scrapers/productBased/amazon.js";
 
+import runTextbookJobsScraper from "./scrapers/productBased/textbook.js"
+
 const config = {
   concurrency: 5,
   notification: {
@@ -89,6 +91,8 @@ const scrapers = [
   { fn: runAckoScraper, headless: true },
   { fn: runAdobeScraper, headless: true },
   { fn: runAmazonScraper, headless: true },
+
+  { fn: runTextbookJobsScraper, headless: true },
 ];
 
 const runAllScrapers = async () => {

@@ -59,6 +59,7 @@ import runTezoJobsScraper from "./scrapers/servicebased/tezo.js"
 import runSaviantConsultingJobsScraper from "./scrapers/servicebased/SaviantConsulting.js"
 
 import runTextbookJobsScraper from "./scrapers/productBased/textbook.js"
+import runKhanAcademyJobsScraper from "./scrapers/productBased/khanAcademy.js"
 
 
 
@@ -131,7 +132,7 @@ ${error.stack}`;
 };
 
 const scrapers = [
-    { fn: runTextbookJobsScraper, headless: true },
+    { fn: runKhanAcademyJobsScraper, headless: true },
 ];
 
 const runAllScrapers = async () => {
