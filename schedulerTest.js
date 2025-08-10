@@ -52,6 +52,7 @@ import runCybageJobsScraper from "./scrapers/servicebased/cybage.js"
 import runExperionTechnologiesJobsScraper from "./scrapers/servicebased/experionTechnologies.js"
 import runCLoverInfotechJobsScraper from "./scrapers/servicebased/cloverInfotech.js"
 import runIncedoJobsScraper from "./scrapers/servicebased/incedo.js"
+import runNetSolutionsJobsScraper from "./scrapers/servicebased/netSolutions.js"
 
 const config = {
     concurrency: 5,
@@ -120,7 +121,7 @@ ${error.stack}`;
 };
 
 const scrapers = [
-    { fn: runIncedoJobsScraper, headless: true },
+    { fn: runNetSolutionsJobsScraper, headless: true },
 ];
 
 const runAllScrapers = async () => {
