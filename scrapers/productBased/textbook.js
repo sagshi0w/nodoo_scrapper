@@ -40,7 +40,7 @@ class TextBookJobsScraper {
 
             // Collect new links
             const jobLinks = await this.page.$$eval(
-                '..js-card.list-item a',
+                '.js-card.list-item a',
                 anchors => anchors.map(a => a.href)
             );
 
