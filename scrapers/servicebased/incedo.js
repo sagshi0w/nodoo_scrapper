@@ -225,7 +225,7 @@ const extractWiproData = (job) => {
     return {
         ...job,
         title: job.title?.replace('Career Opportunities:', '').trim() || '',
-        location: location || job.location?.trim() || 'Not specified',
+        location: location || job.location?.trim() || 'India',
         description: cleanedDescription,
         experience: experience || 'Not specified',
     };
