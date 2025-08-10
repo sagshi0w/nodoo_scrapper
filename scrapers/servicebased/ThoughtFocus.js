@@ -40,7 +40,7 @@ class ThoughtFocusJobsScraper {
 
             // Collect new links
             const jobLinks = await this.page.$$eval(
-                'a.jobTitle',
+                'h5.card-title > a.jobTitle',
                 anchors => anchors.map(a => a.href)
             );
 
