@@ -23,7 +23,7 @@ class ThoughtFocusJobsScraper {
 
     async navigateToJobsPage() {
         console.log('🌐 Navigating to ThoughtFocus Careers...');
-        await this.page.goto('https://www.neurealm.com/about-us/openings/', {
+        await this.page.goto('https://thoughtfocus.com/careers/', {
             waitUntil: 'networkidle2'
         });
         await delay(5000);
