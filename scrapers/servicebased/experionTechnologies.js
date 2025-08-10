@@ -40,7 +40,7 @@ class ExperionTechnologiesJobsScraper {
 
             // Collect new links
             const jobLinks = await this.page.$$eval(
-                'a[href^="https://experionglobal.com/jobs/"]',
+                'h2.awsm-job-post-title > a',
                 anchors => anchors.map(a => a.href)
             );
 
