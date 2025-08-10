@@ -202,12 +202,12 @@ const extractWiproData = (job) => {
 
     // Step 3: Clean description
     if (cleanedDescription) {
-        cleanedDescription = cleanedDescription.replace(
-            /(Current Openings|Job Summary|Company Description)[\s\S]*?(?:Apply\.?\s*)?(?=\n{2,}|$)/gi,
-            ''
-        );
+        // cleanedDescription = cleanedDescription.replace(
+        //     /(Current Openings|Job Summary|Company Description)[\s\S]*?(?:Apply\.?\s*)?(?=\n{2,}|$)/gi,
+        //     ''
+        // );
 
-        cleanedDescription = cleanedDescription.replace(/Job Description/gi, '');
+        // cleanedDescription = cleanedDescription.replace(/Job Description/gi, '');
 
         cleanedDescription = cleanedDescription
             .replace(/(\n\s*)(\d+\.\s+)(.*?)(\n)/gi, '\n\n$1$2$3$4\n\n')
