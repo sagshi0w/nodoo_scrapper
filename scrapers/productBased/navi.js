@@ -115,11 +115,10 @@ class NaviJobsScraper {
                 });
 
                 return {
-                    title: getText('div.text-3xl'),
+                    title: getText('h1'),
                     company: 'Navi',
-                    location: location,
-                    experience: experience,
-                    description: getText('div.ql-editor'),
+                    location: getText('div.stick-hide-in-mobile.text-color'),
+                    description: getText('div.job-details-content.content'),
                     url: window.location.href
                 };
             });

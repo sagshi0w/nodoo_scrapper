@@ -18,6 +18,11 @@ import runHexawareJobsScraper from "./scrapers/servicebased/hexaware.js";
 import runMphasisScrapper from "./scrapers/servicebased/mphasis.js";
 import runZensarScrapper from "./scrapers/servicebased/zensar.js";
 import runMindgateSolutionsScrapper from "./scrapers/servicebased/mindgateSolutions.js";
+import runCybageJobsScraper from "./scrapers/servicebased/cybage.js"
+import runExperionTechnologiesJobsScraper from "./scrapers/servicebased/experionTechnologies.js"
+import runCLoverInfotechJobsScraper from "./scrapers/servicebased/cloverInfotech.js"
+import runTezoJobsScraper from "./scrapers/servicebased/tezo.js"
+import runSaviantConsultingJobsScraper from "./scrapers/servicebased/SaviantConsulting.js"
 
 const config = {
   concurrency: 5,
@@ -90,6 +95,11 @@ const scrapers = [
   { fn: runMphasisScrapper, headless: true },
   { fn: runZensarScrapper, headless: true },
   { fn: runMindgateSolutionsScrapper, headless: true },
+  { fn: runCybageJobsScraper, headless: true },
+  { fn: runExperionTechnologiesJobsScraper, headless: true },
+  { fn: runCLoverInfotechJobsScraper, headless: true },
+  { fn: runTezoJobsScraper, headless: true },
+  { fn: runSaviantConsultingJobsScraper, headless: true },
 ];
 
 const runAllScrapers = async () => {

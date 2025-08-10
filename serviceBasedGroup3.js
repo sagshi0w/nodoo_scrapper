@@ -19,6 +19,13 @@ import runeClerxScrapper from "./scrapers/servicebased/eclerx.js"
 import runSaskenScrapper from "./scrapers/servicebased/sasken.js"
 import runInfiniteComputerSolutionsJobsScraper from "./scrapers/servicebased/infiniteComputerSolutions.js"
 import runUstGlobalJobsScraper from "./scrapers/servicebased/ustGlobal.js"
+import runQuinnoxJobsScraper from "./scrapers/servicebased/quinnox.js"
+import runInfogainJobsScraper from "./scrapers/servicebased/infogain.js"
+import runThreeiInfotechJobsScraper from "./scrapers/servicebased/threeiInfotech.js"
+import runIncedoJobsScraper from "./scrapers/servicebased/incedo.js"
+import runNetSolutionsJobsScraper from "./scrapers/servicebased/netSolutions.js"
+import runWNSJobsScraper from "./scrapers/servicebased/WNS.js"
+import runThoughtFocusJobsScraper from "./scrapers/servicebased/ThoughtFocus.js"
 
 const config = {
   concurrency: 5,
@@ -92,6 +99,13 @@ const scrapers = [
   { fn: runSaskenScrapper, headless: true },
   { fn: runInfiniteComputerSolutionsJobsScraper, headless: true },
   { fn: runUstGlobalJobsScraper, headless: true },
+  { fn: runQuinnoxJobsScraper, headless: true },
+  { fn: runInfogainJobsScraper, headless: true },
+  { fn: runThreeiInfotechJobsScraper, headless: true },
+  { fn: runIncedoJobsScraper, headless: true },
+  { fn: runNetSolutionsJobsScraper, headless: true },
+  { fn: runWNSJobsScraper, headless: true },
+  { fn: runThoughtFocusJobsScraper, headless: true },
 ];
 
 const runAllScrapers = async () => {
