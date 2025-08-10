@@ -60,6 +60,7 @@ import runSaviantConsultingJobsScraper from "./scrapers/servicebased/SaviantCons
 
 import runTextbookJobsScraper from "./scrapers/productBased/textbook.js"
 import runKhanAcademyJobsScraper from "./scrapers/productBased/khanAcademy.js"
+import runTataMgJobsScraper from "./scrapers/productBased/tata1mg.js"
 
 
 
@@ -132,7 +133,7 @@ ${error.stack}`;
 };
 
 const scrapers = [
-    { fn: runKhanAcademyJobsScraper, headless: true },
+    { fn: runTataMgJobsScraper, headless: true },
 ];
 
 const runAllScrapers = async () => {
