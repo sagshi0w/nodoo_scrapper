@@ -203,7 +203,7 @@ const extractWiproData = (job) => {
     // Step 3: Clean description
     if (cleanedDescription) {
         cleanedDescription = cleanedDescription.replace(
-            /(Current Openings|Job Summary)[\s\S]*?(?:Apply\.?\s*)?(?=\n{2,}|$)/gi,
+            /(Current Openings|Job Summary|ABOUT KHAN ACADEMY)[\s\S]*?(?:Apply\.?\s*)?(?=\n{2,}|$)/gi,
             ''
         );
 
