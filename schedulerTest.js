@@ -55,6 +55,7 @@ import runIncedoJobsScraper from "./scrapers/servicebased/incedo.js"
 import runNetSolutionsJobsScraper from "./scrapers/servicebased/netSolutions.js"
 import runWNSJobsScraper from "./scrapers/servicebased/WNS.js"
 import runThoughtFocusJobsScraper from "./scrapers/servicebased/ThoughtFocus.js"
+import runGlobalLogicJobsScraper from "./scrapers/servicebased/GlobalLogic.js"
 
 const config = {
     concurrency: 5,
@@ -123,7 +124,7 @@ ${error.stack}`;
 };
 
 const scrapers = [
-    { fn: runThoughtFocusJobsScraper, headless: true },
+    { fn: runGlobalLogicJobsScraper, headless: true },
 ];
 
 const runAllScrapers = async () => {
