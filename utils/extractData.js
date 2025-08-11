@@ -897,7 +897,7 @@ export default function extractSkillsAndExperience(job) {
             "creative director",
             "design research",
             "researcher",
-        ],
+        ],
         "Marketing & Growth": [
             "marketing",
             "growth",
@@ -1066,47 +1066,12 @@ export default function extractSkillsAndExperience(job) {
     function cleanDescription(desc) {
         if (!desc) return '';
 
-        // Step 1: Normalize line endings and trim
-        let cleaned = desc.replace(/\r\n/g, '\n').trim();
-
-        // Step 2: Remove leading 'description' label
-        cleaned = cleaned.replace(/^(job\s+)?descriptions?\s*[:\-]?\s*/i, '');
-
-        // Step 3: Split into lines and clean each
-        const lines = cleaned
+        return desc
+            .replace(/\r\n/g, '\n')
             .split('\n')
             .map(line => line.trim())
-            .filter(line => line.length > 0);
-
-        const formattedLines = [];
-
-        for (let line of lines) {
-            const isBulletCandidate =
-                /^[a-zA-Z0-9]/.test(line) &&
-                !line.includes('. ') &&
-                /^[a-z]/.test(line.trim()) &&
-                !line.endsWith('.');
-
-            if (isBulletCandidate) {
-                line = line.trim();
-                if (!line.endsWith('.')) line += '.';
-                formattedLines.push('• ' + line);
-            } else {
-                line = line.trim();
-                if (!line.endsWith('.')) line += '.';
-                formattedLines.push(line);
-            }
-        }
-
-
-        // Step 4: Join lines with appropriate spacing
-        let finalText = formattedLines.join('\n');
-
-        // Step 5: Add extra newlines between paragraphs (if needed)
-        finalText = finalText.replace(/(\.)(\s*•)/g, '$1\n$2'); // new line before bullet
-        finalText = finalText.replace(/([a-z])\. ([A-Z])/g, '$1.\n$2'); // break paragraphs
-
-        return finalText.trim();
+            .filter(line => line.length)
+            .join('\n');
     }
 
 
@@ -1138,20 +1103,12 @@ export default function extractSkillsAndExperience(job) {
             });
         }
 
-        // 3. Special handling for common patterns
-        if (lowercaseDesc.includes('excel') && lowercaseDesc.includes('skills')) {
-            foundSkills.add('Excel');
-        }
-        if (lowercaseDesc.includes('communication skills')) {
-            foundSkills.add('Communication');
-        }
-
         return Array.from(foundSkills);
     };
 
     // Get job type.
     const extractJobType = (desc, experience) => {
-        if (!desc) return "Not specified";
+        if (!desc) return "Full Time";
         const lower = desc.toLowerCase();
 
         if (experience <= 1 && (lower.includes("internship") || lower.includes("intern"))) {
@@ -1166,7 +1123,7 @@ export default function extractSkillsAndExperience(job) {
         if (lower.includes("freelance")) return "Freelance";
         if (lower.includes("consultant")) return "Consultant";
 
-        return "Full Time"; // default fallback
+        return "Full Time";
     };
 
 
@@ -1216,14 +1173,15 @@ export default function extractSkillsAndExperience(job) {
         const min = parseInt(match[1], 10);
         const max = match[2] ? parseInt(match[2], 10) : min;
 
-        // ✅ Entry-level only if both min and max are within 0–2
-        return min >= 0 && max <= 2;
+        // Check if it's entry-level
+        const isEntryLevel = max < 2;
+
+        return isEntryLevel;
     }
 
     // Catergorise job into different sectors
     function categorizeJob(title, description) {
         const normalizedTitle = (title || "").toLowerCase();
-        const normalizedDescription = (description || "").toLowerCase();
 
         for (const [sector, keywords] of Object.entries(sectorKeywords)) {
             if (keywords.some(keyword =>
