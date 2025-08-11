@@ -18,6 +18,9 @@ import runAtlassianScraper from "./scrapers/productBased/atlassian.js";
 import runGoldmanScraper from "./scrapers/productBased/goldmanSach.js";
 import runGoogleScraper from "./scrapers/productBased/google.js";
 
+import runUpstoxJobsScraper from "./scrapers/productBased/upstox.js"
+import runLocusJobsScraper from "./scrapers/productBased/Locus.js"
+
 const config = {
   concurrency: 5,
   notification: {
@@ -88,6 +91,9 @@ const scrapers = [
   { fn: runAtlassianScraper, headless: true },
   { fn: runGoldmanScraper, headless: true },
   { fn: runGoogleScraper, headless: true },
+
+  { fn: runUpstoxJobsScraper, headless: true },
+  { fn: runLocusJobsScraper, headless: true },
 ];
 
 const runAllScrapers = async () => {

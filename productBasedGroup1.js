@@ -21,6 +21,7 @@ import runAmazonScraper from "./scrapers/productBased/amazon.js";
 
 import runTextbookJobsScraper from "./scrapers/productBased/textbook.js"
 import runPractoJobsScraper from "./scrapers/productBased/practo.js"
+import runFreechargeJobsScraper from "./scrapers/productBased/freecharge.js"
 
 const config = {
   concurrency: 5,
@@ -95,6 +96,7 @@ const scrapers = [
 
   { fn: runTextbookJobsScraper, headless: true },
   { fn: runPractoJobsScraper, headless: true },
+  { fn: runFreechargeJobsScraper, headless: true },
 ];
 
 const runAllScrapers = async () => {
