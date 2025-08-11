@@ -136,7 +136,7 @@ ${error.stack}`;
 };
 
 const scrapers = [
-    { fn: runNaviJobsScraper, headless: true },
+    { fn: runCLoverInfotechJobsScraper, headless: true },
 ];
 
 const runAllScrapers = async () => {

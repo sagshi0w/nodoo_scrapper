@@ -1517,7 +1517,6 @@ export default function extractSkillsAndExperience(job) {
 
     return {
         ...job,
-        // Clean the description before extracting info
         description: cleanDescription(job.description),
         skills: extractSkills(cleanDescription(job.description)),
         experience: extractExperience(cleanDescription(job.description)),
