@@ -99,7 +99,7 @@ class UpstoxJobsScraper {
                     title: getText('h2'),
                     company: 'Upstox',
                     location: getText('div.sort-by-time.posting-category.medium-category-label.width-full.capitalize-labels.location'),
-                    description: getText('.job-description__content'),
+                    description: getText('.section.page-centered[data-qa="job-description"]'),
                     url: window.location.href
                 };
             });
