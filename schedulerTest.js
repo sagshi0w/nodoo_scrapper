@@ -45,6 +45,7 @@ import runMindFireSolutionsJobsScraper from "./scrapers/servicebased/mindFireSol
 import runMavericJobsScraper from "./scrapers/servicebased/maveric.js"
 import runYashTechnologiesJobsScraper from "./scrapers/servicebased/yashTechnologies.js"
 import runSynechronJobsScraper from "./scrapers/servicebased/synechron.js"
+
 import runQuinnoxJobsScraper from "./scrapers/servicebased/quinnox.js"
 import runInfogainJobsScraper from "./scrapers/servicebased/infogain.js"
 import runThreeiInfotechJobsScraper from "./scrapers/servicebased/threeiInfotech.js"

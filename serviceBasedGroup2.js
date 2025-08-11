@@ -97,7 +97,6 @@ const scrapers = [
   { fn: runMindgateSolutionsScrapper, headless: true },
   { fn: runCybageJobsScraper, headless: true },
   { fn: runExperionTechnologiesJobsScraper, headless: true },
-  { fn: runCLoverInfotechJobsScraper, headless: true },
   { fn: runTezoJobsScraper, headless: true },
   { fn: runSaviantConsultingJobsScraper, headless: true },
 ];
