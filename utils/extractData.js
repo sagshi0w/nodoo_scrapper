@@ -1349,12 +1349,18 @@ export default function extractSkillsAndExperience(job) {
         const match = desc.match(numRegex);
 
         if (match) {
-            const min = match[1];
-            const max = match[2] || "";
-            return max ? `${min}-${max} yrs` : `${min}+ yrs`;
+            const min = parseInt(match[1]);
+            let max = match[2] ? parseInt(match[2]) : null;
+
+            // If format was like "5+ years", convert to "5-7 yrs"
+            if (!max && /\+/.test(desc)) {
+                max = min + 2;
+            }
+
+            return max ? `${min}-${max} yrs` : `${min} yrs`;
         }
 
-        // Match words for numbers (e.g., "three years")
+        // Match words for numbers (e.g., "three years", "three to five years")
         const wordToNum = {
             one: 1, two: 2, three: 3, four: 4, five: 5,
             six: 6, seven: 7, eight: 8, nine: 9, ten: 10
@@ -1367,12 +1373,19 @@ export default function extractSkillsAndExperience(job) {
 
         if (wordMatch) {
             const min = wordToNum[wordMatch[1].toLowerCase()];
-            const max = wordMatch[2] ? wordToNum[wordMatch[2].toLowerCase()] : "";
+            let max = wordMatch[2] ? wordToNum[wordMatch[2].toLowerCase()] : null;
+
+            // If format was like "five+ years", assume +2 years
+            if (!max && /\+/.test(desc)) {
+                max = min + 2;
+            }
+
             return max ? `${min}-${max} yrs` : `${min} yrs`;
         }
 
         return "Not specified";
     }
+
 
     // Preprocess job description:
     function cleanDescription(desc) {
