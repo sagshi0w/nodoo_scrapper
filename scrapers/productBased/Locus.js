@@ -40,7 +40,7 @@ class LocusJobsScraper {
 
             // Collect new links
             const jobLinks = await this.page.$$eval(
-                'a.heading.show .job-title',
+                'a.heading.show',
                 anchors => anchors.map(a => a.href)
             );
 
