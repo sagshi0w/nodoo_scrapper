@@ -825,16 +825,17 @@ export default function extractSkillsAndExperience(job) {
     ];
 
     const knownCities = [
-        "Bangalore", "Bengaluru", "Mumbai", "Delhi", "Hyderabad", "Chennai", "Pune", "Gurgaon", "Noida",
+        "Mumbai", "Bangalore", "Delhi", "Hyderabad", "Chennai", "Pune", "Gurgaon", "Noida",
         "Kolkata", "Ahmedabad", "Jaipur", "Chandigarh", "Indore", "Lucknow", "Coimbatore", "Nagpur",
         "Surat", "Visakhapatnam", "Bhopal", "Patna", "Vadodara", "Ghaziabad", "Ludhiana", "Agra",
         "Nashik", "Faridabad", "Meerut", "Rajkot", "Kalyan", "Vasai", "Varanasi", "Srinagar", "Aurangabad",
         "Dhanbad", "Amritsar", "Navi Mumbai", "Allahabad", "Ranchi", "Howrah", "Jabalpur", "Gwalior",
         "Vijayawada", "Jodhpur", "Madurai", "Raipur", "Kota", "Guwahati", "Chandrapur", "Solapur",
-        "Remote", "Gurugram", "Kanpur", "Trichy", "Tiruchirappalli", "Mysore", "Thrissur", "Jamshedpur", "Udaipur",
-        "Dehradun", "Hubli", "Dharwad", "Nellore", "Thane", "Panaji", "Shimla", "Mangalore",
-        "Bareilly", "Salem", "Aligarh", "Bhavnagar", "Kolhapur", "Ajmer", "Belgaum", "Tirupati",
-        "Rourkela", "Bilaspur", "Anantapur", "Silchar", "Kochi", "Thiruvananthapuram"
+        "Remote", "Kanpur", "Trichy", "Mysore", "Thrissur", "Jamshedpur", "Udaipur", "Dehradun",
+        "Hubli", "Dharwad", "Nellore", "Thane", "Panaji", "Shimla", "Mangalore", "Bareilly", "Salem",
+        "Aligarh", "Bhavnagar", "Kolhapur", "Ajmer", "Belgaum", "Tirupati", "Rourkela", "Bilaspur",
+        "Anantapur", "Silchar", "Kochi", "Thiruvananthapuram", "Bhubaneswar", "Imphal", "Shillong",
+        "Aizawl", "Itanagar", "Kohima", "Gangtok", "Patiala", "Jammu", "Shimoga", "Muzaffarpur"
     ];
 
     const sectorKeywords = {
@@ -850,145 +851,484 @@ export default function extractSkillsAndExperience(job) {
             "devops",
             "sre",
             "qa",
+            "quality assurance",
             "testing",
+            "automation engineer",
+            "test engineer",
             "mobile",
             "android",
             "ios",
             "flutter",
             "react",
+            "react native",
+            "angular",
+            "vue",
+            "node",
             "java",
             "python",
+            "c++",
+            "c#",
+            ".net",
+            "php",
+            "ruby",
+            "go",
+            "rust",
+            "swift",
             "javascript",
+            "typescript",
             "cybersecurity",
+            "security engineer",
+            "ethical hacker",
+            "penetration tester",
             "blockchain",
             "web3",
+            "smart contract",
+            "solidity",
             "embedded",
+            "firmware",
             "iot",
-            "data science",
+            "cloud engineer",
+            "aws",
+            "azure",
+            "gcp",
+            "data engineer",
+            "data analyst",
+            "data scientist",
             "ml",
             "machine learning",
+            "ai",
+            "deep learning",
+            "nlp",
+            "computer vision",
+            "big data",
+            "hadoop",
+            "spark",
+            "kubernetes",
+            "docker",
+            "site reliability engineer",
+            "infrastructure engineer",
+            "platform engineer",
+            "system architect",
+            "application architect",
+            "integration engineer",
+            "build engineer",
+            "release engineer",
+            "game developer",
+            "unity",
+            "unreal engine"
         ],
         "Product & Design": [
             "designer",
             "design",
             "ux",
             "ui",
+            "ux/ui",
             "product",
+            "product manager",
+            "product owner",
             "creative",
             "visual",
             "graphic",
             "ux writer",
+            "content designer",
             "game design",
+            "game designer",
             "furniture design",
             "design system specialist",
             "accessibility designer",
             "mobile app designer",
             "web designer",
+            "interaction designer",
             "human-centered designer",
             "communication designer",
             "experience architect",
+            "service designer",
             "game ux designer",
             "packaging designer",
             "logo designer",
+            "illustrator",
             "brand strategist",
+            "branding specialist",
+            "art director",
             "designOps manager",
             "visual effects (vfx) artist",
+            "motion designer",
+            "3d designer",
+            "3d artist",
             "interactive designer",
             "creative director",
             "design research",
             "researcher",
+            "product strategist",
+            "wireframe designer",
+            "prototype designer",
+            "user researcher",
+            "usability analyst",
+            "information architect",
+            "storyboard artist",
+            "animation designer",
+            "concept artist",
+            "colorist",
+            "digital artist",
+            "industrial designer",
+            "set designer",
+            "environment designer",
+            "game environment artist",
+            "props designer",
+            "retail space designer"
         ],
         "Marketing & Growth": [
             "marketing",
             "growth",
+            "growth hacker",
+            "growth marketing",
             "digital",
+            "digital marketing",
             "seo",
+            "search engine optimization",
             "content",
+            "content marketing",
+            "content strategist",
+            "copywriter",
+            "copywriting",
             "social",
+            "social media",
+            "social media manager",
+            "community manager",
+            "community growth",
             "brand",
+            "brand manager",
+            "branding",
             "campaign",
-            "analytics",
+            "campaign manager",
+            "email marketing",
+            "email automation",
+            "marketing automation",
+            "crm marketing",
+            "crm manager",
             "performance marketing",
+            "paid marketing",
+            "paid social",
+            "paid search",
+            "ppc",
             "sem",
+            "search engine marketing",
+            "display advertising",
+            "programmatic advertising",
+            "affiliate marketing",
+            "influencer marketing",
+            "event marketing",
+            "product marketing",
+            "go-to-market",
+            "market research",
+            "marketing analytics",
+            "analytics",
+            "data-driven marketing",
+            "conversion rate optimization",
+            "cro",
+            "app store optimization",
+            "aso"
         ],
         "Sales & Business Development": [
             "sales",
+            "sales executive",
+            "sales manager",
+            "sales associate",
+            "sales representative",
+            "sales rep",
+            "sales lead",
+            "sales director",
+            "sales consultant",
             "business development",
+            "business development executive",
+            "business development manager",
+            "business development associate",
             "business",
             "account",
-            "revenue",
-            "partnership",
-            "channel sales",
-            "client",
-            "b2b",
-            "customer success",
+            "account executive",
             "account manager",
+            "account director",
+            "key account manager",
+            "strategic account manager",
+            "major account manager",
+            "revenue",
+            "revenue growth",
+            "partnership",
+            "partnership manager",
+            "strategic partnerships",
+            "alliances manager",
+            "channel sales",
+            "channel partner manager",
+            "client",
+            "client relationship manager",
+            "client services",
+            "client partner",
+            "customer success",
+            "customer success manager",
+            "customer success executive",
+            "customer success associate",
+            "b2b",
+            "b2c",
             "enterprise sales",
             "inside sales",
+            "field sales",
+            "regional sales",
+            "territory sales",
+            "solution sales",
+            "pre-sales",
+            "sales engineer",
+            "sales operations",
+            "sales enablement",
+            "sales analyst",
+            "sales development",
+            "sales development representative",
+            "sdr",
+            "lead generation",
+            "lead gen",
+            "business growth",
+            "partnership development"
         ],
         "Finance & Legal": [
+            // Finance & Accounting
             "finance",
             "financial",
+            "financial analyst",
+            "financial controller",
             "accounting",
+            "accountant",
+            "accounts",
+            "bookkeeping",
+            "bookkeeper",
             "fp&a",
             "audit",
+            "auditor",
+            "internal audit",
+            "statutory audit",
+            "tax",
+            "taxation",
+            "gst",
+            "income tax",
+            "corporate tax",
             "actuarial",
             "pricing",
-            "strategy",
-            "legal",
-            "counsel",
-            "compliance",
-            "regulatory",
-            "filing",
-            "corporate",
+            "valuation",
+            "treasury",
+            "cash management",
+            "payroll",
             "budget",
-            "investment banking",
-            "vc",
+            "budgeting",
+            "forecasting",
+            "cost accounting",
+            "cost analyst",
+            "financial planning",
+            "investment",
+            "investment analyst",
+            "portfolio manager",
+            "equity research",
+            "fund manager",
+            "mutual funds",
+            "private equity",
             "venture capital",
+            "vc",
+            "hedge funds",
+            "asset management",
+            "investment banking",
+            "strategy",
+            "strategic finance",
+            "risk",
+            "risk management",
+            "credit risk",
+            "market risk",
+            "fraud analyst",
+            "collections",
+            "underwriter",
+            "loan officer",
+
+            // Legal & Compliance
+            "legal",
+            "lawyer",
+            "attorney",
+            "counsel",
+            "corporate counsel",
+            "legal counsel",
             "corporate law",
+            "legal associate",
+            "paralegal",
+            "compliance",
+            "compliance officer",
+            "regulatory",
+            "regulatory affairs",
+            "legal advisor",
+            "legal analyst",
+            "filing",
+            "litigation",
+            "arbitration",
+            "contract manager",
+            "contract specialist",
+            "intellectual property",
+            "ip law",
+            "patent attorney",
+            "trademark attorney",
+            "company secretary",
+            "cs",
+            "corporate governance",
+            "policy",
+            "policy analyst",
+            "ethics",
+            "anti-money laundering",
+            "aml",
+            "kyc"
         ],
         "Human Resources": [
+            // Core HR
             "hr",
             "human resource",
-            "recruitment",
-            "talent",
-            "people operations",
+            "human resources",
             "people",
-            "training",
-            "learning",
-            "development",
-            "l&d",
+            "people operations",
+            "people ops",
+            "people partner",
             "hrbp",
+            "hr business partner",
+            "hr executive",
+            "hr manager",
+            "hr assistant",
+            "hr coordinator",
+            "hr officer",
+            "hr director",
+            "chief people officer",
+            "cpo",
+            "personnel",
+
+            // Recruitment & Talent
+            "recruitment",
+            "recruiter",
+            "talent",
+            "talent acquisition",
+            "ta",
+            "sourcing specialist",
+            "headhunter",
+            "campus recruiter",
+            "technical recruiter",
+            "non-technical recruiter",
+            "staffing",
+            "staffing specialist",
+            "resource manager",
+            "resourcing",
+            "manpower planning",
+
+            // Training & Development
+            "training",
+            "trainer",
+            "learning",
+            "learning and development",
+            "l&d",
+            "employee development",
+            "training coordinator",
+            "training manager",
+            "training specialist",
+            "onboarding",
+            "orientation",
+
+            // Employee Engagement & Relations
+            "employee engagement",
+            "employee relations",
+            "er",
+            "workforce planning",
+            "organizational development",
+            "od",
+            "culture manager",
+            "diversity and inclusion",
+            "d&i",
+            "compensation and benefits",
+            "comp & ben",
+            "payroll",
+            "hr compliance",
+            "hr analytics",
+            "hr data analyst"
         ],
-        Operations: [
+        "Operations": [
             "operations",
             "operational",
+            "ops",
+            "bizops",
+            "business operations",
             "fleet",
+            "fleet manager",
             "supervisor",
+            "shift supervisor",
+            "team lead",
             "coordinator",
-            "manager",
+            "operations coordinator",
+            "operations manager",
+            "general manager",
+            "plant manager",
+            "factory manager",
+            "logistics",
+            "logistics manager",
             "process",
+            "process manager",
+            "process improvement",
             "workflow",
             "efficiency",
             "planning",
+            "production planning",
+            "inventory",
+            "inventory manager",
             "supply chain",
+            "supply chain manager",
+            "supply planning",
+            "warehousing",
+            "warehouse manager",
             "procurement",
+            "purchasing",
+            "purchasing manager",
+            "vendor",
             "vendor management",
-            "bizops",
+            "vendor coordinator",
+            "materials manager",
+            "quality control",
+            "qc",
+            "quality assurance",
+            "qa",
+            "operations analyst",
+            "project operations",
+            "program operations"
         ],
         "Support & Customer Experience": [
             "support",
             "customer service",
-            "helpdesk",
-            "call center",
-            "service",
-            "technical support",
-            "onboarding",
             "customer support",
-        ],
+            "client service",
+            "client support",
+            "helpdesk",
+            "help desk",
+            "call center",
+            "bpo",
+            "service desk",
+            "service representative",
+            "service coordinator",
+            "technical support",
+            "technical support engineer",
+            "tech support",
+            "onboarding",
+            "customer onboarding",
+            "customer care",
+            "customer experience",
+            "cx",
+            "customer relations",
+            "client relations",
+            "relationship manager",
+            "after sales",
+            "post sales",
+            "account support",
+            "support specialist",
+            "support engineer",
+            "support associate",
+            "support executive",
+            "service manager"
+        ]
     };
-
-
 
     // Function to extract experience range
     /**
@@ -996,71 +1336,43 @@ export default function extractSkillsAndExperience(job) {
     * @param {string} desc - Job description text
     * @returns {string} Formatted experience range or default text
     */
-    const extractExperience = (desc) => {
-        if (job.experience) return job.experience;
-        if (!desc) return 'Not specified';
+    function extractExperience(desc, job = {}) {
+        if (!desc) return "Not specified";
 
-        // Map number words to digits
-        const numberWords = {
+        // If job object already has experience string, return it
+        if (job.experience && typeof job.experience === "string" && job.experience.trim() !== "") {
+            return job.experience.trim();
+        }
+
+        // Match patterns like "3-5 years", "2+ years", "at least 4 years", etc.
+        const numRegex = /(\d+)\s*[-to]{0,3}\s*(\d*)\s*(?:\+?\s*)?(?:years?|yrs?)/i;
+        const match = desc.match(numRegex);
+
+        if (match) {
+            const min = match[1];
+            const max = match[2] || "";
+            return max ? `${min}-${max} yrs` : `${min}+ yrs`;
+        }
+
+        // Match words for numbers (e.g., "three years")
+        const wordToNum = {
             one: 1, two: 2, three: 3, four: 4, five: 5,
-            six: 6, seven: 7, eight: 8, nine: 9, ten: 10,
-            eleven: 11, twelve: 12, thirteen: 13, fourteen: 14, fifteen: 15,
-            sixteen: 16, seventeen: 17, eighteen: 18, nineteen: 19, twenty: 20
+            six: 6, seven: 7, eight: 8, nine: 9, ten: 10
         };
+        const wordRegex = new RegExp(
+            `\\b(${Object.keys(wordToNum).join("|")})\\b\\s+(?:to\\s+(${Object.keys(wordToNum).join("|")})\\s+)?years?`,
+            "i"
+        );
+        const wordMatch = desc.match(wordRegex);
 
-        // Try digit-based patterns first (existing logic)
-        const patterns = [
-            // Explicit range patterns with years/experience
-            /(\d+)\s*-\s*(\d+)\s*years\s*of\s*experience/i,
-            /(\d+)\s*to\s*(\d+)\s*years\s*of\s*experience/i,
-            /(\d+)\s*\+\s*years\s*of\s*experience/i,
-            /(\d+)\s*years\s*of\s*experience/i,
-            /(\d+)\s*-\s*(\d+)\s*yrs\.?\s*of\s*exp\.?/i,
-            /(\d+)\s*to\s*(\d+)\s*yrs\.?\s*of\s*exp\.?/i,
-            /(\d+)\s*\+\s*yrs\.?\s*of\s*exp\.?/i,
-            /(\d+)\s*yrs\.?\s*of\s*exp\.?/i,
-            // General range patterns
-            /(\d+)\s*-\s*(\d+)\s*years?/i,
-            /(\d+)\s*to\s*(\d+)\s*years?/i,
-            /(\d+)\s*\+\s*years?/i,
-            /(\d+)\s*years?/i,
-            /(?:experience|exp)\s*:\s*(\d+)\s*(?:-|\+)?\s*(\d+)?/i,
-            /(?:minimum|min)\.?\s*(\d+)\s*years?/i
-        ];
-
-        for (const pattern of patterns) {
-            const match = desc.match(pattern);
-            if (match) {
-                const minYears = parseInt(match[1]);
-                const maxYears = match[2] ? parseInt(match[2]) : null;
-                const isPlusRange = match[0].includes('+') ||
-                    match[0].includes('least') ||
-                    match[0].includes('minimum');
-
-                // Format the output based on what we found
-                if (maxYears) {
-                    return `${minYears}-${maxYears} yrs`;
-                } else if (isPlusRange) {
-                    // For plus ranges, estimate max as min+2 (5+ → 5-7)
-                    return `${minYears}-${minYears + 2} yrs`;
-                } else {
-                    // For single values, create range (14 → 12-14)
-                    return `${Math.max(1, minYears - 2)}-${minYears} yrs`;
-                }
-            }
-        }
-
-        // Now try word-based patterns (e.g., 'six years of experience')
-        const wordPattern = new RegExp(`(${Object.keys(numberWords).join('|')})[+\-\s]*years?\s*of\s*experience`, 'i');
-        const wordMatch = desc.match(wordPattern);
         if (wordMatch) {
-            const minYears = numberWords[wordMatch[1].toLowerCase()];
-            // For single word, create a range as above
-            return `${Math.max(1, minYears - 2)}-${minYears} yrs`;
+            const min = wordToNum[wordMatch[1].toLowerCase()];
+            const max = wordMatch[2] ? wordToNum[wordMatch[2].toLowerCase()] : "";
+            return max ? `${min}-${max} yrs` : `${min} yrs`;
         }
 
-        return 'Not specified';
-    };
+        return "Not specified";
+    }
 
     // Preprocess job description:
     function cleanDescription(desc) {
@@ -1149,16 +1461,23 @@ export default function extractSkillsAndExperience(job) {
 
     function isEntryLevelJob(title, experience) {
         const normalizedTitle = title.toLowerCase();
+
         const seniorityKeywords = [
-            "sr.", "senior", "lead", "director", "head", "vp", "chief", "principal",
-            "manager", "architect", "president", "executive", "expert", "specialist",
-            "consultant", "supervisor", "officer", "owner", "founder", "co-founder",
-            "ii", "sde 2", "sde 3", "2", "3"
+            "sr\\.?\\b", "senior\\b", "lead\\b", "director\\b", "head\\b", "vp\\b", "chief\\b",
+            "principal\\b", "manager\\b", "architect\\b", "president\\b", "executive\\b",
+            "expert\\b", "specialist\\b", "consultant\\b", "supervisor\\b", "officer\\b",
+            "owner\\b", "founder\\b", "co-founder\\b", "sde\\s*2\\b", "sde\\s*3\\b", "\\bii\\b"
         ];
 
         // Reject if title contains seniority indicators
-        if (seniorityKeywords.some(keyword => normalizedTitle.includes(keyword))) {
+        if (seniorityKeywords.some(keyword => new RegExp(keyword, "i").test(normalizedTitle))) {
             return false;
+        }
+
+        // Positive entry-level hints
+        const entryKeywords = ["fresher", "graduate", "trainee", "intern", "apprentice"];
+        if (entryKeywords.some(keyword => normalizedTitle.includes(keyword))) {
+            return true;
         }
 
         // If no experience info or explicitly "not specified", assume entry level
@@ -1173,11 +1492,10 @@ export default function extractSkillsAndExperience(job) {
         const min = parseInt(match[1], 10);
         const max = match[2] ? parseInt(match[2], 10) : min;
 
-        // Check if it's entry-level
-        const isEntryLevel = max < 2;
-
-        return isEntryLevel;
+        // Treat <= 2 years as entry-level
+        return max <= 2;
     }
+
 
     // Catergorise job into different sectors
     function categorizeJob(title, description) {
