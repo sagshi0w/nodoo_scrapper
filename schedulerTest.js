@@ -64,6 +64,7 @@ import runKhanAcademyJobsScraper from "./scrapers/productBased/khanAcademy.js"
 import runPractoJobsScraper from "./scrapers/productBased/practo.js"
 import runNaviJobsScraper from "./scrapers/productBased/navi.js"
 import runFreechargeJobsScraper from "./scrapers/productBased/freecharge.js"
+import runUpstoxJobsScraper from "./scrapers/productBased/upstox.js"
 
 
 
@@ -137,7 +138,7 @@ ${error.stack}`;
 };
 
 const scrapers = [
-    { fn: runFreechargeJobsScraper, headless: true },
+    { fn: runUpstoxJobsScraper, headless: true },
 ];
 
 const runAllScrapers = async () => {
