@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node scheduler.js"
+    "start": "node scheduler.js",
+    "clean-duplicates": "node src/utils/removeDuplicates.js"
   },
   "keywords": [],
   "author": "",
