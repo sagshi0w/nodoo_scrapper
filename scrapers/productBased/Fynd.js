@@ -40,7 +40,7 @@ class FyndJobsScraper {
 
             // Collect new links
             const jobLinks = await this.page.$$eval(
-                'a.card.job-card',
+                'a[href*="/careers/jobdetails/"][class*="job-card"]',
                 anchors => anchors.map(a => a.href)
             );
 
