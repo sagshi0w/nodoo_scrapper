@@ -36,6 +36,7 @@ class AckoJobsScraper {
 
     async collectAllJobCardLinks() {
         console.log('📋 Collecting job links...');
+        const existingLinks = new Set();
 
         while (true) {
             await delay(2000);
@@ -46,8 +47,11 @@ class AckoJobsScraper {
                     .map(id => `https://www.acko.com/careers/jobs/${id}`);
             });
 
-            for (const url of newJobUrls) {
-                this.jobLinks.push(url);
+            for (const link of newJobUrls) {
+                if (!existingLinks.has(link)) {
+                    existingLinks.add(link);
+                    this.jobLinks.push(link);
+                }
             }
 
             console.log(`🔗 Found ${this.jobLinks.length} unique job links so far...`);
