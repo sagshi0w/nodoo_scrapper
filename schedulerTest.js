@@ -141,7 +141,7 @@ ${error.stack}`;
 };
 
 const scrapers = [
-    { fn: runHcltechJobsScraper, headless: true },
+    { fn: runAckoScraper, headless: true },
 ];
 
 const runAllScrapers = async () => {
