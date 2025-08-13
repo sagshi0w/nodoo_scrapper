@@ -46,10 +46,10 @@ class hclTechJobsScraper {
 
         while (true) {
             // Wait for job links on current page
-            await this.page.waitForSelector('td.views-field-field-designation a', { timeout: 10000 });
+            //await this.page.waitForSelector('td.views-field-field-designation a', { timeout: 10000 });
 
             // Collect job links
-            const jobLinks = await page.$$eval('td.views-field-field-designation a', anchors =>
+            const jobLinks = await page.$$eval('a[href^="/jobs/"]', anchors =>
                 anchors.map(a => ({
                     title: a.textContent.trim(),
                     url: a.href
