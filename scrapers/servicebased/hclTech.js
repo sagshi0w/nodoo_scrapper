@@ -33,7 +33,7 @@ class hclTechJobsScraper {
 
     async navigateToJobsPage() {
         console.log('🌐 Navigating to HCLTech Careers...');
-        await this.page.goto('https://www.hcltech.com/careers/careers-in-india', {
+        await this.page.goto('https://www.hcltech.com/careers/careers-in-india#job-openings', {
             waitUntil: 'load',
             timeout: 90000
         });
