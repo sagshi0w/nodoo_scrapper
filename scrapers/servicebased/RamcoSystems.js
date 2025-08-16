@@ -98,7 +98,7 @@ class RamcoSystemsJobsScraper {
                 return {
                     title: getText('h4.job-details-banner__title'),
                     company: 'Ramco Systems',
-                    description: getText('.job-details__col-left .job-details__content .job-details__content-divider'),
+                    description: getText('div.job-details__col-left'),
                     url: window.location.href
                 };
             });
