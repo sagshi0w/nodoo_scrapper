@@ -18,6 +18,8 @@ import runBirlaSoftScrapper from "./scrapers/servicebased/birlaSoft.js"
 import runTechMahindraScraper from "./scrapers/servicebased/techMahindra.js";
 import runWiproScraper from "./scrapers/servicebased/wipro.js";
 import runLTIMindtreeScrapper from "./scrapers/servicebased/ltiMindTree.js";
+import runRamcoSystemsJobsScraper from "./scrapers/servicebased/RamcoSystems.js"
+import runCapgeminiJobsScraper from "./scrapers/servicebased/Capgemini.js"
 
 const config = {
   concurrency: 5,
@@ -90,6 +92,8 @@ const scrapers = [
   { fn: runTechMahindraScraper, headless: true },
   { fn: runWiproScraper, headless: true },
   { fn: runLTIMindtreeScrapper, headless: true },
+  { fn: runRamcoSystemsJobsScraper, headless: true },
+  { fn: runCapgeminiJobsScraper, headless: true },
 ];
 
 const runAllScrapers = async () => {
