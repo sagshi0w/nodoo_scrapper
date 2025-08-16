@@ -40,7 +40,7 @@ class CognizantJobsScraper {
 
             // Collect new links
             const jobLinks = await this.page.$$eval(
-                'h2.card-title a.stretched-link.js-view-job',
+                'a.stretched-link.js-view-job',
                 anchors => anchors.map(a => a.href)
             );
 
