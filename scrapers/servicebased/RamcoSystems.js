@@ -178,7 +178,7 @@ const extractWiproData = (job) => {
 
     // --- Regex patterns for city/location ---
     const cityPatterns = [
-        /Location\s*(?:City|:)?\s*([A-Za-z .]+)/i, // "Location City: Chennai"
+        /Location\s*(?:City)?:\s*([A-Za-z .]+)/i,   // captures only city name after "Location City:"
         /\b(Bangalore|Bengaluru|Hyderabad|Chennai|Pune|Mumbai|Delhi|Gurgaon|Noida|Kolkata|Trivandrum|Cochin|Jaipur|Ahmedabad|Indore|Nagpur)\b/i
     ];
 
