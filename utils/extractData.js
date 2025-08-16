@@ -1392,11 +1392,15 @@ export default function extractSkillsAndExperience(job) {
         if (!desc) return '';
 
         return desc
-            .replace(/\r\n/g, '\n')
+            .replace(/\r\n/g, '\n')                 // normalize line endings
+            .replace(/\t+/g, ' ')                   // remove tabs
+            .replace(/[ ]{2,}/g, ' ')               // collapse multiple spaces
+            .replace(/\n{3,}/g, '\n\n')             // collapse 3+ newlines into 2
             .split('\n')
             .map(line => line.trim())
-            .filter(line => line.length)
-            .join('\n');
+            .filter(line => !/^(\*|•|-|—)?\s*$/.test(line)) // remove lines that are only bullets or dashes
+            .join('\n')
+            .trim();
     }
 
 
