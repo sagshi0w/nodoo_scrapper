@@ -3,7 +3,7 @@ import fs from 'fs';
 
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
-class CognizantJobsScraper {
+class DeloitteJobsScraper {
     constructor(headless = true) {
         this.headless = headless;
         this.browser = null;
@@ -22,8 +22,8 @@ class CognizantJobsScraper {
     }
 
     async navigateToJobsPage() {
-        console.log('🌐 Navigating to Cognizant Careers...');
-        await this.page.goto('https://careers.cognizant.com/us-en/jobs/?keyword=&location=&lat=&lng=&cname=&ccode=&origin=global', {
+        console.log('🌐 Navigating to Deloitte Careers...');
+        await this.page.goto('https://southasiacareers.deloitte.com/go/Deloitte-India/718244/', {
             waitUntil: 'networkidle2'
         });
         await delay(5000);
@@ -40,7 +40,7 @@ class CognizantJobsScraper {
 
             // Collect new links
             const jobLinks = await this.page.$$eval(
-                'a.stretched-link.js-view-job',
+                'a.jobTitle-link',
                 anchors => anchors.map(a => a.href)
             );
 
@@ -96,9 +96,10 @@ class CognizantJobsScraper {
             const job = await jobPage.evaluate(() => {
                 const getText = sel => document.querySelector(sel)?.innerText.trim() || '';
                 return {
-                    title: getText('h1.hero-heading'),
-                    company: 'Cognizant',
-                    description: getText('.cms-content'),
+                    title: getText('h1 span[ itemprop="title" ]'),
+                    location: getText('div.col-xs-12.fontalign-left span[data-careersite-propertyid="city"]'),
+                    company: 'Deloitte',
+                    description: getText('.jobdescription'),
                     url: window.location.href
                 };
             });
@@ -260,18 +261,18 @@ const extractWiproData = (job) => {
 
 
 // ✅ Exportable runner function
-const runCognizantJobsScraper = async ({ headless = true } = {}) => {
-    const scraper = new CognizantJobsScraper(headless);
+const runDeloitteJobsScraper = async ({ headless = true } = {}) => {
+    const scraper = new DeloitteJobsScraper(headless);
     await scraper.run();
     return scraper.allJobs;
 };
 
-export default runCognizantJobsScraper;
+export default runDeloitteJobsScraper;
 
 // ✅ CLI support: node phonepe.js --headless=false
 if (import.meta.url === `file://${process.argv[1]}`) {
     const headlessArg = process.argv.includes('--headless=false') ? false : true;
     (async () => {
-        await runCognizantJobsScraper({ headless: headlessArg });
+        await runDeloitteJobsScraper({ headless: headlessArg });
     })();
 }

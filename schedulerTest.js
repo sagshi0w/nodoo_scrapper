@@ -72,6 +72,7 @@ import runHcltechJobsScraper from "./scrapers/servicebased/hclTech.js"
 import runRamcoSystemsJobsScraper from "./scrapers/servicebased/RamcoSystems.js"
 import runCapgeminiJobsScraper from "./scrapers/servicebased/Capgemini.js"
 import runCognizantJobsScraper from "./scrapers/servicebased/Cognizant.js"
+import runDeloitteJobsScraper from "./scrapers/servicebased/Deloitte.js"
 
 
 import runTataMgJobsScraper from "./scrapers/productBased/tata1mg.js"
@@ -144,7 +145,7 @@ ${error.stack}`;
 };
 
 const scrapers = [
-    { fn: runCognizantJobsScraper, headless: true },
+    { fn: runDeloitteJobsScraper, headless: true },
 ];
 
 const runAllScrapers = async () => {
