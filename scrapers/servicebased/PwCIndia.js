@@ -99,7 +99,7 @@ class PwCIndiaJobsScraper {
                     title: getText('h1.title-strip__heading'),
                     location: getText('div.col-xs-12.fontalign-left span[data-careersite-propertyid="city"]'),
                     company: 'PwC India',
-                    description: getText('div.wd-jobdescr'),
+                    description: getText('.wd-jobdescr'),
                     url: window.location.href
                 };
             });
