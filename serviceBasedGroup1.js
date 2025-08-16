@@ -20,6 +20,7 @@ import runWiproScraper from "./scrapers/servicebased/wipro.js";
 import runLTIMindtreeScrapper from "./scrapers/servicebased/ltiMindTree.js";
 import runRamcoSystemsJobsScraper from "./scrapers/servicebased/RamcoSystems.js"
 import runCapgeminiJobsScraper from "./scrapers/servicebased/Capgemini.js"
+import runDeloitteJobsScraper from "./scrapers/servicebased/Deloitte.js"
 
 const config = {
   concurrency: 5,
@@ -94,6 +95,7 @@ const scrapers = [
   { fn: runLTIMindtreeScrapper, headless: true },
   { fn: runRamcoSystemsJobsScraper, headless: true },
   { fn: runCapgeminiJobsScraper, headless: true },
+  { fn: runDeloitteJobsScraper, headless: true },
 ];
 
 const runAllScrapers = async () => {

@@ -71,12 +71,14 @@ import runHcltechJobsScraper from "./scrapers/servicebased/hclTech.js"
 
 import runRamcoSystemsJobsScraper from "./scrapers/servicebased/RamcoSystems.js"
 import runCapgeminiJobsScraper from "./scrapers/servicebased/Capgemini.js"
-import runCognizantJobsScraper from "./scrapers/servicebased/Cognizant.js"
 import runDeloitteJobsScraper from "./scrapers/servicebased/Deloitte.js"
+import runPwCIndiaJobsScraper from "./scrapers/servicebased/PwCIndia.js"
 
 
+// Not working scrappers:
 import runTataMgJobsScraper from "./scrapers/productBased/tata1mg.js"
 import runGlobalLogicJobsScraper from "./scrapers/servicebased/GlobalLogic.js"
+import runCognizantJobsScraper from "./scrapers/servicebased/Cognizant.js"
 
 const config = {
     concurrency: 5,
@@ -145,7 +147,7 @@ ${error.stack}`;
 };
 
 const scrapers = [
-    { fn: runDeloitteJobsScraper, headless: true },
+    { fn: runPwCIndiaJobsScraper, headless: true },
 ];
 
 const runAllScrapers = async () => {
