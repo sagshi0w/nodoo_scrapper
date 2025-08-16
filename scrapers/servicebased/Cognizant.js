@@ -39,6 +39,8 @@ class CognizantJobsScraper {
             //await this.page.waitForSelector('div.op-job-apply-bt', { timeout: 10000 });
 
             // Collect new links
+            await this.page.waitForSelector('a.stretched-link.js-view-job', { timeout: 5000 });
+
             const jobLinks = await this.page.$$eval(
                 'a.stretched-link.js-view-job',
                 anchors => anchors.map(a => a.href)
