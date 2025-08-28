@@ -61,7 +61,7 @@ class SiemensJobsScraper {
     const maxPages = 50;
     let pageNum = 1;
 
-    for (; pageNum <= maxPages; pageNum++) {
+    for (; pageNum <= 2; pageNum++) {
       console.log(`📄 Scraping Page ${pageNum}...`);
 
       await this.page.waitForSelector(jobCardsSelector, { timeout: 10000 });
