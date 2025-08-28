@@ -147,7 +147,7 @@ ${error.stack}`;
 };
 
 const scrapers = [
-    { fn: runPwCIndiaJobsScraper, headless: true },
+    { fn: runSiemensScraper, headless: true },
 ];
 
 const runAllScrapers = async () => {
