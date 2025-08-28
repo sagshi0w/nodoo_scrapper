@@ -58,10 +58,10 @@ class SiemensJobsScraper {
   async scrapeAllJobs() {
     const jobCardsSelector = '#pcs-body-container div.search-results-main-container div.position-cards-container div:nth-child(2) > div';
     const jobDetailsSelector = 'div.position-details div.position-job-description-column div.custom-jd-container';
-    const maxPages = 50;
+    const maxPages = 20;
     let pageNum = 1;
 
-    for (; pageNum <= 2; pageNum++) {
+    for (; pageNum <= maxPages; pageNum++) {
       console.log(`📄 Scraping Page ${pageNum}...`);
 
       await this.page.waitForSelector(jobCardsSelector, { timeout: 10000 });
@@ -98,11 +98,8 @@ class SiemensJobsScraper {
               description: document.querySelector('div.position-job-description')?.innerText.trim() || '',
               url: window.location.href,
               company: 'Siemens',
-              ...fields
             };
           }, jobDetailsSelector);
-
-          console.log("Job=",job);
 
           if (job?.title) {
             job.description = this.cleanJobDescription(job.description);

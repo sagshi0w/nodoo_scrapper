@@ -1386,7 +1386,6 @@ export default function extractSkillsAndExperience(job) {
         return "Not specified";
     }
 
-
     // Preprocess job description:
     function cleanDescription(desc) {
         if (!desc) return '';
