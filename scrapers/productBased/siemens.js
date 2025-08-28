@@ -93,8 +93,8 @@ class SiemensJobsScraper {
             });
 
             return {
-              title: document.querySelector('.position-title')?.innerText.trim() || '',
-              location: document.querySelector('.position-location')?.innerText.trim() || '',
+              title: document.querySelector('h1.position-title')?.innerText.trim() || '',
+              location: document.querySelector('p.position-location')?.innerText.trim() || '',
               description: document.querySelector('div.position-job-description')?.innerText.trim() || '',
               url: window.location.href,
               company: 'Siemens',
