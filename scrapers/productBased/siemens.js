@@ -102,7 +102,7 @@ class SiemensJobsScraper {
             };
           }, jobDetailsSelector);
 
-          console.log("Job title=",job.title);
+          console.log("Job=",job);
 
           if (job?.title) {
             job.description = this.cleanJobDescription(job.description);
