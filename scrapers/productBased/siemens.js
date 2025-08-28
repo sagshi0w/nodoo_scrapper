@@ -76,9 +76,7 @@ class SiemensJobsScraper {
         console.log(`📝 Processing job ${i + 1}/${cards.length}`);
         try {
           const card = cards[i];
-          console.log("card=",card);
           await card.click();
-          console.log("card clicked=");
           await delay(2000);
 
           const job = await this.page.evaluate((detailsSelector) => {
@@ -103,6 +101,8 @@ class SiemensJobsScraper {
               ...fields
             };
           }, jobDetailsSelector);
+
+          console.log("Job title=",job.title);
 
           if (job?.title) {
             job.description = this.cleanJobDescription(job.description);
