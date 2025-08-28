@@ -1531,6 +1531,50 @@ export default function extractSkillsAndExperience(job) {
     // Get the date posted
     const getISOTimestamp = () => new Date().toISOString();
 
+    // Get miniExperience and maxExperience fields:
+    function parseExperience(expString = "") {
+        if (!expString) {
+            return { miniExperience: null, maxExperience: null };
+        }
+
+        // Normalize input
+        let str = expString.toLowerCase().trim();
+
+        // Remove words like "yrs", "years", "year", "experience"
+        str = str.replace(/(yrs?|years?|experience)/g, "").trim();
+
+        let miniExperience = null;
+        let maxExperience = null;
+
+        // Case 1: Range (e.g., "2-3", "0 - 1")
+        const rangeMatch = str.match(/(\d+)\s*-\s*(\d+)/);
+        if (rangeMatch) {
+            miniExperience = parseInt(rangeMatch[1], 10);
+            maxExperience = parseInt(rangeMatch[2], 10);
+            return { miniExperience, maxExperience };
+        }
+
+        // Case 2: "10+"
+        const plusMatch = str.match(/(\d+)\s*\+/);
+        if (plusMatch) {
+            miniExperience = parseInt(plusMatch[1], 10);
+            maxExperience = null; // open-ended
+            return { miniExperience, maxExperience };
+        }
+
+        // Case 3: Single number (e.g., "3")
+        const singleMatch = str.match(/(\d+)/);
+        if (singleMatch) {
+            miniExperience = parseInt(singleMatch[1], 10);
+            maxExperience = parseInt(singleMatch[1], 10);
+            return { miniExperience, maxExperience };
+        }
+
+        // Default (not found)
+        return { miniExperience: null, maxExperience: null };
+    }
+
+
     return {
         ...job,
         description: cleanDescription(job.description),
@@ -1540,6 +1584,7 @@ export default function extractSkillsAndExperience(job) {
         isEntryLevel: isEntryLevelJob(job.title, cleanDescription(job.description)),
         jobType: extractJobType(cleanDescription(job.description), extractExperience(cleanDescription(job.description))),
         location: extractCity(job.location) || 'India',
+        ...parseExperience(extractExperience(cleanDescription(job.description))), 
         postedAt: getISOTimestamp()
     };
 }
