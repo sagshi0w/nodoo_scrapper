@@ -147,7 +147,7 @@ ${error.stack}`;
 };
 
 const scrapers = [
-    { fn: runSiemensScraper, headless: true },
+    { fn: runAckoScraper, headless: true },
 ];
 
 const runAllScrapers = async () => {
