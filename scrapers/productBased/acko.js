@@ -71,7 +71,7 @@ class AckoJobsScraper {
                 }, loadMoreSelector);
 
                 await this.page.waitForSelector(loadMoreSelector, { visible: true, timeout: 5000 });
-                await loadMoreBtn.click();
+                //await loadMoreBtn.click();
                 await delay(2000);
             } catch (err) {
                 console.warn(`⚠️ Skipping click due to error: ${err.message}`);
