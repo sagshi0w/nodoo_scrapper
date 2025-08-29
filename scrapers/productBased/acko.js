@@ -29,7 +29,6 @@ class AckoJobsScraper {
         console.log('🌐 Navigating to Acko Careers page...');
         await this.page.goto('https://www.acko.com/careers/jobs/', {
             waitUntil: 'networkidle2',
-            timeout: 60000
         });
         await delay(5000);
     }
