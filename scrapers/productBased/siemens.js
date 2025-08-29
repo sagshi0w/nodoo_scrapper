@@ -31,7 +31,7 @@ class SiemensJobsScraper {
   async navigateToJobsPage() {
     console.log('🌐 Navigating to Siemens Careers page...');
     await this.page.goto(
-      'https://jobs.siemens.com/careers?query=Developer&location=India&pid=563156125003043&domain=siemens.com&sort_by=relevance&location_distance_km=25&triggerGoButton=false&utm_source=j_c_in',
+      'https://jobs.siemens.com/careers?utm_source=j_c_global',
       { waitUntil: 'networkidle2', timeout: 60000 }
     );
     await delay(3000);
@@ -101,7 +101,7 @@ class SiemensJobsScraper {
             };
           }, jobDetailsSelector);
 
-          console.log("job title=",job.title)
+          console.log("job title=", job.title)
 
           if (job?.title) {
             job.description = this.cleanJobDescription(job.description);
