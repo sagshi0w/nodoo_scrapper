@@ -87,7 +87,7 @@ class TanlaJobsScraper {
             const job = await jobPage.evaluate(() => {
                 const getText = sel => document.querySelector(sel)?.innerText.trim() || '';
                 return {
-                    title: getText('h1.job-title'),
+                    title: getText('#job-title'),
                     company: 'Tanla',
                     location: getText('.careers-header_subtitle-wrapper p'),
                     description: getText('.job-content_wrapper'),
