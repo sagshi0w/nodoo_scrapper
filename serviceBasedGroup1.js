@@ -22,6 +22,8 @@ import runRamcoSystemsJobsScraper from "./scrapers/servicebased/RamcoSystems.js"
 import runCapgeminiJobsScraper from "./scrapers/servicebased/Capgemini.js"
 import runDeloitteJobsScraper from "./scrapers/servicebased/Deloitte.js"
 
+import runOracleJobsScraper from "./scrapers/productBased/oracle.js"
+
 const config = {
   concurrency: 5,
   notification: {
@@ -96,6 +98,7 @@ const scrapers = [
   { fn: runRamcoSystemsJobsScraper, headless: true },
   { fn: runCapgeminiJobsScraper, headless: true },
   { fn: runDeloitteJobsScraper, headless: true },
+  { fn: runOracleJobsScraper, headless: true },
 ];
 
 const runAllScrapers = async () => {
