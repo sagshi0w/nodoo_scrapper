@@ -51,7 +51,7 @@ class OracleJobsScraper {
             }
 
             // Click next page button:
-            const loadMoreSelector = 'search-pagination';
+            const loadMoreSelector = 'div.search-pagination';
             const loadMoreBtn = await this.page.$(loadMoreSelector);
             if (!loadMoreBtn) {
                 console.log('❌ No more "Load more" button — all jobs loaded.');
