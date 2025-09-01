@@ -31,7 +31,6 @@ class OracleJobsScraper {
 
     async collectAllJobCardLinks() {
         this.allJobLinks = [];
-        let pageIndex = 1;
         const existingLinks = new Set();
 
         while (true) {
@@ -51,35 +50,28 @@ class OracleJobsScraper {
                 }
             }
 
-            console.log(`📄 Collected ${this.allJobLinks.length} unique job links so far...`);
-
-            const pageNumbers = await this.page.$$eval('ul.pagination li a', links =>
-                links
-                    .map(a => ({
-                        text: a.textContent.trim(),
-                        href: a.getAttribute('href'),
-                    }))
-                    .filter(a => /^\d+$/.test(a.text)) // Only page numbers
-            );
-
-            // Try to click "See more results" button
-            // Check if "Show More Results" button exists and is visible
-            const nextPage = pageNumbers.find(p => Number(p.text) === pageIndex + 1);
-
-            if (!nextPage) {
-                console.log('✅ No more pages left. Done.');
+            // Click next page button:
+            const loadMoreSelector = 'search-pagination';
+            const loadMoreBtn = await this.page.$(loadMoreSelector);
+            if (!loadMoreBtn) {
+                console.log('❌ No more "Load more" button — all jobs loaded.');
                 break;
             }
 
-            // Click the next page
-            console.log(`➡️ Clicking page ${pageIndex + 1}`);
-            await Promise.all([
-                //this.page.click(`ul.pagination li a[title="Page ${pageIndex + 1}"]`),
-                //this.page.waitForNavigation({ waitUntil: 'networkidle2' }),
-            ]);
+            try {
+                console.log('🔄 Clicking "Load more"...');
+                await this.page.evaluate(selector => {
+                    const btn = document.querySelector(selector);
+                    if (btn) btn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, loadMoreSelector);
 
-            pageIndex++;
-
+                await this.page.waitForSelector(loadMoreSelector, { visible: true, timeout: 5000 });
+                await loadMoreBtn.click();
+                await delay(2000);
+            } catch (err) {
+                console.warn(`⚠️ Skipping click due to error: ${err.message}`);
+                break;
+            }
         }
 
         return this.allJobLinks;;
