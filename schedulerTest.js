@@ -76,6 +76,7 @@ import runPwCIndiaJobsScraper from "./scrapers/servicebased/PwCIndia.js"
 
 // 01.09.2025
 import runOracleJobsScraper from "./scrapers/productBased/oracle.js"
+import runTanlaJobsScraper from "./scrapers/servicebased/tanla.js"
 
 // Not working scrappers:
 import runTataMgJobsScraper from "./scrapers/productBased/tata1mg.js"
@@ -149,7 +150,7 @@ ${error.stack}`;
 };
 
 const scrapers = [
-    { fn: runOracleJobsScraper, headless: true },
+    { fn: runTanlaJobsScraper, headless: true },
 ];
 
 const runAllScrapers = async () => {
