@@ -23,6 +23,8 @@ import runTextbookJobsScraper from "./scrapers/productBased/textbook.js"
 import runPractoJobsScraper from "./scrapers/productBased/practo.js"
 import runFreechargeJobsScraper from "./scrapers/productBased/freecharge.js"
 
+import runTanlaJobsScraper from "./scrapers/servicebased/tanla.js"
+
 const config = {
   concurrency: 5,
   notification: {
@@ -99,6 +101,7 @@ const scrapers = [
   { fn: runTextbookJobsScraper, headless: true },
   { fn: runPractoJobsScraper, headless: true },
   { fn: runFreechargeJobsScraper, headless: true },
+  { fn: runTanlaJobsScraper, headless: true },
 ];
 
 const runAllScrapers = async () => {
