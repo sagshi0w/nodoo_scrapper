@@ -37,6 +37,8 @@ const config = {
   }
 };
 
+
+
 const transporter = nodemailer.createTransport({
   service: config.notification.email.service,
   auth: {

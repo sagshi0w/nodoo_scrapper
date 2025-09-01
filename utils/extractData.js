@@ -1387,19 +1387,28 @@ export default function extractSkillsAndExperience(job) {
     }
 
     // Preprocess job description:
+    // function cleanDescription(desc) {
+    //     if (!desc) return '';
+
+    //     return desc
+    //         .replace(/\r\n/g, '\n')                 // normalize line endings
+    //         .replace(/\t+/g, ' ')                   // remove tabs
+    //         .replace(/[ ]{2,}/g, ' ')               // collapse multiple spaces
+    //         .replace(/\n{3,}/g, '\n\n')             // collapse 3+ newlines into 2
+    //         .split('\n')
+    //         .map(line => line.trim())
+    //         .filter(line => !/^(\*|•|-|—)?\s*$/.test(line)) // remove lines that are only bullets or dashes
+    //         .trim();
+    // }
+
     function cleanDescription(desc) {
         if (!desc) return '';
 
         return desc
-            .replace(/\r\n/g, '\n')                 // normalize line endings
-            .replace(/\t+/g, ' ')                   // remove tabs
-            .replace(/[ ]{2,}/g, ' ')               // collapse multiple spaces
-            .replace(/\n{3,}/g, '\n\n')             // collapse 3+ newlines into 2
-            .split('\n')
-            .map(line => line.trim())
-            .filter(line => !/^(\*|•|-|—)?\s*$/.test(line)) // remove lines that are only bullets or dashes
-            .join('\n')
-            .trim();
+            .split('\n')                       // keep line breaks
+            .map(line => line.trim())          // trim spaces from each line
+            .filter(line => line.length > 0)   // remove empty lines
+            .join('\n');                       // join back with preserved formatting
     }
 
 
@@ -1584,7 +1593,7 @@ export default function extractSkillsAndExperience(job) {
         isEntryLevel: isEntryLevelJob(job.title, cleanDescription(job.description)),
         jobType: extractJobType(cleanDescription(job.description), extractExperience(cleanDescription(job.description))),
         location: extractCity(job.location) || 'India',
-        ...parseExperience(extractExperience(cleanDescription(job.description))), 
+        ...parseExperience(extractExperience(cleanDescription(job.description))),
         postedAt: getISOTimestamp()
     };
 }

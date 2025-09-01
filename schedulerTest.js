@@ -74,6 +74,8 @@ import runCapgeminiJobsScraper from "./scrapers/servicebased/Capgemini.js"
 import runDeloitteJobsScraper from "./scrapers/servicebased/Deloitte.js"
 import runPwCIndiaJobsScraper from "./scrapers/servicebased/PwCIndia.js"
 
+// 01.09.2025
+import runOracleJobsScraper from "./scrapers/productBased/oracle.js"
 
 // Not working scrappers:
 import runTataMgJobsScraper from "./scrapers/productBased/tata1mg.js"
@@ -147,7 +149,7 @@ ${error.stack}`;
 };
 
 const scrapers = [
-    { fn: runAckoScraper, headless: true },
+    { fn: runOracleJobsScraper, headless: true },
 ];
 
 const runAllScrapers = async () => {
