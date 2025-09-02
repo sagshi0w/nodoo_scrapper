@@ -3,7 +3,7 @@ import fs from 'fs';
 
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
-class RateGainJobsScraper {
+class MotivityLabsJobsScraper {
     constructor(headless = true) {
         this.headless = headless;
         this.browser = null;
@@ -22,8 +22,8 @@ class RateGainJobsScraper {
     }
 
     async navigateToJobsPage() {
-        console.log('🌐 Navigating to RateGain Careers...');
-        await this.page.goto('https://rategain.darwinbox.com/ms/candidate/careers', {
+        console.log('🌐 Navigating to MotivityLabs Careers...');
+        await this.page.goto('https://motivitylabs.com/job-openings/', {
             waitUntil: 'networkidle2'
         });
         await delay(5000);
@@ -40,7 +40,7 @@ class RateGainJobsScraper {
 
             // Collect new links
             const jobLinks = await this.page.$$eval(
-                'a.clickable.color-blue.custom-theme-color',
+                'a.awsm-job-item',
                 anchors => anchors.map(a => a.href)
             );
 
@@ -257,18 +257,18 @@ const extractWiproData = (job) => {
 
 
 // ✅ Exportable runner function
-const runRateGainJobsScraper = async ({ headless = true } = {}) => {
-    const scraper = new RateGainJobsScraper(headless);
+const runMotivityLabsJobsScraper = async ({ headless = true } = {}) => {
+    const scraper = new MotivityLabsJobsScraper(headless);
     await scraper.run();
     return scraper.allJobs;
 };
 
-export default runRateGainJobsScraper;
+export default runMotivityLabsJobsScraper;
 
 // ✅ CLI support: node phonepe.js --headless=false
 if (import.meta.url === `file://${process.argv[1]}`) {
     const headlessArg = process.argv.includes('--headless=false') ? false : true;
     (async () => {
-        await runRateGainJobsScraper({ headless: headlessArg });
+        await runMotivityLabsJobsScraper({ headless: headlessArg });
     })();
 }
