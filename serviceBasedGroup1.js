@@ -14,15 +14,15 @@ const require = createRequire(import.meta.url);
 const nodemailer = require('nodemailer');
 
 // ✅ Scrapers
-import runBirlaSoftScrapper from "./scrapers/servicebased/birlaSoft.js"
-import runTechMahindraScraper from "./scrapers/servicebased/techMahindra.js";
-import runWiproScraper from "./scrapers/servicebased/wipro.js";
-import runLTIMindtreeScrapper from "./scrapers/servicebased/ltiMindTree.js";
-import runRamcoSystemsJobsScraper from "./scrapers/servicebased/RamcoSystems.js"
-import runCapgeminiJobsScraper from "./scrapers/servicebased/Capgemini.js"
-import runDeloitteJobsScraper from "./scrapers/servicebased/Deloitte.js"
+import BirlaSoft from "./scrapers/servicebased/birlaSoft.js"
+import TechMahindra from "./scrapers/servicebased/techMahindra.js";
+import Wipro from "./scrapers/servicebased/wipro.js";
+import LTIMindtree from "./scrapers/servicebased/ltiMindTree.js";
+import RamcoSystems from "./scrapers/servicebased/RamcoSystems.js"
+import Capgemini from "./scrapers/servicebased/Capgemini.js"
+import Deloitte from "./scrapers/servicebased/Deloitte.js"
 
-import runOracleJobsScraper from "./scrapers/productBased/oracle.js"
+import Oracle from "./scrapers/productBased/oracle.js"
 
 const config = {
   concurrency: 5,
@@ -91,14 +91,14 @@ ${error.stack}`;
 };
 
 const scrapers = [
-  { fn: runBirlaSoftScrapper, headless: true },
-  { fn: runTechMahindraScraper, headless: true },
-  { fn: runWiproScraper, headless: true },
-  { fn: runLTIMindtreeScrapper, headless: true },
-  { fn: runRamcoSystemsJobsScraper, headless: true },
-  { fn: runCapgeminiJobsScraper, headless: true },
-  { fn: runDeloitteJobsScraper, headless: true },
-  { fn: runOracleJobsScraper, headless: true },
+  { fn: BirlaSoft, headless: true },
+  { fn: TechMahindra, headless: true },
+  { fn: Wipro, headless: true },
+  { fn: LTIMindtree, headless: true },
+  { fn: RamcoSystems, headless: true },
+  { fn: Capgemini, headless: true },
+  { fn: Deloitte, headless: true },
+  { fn: Oracle, headless: true },
 ];
 
 const runAllScrapers = async () => {

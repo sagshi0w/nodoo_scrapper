@@ -14,15 +14,15 @@ const require = createRequire(import.meta.url);
 const nodemailer = require('nodemailer');
 
 // ✅ Scrapers
-import runUstGlobalJobsScraper from "./scrapers/servicebased/ustGlobal.js"
-import runIBSSoftwareJobsScraper from "./scrapers/servicebased/ibsSoftware.js"
-import runNousInfosystemsJobsScraper from "./scrapers/servicebased/nousInfosystems.js"
-import runNTTDataJobsScraper from "./scrapers/servicebased/nttData.js"
-import runCGIJobsScraper from "./scrapers/servicebased/cgi.js"
-import runMindFireSolutionsJobsScraper from "./scrapers/servicebased/mindFireSolutions.js"
-import runMavericJobsScraper from "./scrapers/servicebased/maveric.js"
-import runSynechronJobsScraper from "./scrapers/servicebased/synechron.js"
-import runBrillioScrapper from "./scrapers/servicebased/brillio.js"
+import UstGlobal from "./scrapers/servicebased/ustGlobal.js"
+import IBSSoftware from "./scrapers/servicebased/ibsSoftware.js"
+import NousInfosystems from "./scrapers/servicebased/nousInfosystems.js"
+import NTTData from "./scrapers/servicebased/nttData.js"
+import CGI from "./scrapers/servicebased/cgi.js"
+import MindFireSolutions from "./scrapers/servicebased/mindFireSolutions.js"
+import Maveric from "./scrapers/servicebased/maveric.js"
+import Synechron from "./scrapers/servicebased/synechron.js"
+import Brillio from "./scrapers/servicebased/brillio.js"
 
 const config = {
   concurrency: 5,
@@ -91,15 +91,15 @@ ${error.stack}`;
 };
 
 const scrapers = [
-  { fn: runUstGlobalJobsScraper, headless: true },
-  { fn: runIBSSoftwareJobsScraper, headless: true },
-  { fn: runNousInfosystemsJobsScraper, headless: true },
-  { fn: runNTTDataJobsScraper, headless: true },
-  { fn: runCGIJobsScraper, headless: true },
-  { fn: runMindFireSolutionsJobsScraper, headless: true },
-  { fn: runMavericJobsScraper, headless: true },
-  { fn: runSynechronJobsScraper, headless: true },
-  { fn: runBrillioScrapper, headless: true },
+  { fn: UstGlobal, headless: true },
+  { fn: IBSSoftware, headless: true },
+  { fn: NousInfosystems, headless: true },
+  { fn: NTTData, headless: true },
+  { fn: CGI, headless: true },
+  { fn: MindFireSolutions, headless: true },
+  { fn: Maveric, headless: true },
+  { fn: Synechron, headless: true },
+  { fn: Brillio, headless: true },
 ];
 
 const runAllScrapers = async () => {

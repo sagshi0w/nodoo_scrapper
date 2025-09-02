@@ -14,15 +14,14 @@ const require = createRequire(import.meta.url);
 const nodemailer = require('nodemailer');
 
 // ✅ Scrapers
-import runHexawareJobsScraper from "./scrapers/servicebased/hexaware.js";
-import runMphasisScrapper from "./scrapers/servicebased/mphasis.js";
-import runZensarScrapper from "./scrapers/servicebased/zensar.js";
-import runMindgateSolutionsScrapper from "./scrapers/servicebased/mindgateSolutions.js";
-import runCybageJobsScraper from "./scrapers/servicebased/cybage.js"
-import runExperionTechnologiesJobsScraper from "./scrapers/servicebased/experionTechnologies.js"
-import runCLoverInfotechJobsScraper from "./scrapers/servicebased/cloverInfotech.js"
-import runTezoJobsScraper from "./scrapers/servicebased/tezo.js"
-import runSaviantConsultingJobsScraper from "./scrapers/servicebased/SaviantConsulting.js"
+import Hexaware from "./scrapers/servicebased/hexaware.js";
+import Mphasis from "./scrapers/servicebased/mphasis.js";
+import Zensar from "./scrapers/servicebased/zensar.js";
+import MindgateSolutions from "./scrapers/servicebased/mindgateSolutions.js";
+import Cybage from "./scrapers/servicebased/cybage.js"
+import ExperionTechnologies from "./scrapers/servicebased/experionTechnologies.js"
+import Tezo from "./scrapers/servicebased/tezo.js"
+import SaviantConsulting from "./scrapers/servicebased/SaviantConsulting.js"
 
 const config = {
   concurrency: 5,
@@ -91,14 +90,14 @@ ${error.stack}`;
 };
 
 const scrapers = [
-  { fn: runHexawareJobsScraper, headless: true },
-  { fn: runMphasisScrapper, headless: true },
-  { fn: runZensarScrapper, headless: true },
-  { fn: runMindgateSolutionsScrapper, headless: true },
-  { fn: runCybageJobsScraper, headless: true },
-  { fn: runExperionTechnologiesJobsScraper, headless: true },
-  { fn: runTezoJobsScraper, headless: true },
-  { fn: runSaviantConsultingJobsScraper, headless: true },
+  { fn: Hexaware, headless: true },
+  { fn: Mphasis, headless: true },
+  { fn: Zensar, headless: true },
+  { fn: MindgateSolutions, headless: true },
+  { fn: Cybage, headless: true },
+  { fn: ExperionTechnologies, headless: true },
+  { fn: Tezo, headless: true },
+  { fn: SaviantConsulting, headless: true },
 ];
 
 const runAllScrapers = async () => {

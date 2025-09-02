@@ -14,18 +14,18 @@ const require = createRequire(import.meta.url);
 const nodemailer = require('nodemailer');
 
 // ✅ Scrapers
-import runMindgateSolutionsJobsScraper from "./scrapers/servicebased/mindgateSolutions.js";
-import runeClerxScrapper from "./scrapers/servicebased/eclerx.js"
-import runSaskenScrapper from "./scrapers/servicebased/sasken.js"
-import runInfiniteComputerSolutionsJobsScraper from "./scrapers/servicebased/infiniteComputerSolutions.js"
-import runUstGlobalJobsScraper from "./scrapers/servicebased/ustGlobal.js"
-import runQuinnoxJobsScraper from "./scrapers/servicebased/quinnox.js"
-import runInfogainJobsScraper from "./scrapers/servicebased/infogain.js"
-import runThreeiInfotechJobsScraper from "./scrapers/servicebased/threeiInfotech.js"
-import runIncedoJobsScraper from "./scrapers/servicebased/incedo.js"
-import runNetSolutionsJobsScraper from "./scrapers/servicebased/netSolutions.js"
-import runWNSJobsScraper from "./scrapers/servicebased/WNS.js"
-import runThoughtFocusJobsScraper from "./scrapers/servicebased/ThoughtFocus.js"
+import MindgateSolutions from "./scrapers/servicebased/mindgateSolutions.js";
+import eClerx from "./scrapers/servicebased/eclerx.js"
+import Sasken from "./scrapers/servicebased/sasken.js"
+import InfiniteComputerSolutions from "./scrapers/servicebased/infiniteComputerSolutions.js"
+import UstGlobal from "./scrapers/servicebased/ustGlobal.js"
+import Quinnox from "./scrapers/servicebased/quinnox.js"
+import Infogain from "./scrapers/servicebased/infogain.js"
+import ThreeiInfotech from "./scrapers/servicebased/threeiInfotech.js"
+import Incedo from "./scrapers/servicebased/incedo.js"
+import NetSolutions from "./scrapers/servicebased/netSolutions.js"
+import WNS from "./scrapers/servicebased/WNS.js"
+import ThoughtFocus from "./scrapers/servicebased/ThoughtFocus.js"
 
 const config = {
   concurrency: 5,
@@ -94,18 +94,18 @@ ${error.stack}`;
 };
 
 const scrapers = [
-  { fn: runMindgateSolutionsJobsScraper, headless: true },
-  { fn: runeClerxScrapper, headless: true },
-  { fn: runSaskenScrapper, headless: true },
-  { fn: runInfiniteComputerSolutionsJobsScraper, headless: true },
-  { fn: runUstGlobalJobsScraper, headless: true },
-  { fn: runQuinnoxJobsScraper, headless: true },
-  { fn: runInfogainJobsScraper, headless: true },
-  { fn: runThreeiInfotechJobsScraper, headless: true },
-  { fn: runIncedoJobsScraper, headless: true },
-  { fn: runNetSolutionsJobsScraper, headless: true },
-  { fn: runWNSJobsScraper, headless: true },
-  { fn: runThoughtFocusJobsScraper, headless: true },
+  { fn: MindgateSolutions, headless: true },
+  { fn: eClerx, headless: true },
+  { fn: Sasken, headless: true },
+  { fn: InfiniteComputerSolutions, headless: true },
+  { fn: UstGlobal, headless: true },
+  { fn: Quinnox, headless: true },
+  { fn: Infogain, headless: true },
+  { fn: ThreeiInfotech, headless: true },
+  { fn: Incedo, headless: true },
+  { fn: NetSolutions, headless: true },
+  { fn: WNS, headless: true },
+  { fn: ThoughtFocus, headless: true },
 ];
 
 const runAllScrapers = async () => {

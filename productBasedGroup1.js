@@ -15,15 +15,16 @@ const require = createRequire(import.meta.url);
 const nodemailer = require('nodemailer');
 
 // ✅ Scrapers
-import runAckoScraper from "./scrapers/productBased/acko.js";
-import runAdobeScraper from "./scrapers/productBased/adobe.js"
-import runAmazonScraper from "./scrapers/productBased/amazon.js";
+import Acko from "./scrapers/productBased/acko.js";
+import Adobe from "./scrapers/productBased/adobe.js"
+import Amazon from "./scrapers/productBased/amazon.js";
 
-import runTextbookJobsScraper from "./scrapers/productBased/textbook.js"
-import runPractoJobsScraper from "./scrapers/productBased/practo.js"
-import runFreechargeJobsScraper from "./scrapers/productBased/freecharge.js"
+import Textbook from "./scrapers/productBased/textbook.js"
+import Practo from "./scrapers/productBased/practo.js"
+import Freecharge from "./scrapers/productBased/freecharge.js"
 
-import runTanlaJobsScraper from "./scrapers/servicebased/tanla.js"
+import Tanla from "./scrapers/servicebased/tanla.js"
+import MotivityLabs from "./scrapers/servicebased/motivityLabs.js"
 
 const config = {
   concurrency: 5,
@@ -94,14 +95,15 @@ ${error.stack}`;
 };
 
 const scrapers = [
-  { fn: runAckoScraper, headless: true },
-  { fn: runAdobeScraper, headless: true },
-  { fn: runAmazonScraper, headless: true },
+  { fn: Acko, headless: true },
+  { fn: Adobe, headless: true },
+  { fn: Amazon, headless: true },
 
-  { fn: runTextbookJobsScraper, headless: true },
-  { fn: runPractoJobsScraper, headless: true },
-  { fn: runFreechargeJobsScraper, headless: true },
-  { fn: runTanlaJobsScraper, headless: true },
+  { fn: Textbook, headless: true },
+  { fn: Practo, headless: true },
+  { fn: Freecharge, headless: true },
+  { fn: Tanla, headless: true },
+  { fn: MotivityLabs, headless: true },
 ];
 
 const runAllScrapers = async () => {

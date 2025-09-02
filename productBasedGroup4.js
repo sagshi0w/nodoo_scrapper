@@ -14,9 +14,9 @@ const require = createRequire(import.meta.url);
 const nodemailer = require('nodemailer');
 
 // ✅ Scrapers
-import runRazorpayScraper from "./scrapers/productBased/razorpay.js";
-import runSiemensScraper from "./scrapers/productBased/siemens.js";
-import runUberScraper from "./scrapers/productBased/uber.js";
+import Razorpay from "./scrapers/productBased/razorpay.js";
+import Siemens from "./scrapers/productBased/siemens.js";
+import Uber from "./scrapers/productBased/uber.js";
 
 const config = {
   concurrency: 5,
@@ -85,9 +85,9 @@ ${error.stack}`;
 };
 
 const scrapers = [
-  { fn: runSiemensScraper, headless: true },
-  { fn: runRazorpayScraper, headless: true },
-  { fn: runUberScraper, headless: true },
+  { fn: Siemens, headless: true },
+  { fn: Razorpay, headless: true },
+  { fn: Uber, headless: true },
 ];
 
 const runAllScrapers = async () => {

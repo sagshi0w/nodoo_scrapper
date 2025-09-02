@@ -14,9 +14,9 @@ const require = createRequire(import.meta.url);
 const nodemailer = require('nodemailer');
 
 // ✅ Scrapers
-import runGrowwScraper from "./scrapers/productBased/groww.js";
-import runPaypalScraper from "./scrapers/productBased/paypal.js";
-import runPhonepeScraper from "./scrapers/productBased/phonepe.js";
+import Groww from "./scrapers/productBased/groww.js";
+import Paypal from "./scrapers/productBased/paypal.js";
+import Phonepe from "./scrapers/productBased/phonepe.js";
 
 const config = {
   concurrency: 5,
@@ -85,9 +85,9 @@ ${error.stack}`;
 };
 
 const scrapers = [
-  { fn: runGrowwScraper, headless: true },
-  { fn: runPhonepeScraper, headless: true },
-  { fn: runPaypalScraper, headless: true },
+  { fn: Groww, headless: true },
+  { fn: Phonepe, headless: true },
+  { fn: Paypal, headless: true },
 ];
 
 const runAllScrapers = async () => {
