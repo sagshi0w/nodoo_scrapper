@@ -96,10 +96,12 @@ class MotivityLabsJobsScraper {
             const job = await jobPage.evaluate(() => {
                 const getText = sel => document.querySelector(sel)?.innerText.trim() || '';
                 return {
-                    title: getText('div.user_details.h4.custom-theme-color'),
-                    company: 'RateGain',
-                    location: getText('div.user_details p.tooltip-custom'),
-                    description: getText('div.job-summary'),
+                    title: getText('h1.single-post-title.alt-font'),
+                    company: 'MotivityLabs',
+                    experience: getText('.awsm-job-specification-job-category .awsm-job-specification-term'),
+                    jobType: getText('.awsm-job-specification-job-type .awsm-job-specification-term'),
+                    location: getText('.awsm-job-specification-job-location .awsm-job-specification-term'),
+                    description: getText('div.awsm-job-entry-content.entry-content'),
                     url: window.location.href
                 };
             });
