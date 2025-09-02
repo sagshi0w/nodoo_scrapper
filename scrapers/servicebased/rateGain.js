@@ -40,7 +40,7 @@ class RateGainJobsScraper {
 
             // Collect new links
             const jobLinks = await this.page.$$eval(
-                'td.clickable.color-blue.custom-theme-color a',
+                'a.clickable.color-blue.custom-theme-color',
                 anchors => anchors.map(a => a.href)
             );
 
