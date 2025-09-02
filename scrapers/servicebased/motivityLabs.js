@@ -31,17 +31,15 @@ class MotivityLabsJobsScraper {
 
     async collectAllJobCardLinks() {
         this.allJobLinks = [];
-        let pageIndex = 1;
         const existingLinks = new Set();
 
         while (true) {
-            // Wait for job links to load
-            //await this.page.waitForSelector('div.op-job-apply-bt', { timeout: 10000 });
+            // Wait for job cards to appear
+            //await this.page.waitForSelector("a.awsm-job-item", { timeout: 10000 });
 
-            // Collect new links
-            const jobLinks = await this.page.$$eval(
-                'a.awsm-job-item',
-                anchors => anchors.map(a => a.href)
+            // Collect job links on current page
+            const jobLinks = await this.page.$$eval("a.awsm-job-item", anchors =>
+                anchors.map(a => a.href)
             );
 
             for (const link of jobLinks) {
@@ -53,37 +51,22 @@ class MotivityLabsJobsScraper {
 
             console.log(`📄 Collected ${this.allJobLinks.length} unique job links so far...`);
 
-            const pageNumbers = await this.page.$$eval('ul.pagination li a', links =>
-                links
-                    .map(a => ({
-                        text: a.textContent.trim(),
-                        href: a.getAttribute('href'),
-                    }))
-                    .filter(a => /^\d+$/.test(a.text)) // Only page numbers
-            );
+            // Check if "Next" page exists
+            const nextPageUrl = await this.page.$eval("a.next.page-numbers", a => a.href).catch(() => null);
 
-            // Try to click "See more results" button
-            // Check if "Show More Results" button exists and is visible
-            const nextPage = pageNumbers.find(p => Number(p.text) === pageIndex + 1);
-
-            if (!nextPage) {
-                console.log('✅ No more pages left. Done.');
+            if (!nextPageUrl) {
+                console.log("✅ No more pages found. Pagination finished.");
                 break;
             }
 
-            // Click the next page
-            console.log(`➡️ Clicking page ${pageIndex + 1}`);
-            await Promise.all([
-                //this.page.click(`ul.pagination li a[title="Page ${pageIndex + 1}"]`),
-                //this.page.waitForNavigation({ waitUntil: 'networkidle2' }),
-            ]);
-
-            pageIndex++;
-
+            // Go to next page
+            console.log(`➡️ Going to next page: ${nextPageUrl}`);
+            await this.page.goto(nextPageUrl, { waitUntil: "domcontentloaded", timeout: 60000 });
         }
 
-        return this.allJobLinks;;
+        return this.allJobLinks;
     }
+
 
 
     async extractJobDetailsFromLink(url) {
