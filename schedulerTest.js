@@ -78,6 +78,9 @@ import runPwCIndiaJobsScraper from "./scrapers/servicebased/PwCIndia.js"
 import runOracleJobsScraper from "./scrapers/productBased/oracle.js"
 import runTanlaJobsScraper from "./scrapers/servicebased/tanla.js"
 
+// 02.09.2025
+import runRateGainJobsScraper from "./scrapers/servicebased/rateGain.js"
+
 // Not working scrappers:
 import runTataMgJobsScraper from "./scrapers/productBased/tata1mg.js"
 import runGlobalLogicJobsScraper from "./scrapers/servicebased/GlobalLogic.js"
@@ -150,7 +153,7 @@ ${error.stack}`;
 };
 
 const scrapers = [
-    { fn: runTanlaJobsScraper, headless: true },
+    { fn: runRateGainJobsScraper, headless: true },
 ];
 
 const runAllScrapers = async () => {
