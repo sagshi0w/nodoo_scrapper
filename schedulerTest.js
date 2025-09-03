@@ -156,7 +156,7 @@ ${error.stack}`;
 };
 
 const scrapers = [
-    { fn: Accelya, headless: true },
+    // { fn: Accelya, headless: true },
 ];
 
 const runAllScrapers = async () => {
