@@ -81,6 +81,9 @@ import runTanlaJobsScraper from "./scrapers/servicebased/tanla.js"
 // 02.09.2025
 import MotivityLabs from "./scrapers/servicebased/motivityLabs.js"
 
+// 03.09.2025
+import Accelya from "./scrapers/servicebased/accelya.js"
+
 // Not working scrappers:
 import runTataMgJobsScraper from "./scrapers/productBased/tata1mg.js"
 import runGlobalLogicJobsScraper from "./scrapers/servicebased/GlobalLogic.js"
@@ -153,7 +156,7 @@ ${error.stack}`;
 };
 
 const scrapers = [
-    { fn: MotivityLabs, headless: true },
+    { fn: Accelya, headless: true },
 ];
 
 const runAllScrapers = async () => {
