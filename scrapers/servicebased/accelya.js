@@ -147,7 +147,6 @@ const extractWiproData = (job) => {
     let location = null;
 
     const expPatterns = [
-        /\b(\d{1,2})\s*\+\s*(?:years|yrs|yr)\b/i,
         /\bminimum\s*(\d{1,2})\s*(?:years|yrs|yr)\b/i,
         /\bmin(?:imum)?\s*(\d{1,2})\s*(?:years|yrs|yr)\b/i,
         /\b(\d{1,2})\s*(?:to|–|-|–)\s*(\d{1,2})\s*(?:years|yrs|yr)\b/i,
@@ -155,6 +154,7 @@ const extractWiproData = (job) => {
         /\b(\d{1,2})\s*(?:years|yrs|yr)\s+experience\b/i,
         /\bexperience\s*(?:of)?\s*(\d{1,2})\s*(?:years|yrs|yr)\b/i,
         /\bexperience\s*(?:required)?\s*[:\-]?\s*(\d{1,2})\s*(?:[-to]+)?\s*(\d{1,2})?\s*(?:years|yrs|yr)?/i,
+        /\b(\d{1,2})\s*\+\s*(?:years|yrs|yr)\b/i,
     ];
 
     // Step 1: Try job.experience field
