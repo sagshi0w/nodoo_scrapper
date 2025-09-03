@@ -81,7 +81,7 @@ class AccelyaJobsScraper {
                 return {
                     title: getText('h2[data-automation-id="jobPostingHeader"]'),
                     company: 'Accelya',
-                    location: getText('div[data-automation-id="locations"]'),
+                    location: getText('div[data-automation-id="locations"] dd'),
                     description: getText('div[data-automation-id="jobPostingDescription"]'),
                     url: window.location.href
                 };
