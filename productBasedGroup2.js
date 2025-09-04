@@ -21,6 +21,8 @@ import Google from "./scrapers/productBased/google.js";
 import Upstox from "./scrapers/productBased/upstox.js"
 import Locus from "./scrapers/productBased/Locus.js"
 
+import SoftTech from "./scrapers/servicebased/softTech.js"
+
 const config = {
   concurrency: 5,
   notification: {
@@ -94,6 +96,7 @@ const scrapers = [
 
   { fn: Upstox, headless: true },
   { fn: Locus, headless: true },
+  { fn: SoftTech, headless: true },
 ];
 
 const runAllScrapers = async () => {
