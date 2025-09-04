@@ -85,7 +85,7 @@ import MotivityLabs from "./scrapers/servicebased/motivityLabs.js"
 import Accelya from "./scrapers/servicebased/accelya.js"
 
 // 04.09.2025
-import  QuickHeal from "./scrapers/servicebased/quickHeal.js"
+import  SoftTech from "./scrapers/servicebased/softTech.js"
 
 // Not working scrappers:
 import runTataMgJobsScraper from "./scrapers/productBased/tata1mg.js"
@@ -159,7 +159,7 @@ ${error.stack}`;
 };
 
 const scrapers = [
-     { fn: QuickHeal, headless: true },
+     { fn: SoftTech, headless: true },
 ];
 
 const runAllScrapers = async () => {
