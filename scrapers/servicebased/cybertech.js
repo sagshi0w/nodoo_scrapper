@@ -34,9 +34,6 @@ class CyberTechJobsScraper {
         const existingLinks = new Set();
 
         while (true) {
-            // Wait for job cards to appear
-            //await this.page.waitForSelector("a.awsm-job-item", { timeout: 10000 });
-
             // Collect job links on current page
             const jobLinks = await this.page.$$eval("h5 > a", anchors =>
                 anchors.map(a => a.href)
@@ -51,18 +48,32 @@ class CyberTechJobsScraper {
 
             console.log(`📄 Collected ${this.allJobLinks.length} unique job links so far...`);
 
-            const loadMoreBtn = await this.page.$('#load_more_jobs');
-            if (!loadMoreBtn) {
+            // Check if "Load More" button exists (fresh query every loop)
+            const loadMoreExists = await this.page.$('#load_more_jobs');
+            if (!loadMoreExists) {
                 console.log("✅ No more pages found. Pagination finished.");
                 break;
             }
 
             console.log("➡️ Clicking Load More...");
-            await loadMoreBtn.click();
+            await this.page.click('#load_more_jobs');
+
+            // ⏳ Wait for new jobs to load
+            await this.page.waitForFunction(
+                (prevCount) => {
+                    return document.querySelectorAll("h5 > a").length > prevCount;
+                },
+                {},
+                jobLinks.length
+            );
+
+            // Optional: small delay to stabilize
+            await this.page.waitForTimeout(1000);
         }
 
         return this.allJobLinks;
     }
+
 
 
 
