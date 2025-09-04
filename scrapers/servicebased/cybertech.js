@@ -68,7 +68,7 @@ class CyberTechJobsScraper {
             );
 
             // Optional: small delay to stabilize
-            await this.page.waitForTimeout(1000);
+            await delay(5000);
         }
 
         return this.allJobLinks;
