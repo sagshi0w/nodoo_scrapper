@@ -84,6 +84,9 @@ import MotivityLabs from "./scrapers/servicebased/motivityLabs.js"
 // 03.09.2025
 import Accelya from "./scrapers/servicebased/accelya.js"
 
+// 04.09.2025
+import  QuickHeal from "./scrapers/servicebased/quickHeal.js"
+
 // Not working scrappers:
 import runTataMgJobsScraper from "./scrapers/productBased/tata1mg.js"
 import runGlobalLogicJobsScraper from "./scrapers/servicebased/GlobalLogic.js"
@@ -156,7 +159,7 @@ ${error.stack}`;
 };
 
 const scrapers = [
-    // { fn: Accelya, headless: true },
+     { fn: QuickHeal, headless: true },
 ];
 
 const runAllScrapers = async () => {
