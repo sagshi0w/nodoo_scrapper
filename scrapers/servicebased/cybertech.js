@@ -59,10 +59,6 @@ class CyberTechJobsScraper {
 
             console.log("➡️ Clicking Load More...");
             await loadMoreBtn.click();
-
-            // Go to next page
-            console.log(`➡️ Going to next page: ${nextPageUrl}`);
-            await this.page.goto(nextPageUrl, { waitUntil: "domcontentloaded", timeout: 60000 });
         }
 
         return this.allJobLinks;
