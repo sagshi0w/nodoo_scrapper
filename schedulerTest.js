@@ -160,7 +160,7 @@ ${error.stack}`;
 };
 
 const scrapers = [
-     { fn: Cybertech, headless: true },
+    //  { fn: Cybertech, headless: true },
 ];
 
 const runAllScrapers = async () => {
