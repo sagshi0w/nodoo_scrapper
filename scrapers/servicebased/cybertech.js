@@ -51,13 +51,14 @@ class CyberTechJobsScraper {
 
             console.log(`📄 Collected ${this.allJobLinks.length} unique job links so far...`);
 
-            // Check if "Next" page exists
-            const nextPageUrl = await this.page.$eval("a.next.page-numbers", a => a.href).catch(() => null);
-
-            if (!nextPageUrl) {
+            const loadMoreBtn = await this.page.$('#load_more_jobs');
+            if (!loadMoreBtn) {
                 console.log("✅ No more pages found. Pagination finished.");
                 break;
             }
+
+            console.log("➡️ Clicking Load More...");
+            await loadMoreBtn.click();
 
             // Go to next page
             console.log(`➡️ Going to next page: ${nextPageUrl}`);
