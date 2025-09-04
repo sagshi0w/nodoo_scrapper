@@ -49,11 +49,11 @@ class CyberTechJobsScraper {
             console.log(`📄 Collected ${this.allJobLinks.length} unique job links so far...`);
 
             // Check if "Load More" button exists (fresh query every loop)
-            // const loadMoreExists = await this.page.$('#load_more_jobs');
-            // if (!loadMoreExists) {
-            //     console.log("✅ No more pages found. Pagination finished.");
-            //     break;
-            // }
+            const loadMoreExists = await this.page.$('#load_more_jobs2');
+            if (!loadMoreExists) {
+                console.log("✅ No more pages found. Pagination finished.");
+                break;
+            }
 
             // console.log("➡️ Clicking Load More...");
             // await this.page.click('#load_more_jobs');
