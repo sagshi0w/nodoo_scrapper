@@ -59,16 +59,16 @@ class CyberTechJobsScraper {
             await this.page.click('#load_more_jobs');
 
             // ⏳ Wait for new jobs to load
-            await this.page.waitForFunction(
-                (prevCount) => {
-                    return document.querySelectorAll("h5 > a").length > prevCount;
-                },
-                {},
-                jobLinks.length
-            );
+            // await this.page.waitForFunction(
+            //     (prevCount) => {
+            //         return document.querySelectorAll("h5 > a").length > prevCount;
+            //     },
+            //     {},
+            //     jobLinks.length
+            // );
 
-            // Optional: small delay to stabilize
-            await delay(5000);
+            // // Optional: small delay to stabilize
+            // await delay(5000);
         }
 
         return this.allJobLinks;
