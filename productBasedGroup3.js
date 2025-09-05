@@ -18,6 +18,8 @@ import Groww from "./scrapers/productBased/groww.js";
 import Paypal from "./scrapers/productBased/paypal.js";
 import Phonepe from "./scrapers/productBased/phonepe.js";
 
+import  VirtualGalaxy from "./scrapers/servicebased/virtualGalaxy.js"
+
 const config = {
   concurrency: 5,
   notification: {
@@ -88,6 +90,7 @@ const scrapers = [
   { fn: Groww, headless: true },
   { fn: Phonepe, headless: true },
   { fn: Paypal, headless: true },
+  { fn: VirtualGalaxy, headless: true },
 ];
 
 const runAllScrapers = async () => {
