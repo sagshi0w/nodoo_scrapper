@@ -35,7 +35,7 @@ class VirtualGalaxyJobsScraper {
 
         while (true) {
             // Collect job links on current page
-            const jobLinks = await this.page.$$eval("a[href^="/careers/"]", anchors =>
+            const jobLinks = await this.page.$$eval('a[href^="/careers/"]', anchors =>
                 anchors.map(a => a.href)
             );
 
