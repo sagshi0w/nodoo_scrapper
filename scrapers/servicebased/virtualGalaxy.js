@@ -106,7 +106,8 @@ class VirtualGalaxyJobsScraper {
                     title: getText('h1.text-xl.font-black span.text-primary-red'),
                     company: 'Virtual Galaxy',
                     location: location,
-                    description: experience,
+                    experience: experience,
+                    description: getText('div.mt-10 > h3.font-extrabold:contains("Job Description") + p'),
                     url: window.location.href
                 };
             });
