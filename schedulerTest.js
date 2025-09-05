@@ -88,6 +88,9 @@ import Accelya from "./scrapers/servicebased/accelya.js"
 import  SoftTech from "./scrapers/servicebased/softTech.js"
 import  Cybertech from "./scrapers/servicebased/cybertech.js"
 
+// 05.09.2025
+import  VirtualGalaxy from "./scrapers/servicebased/virtualGalaxy.js"
+
 // Not working scrappers:
 import runTataMgJobsScraper from "./scrapers/productBased/tata1mg.js"
 import runGlobalLogicJobsScraper from "./scrapers/servicebased/GlobalLogic.js"
@@ -160,7 +163,7 @@ ${error.stack}`;
 };
 
 const scrapers = [
-    //  { fn: Cybertech, headless: true },
+      { fn: VirtualGalaxy, headless: true },
 ];
 
 const runAllScrapers = async () => {
