@@ -85,7 +85,7 @@ class VirtualGalaxyJobsScraper {
             //await jobPage.waitForSelector('div.job__description.body', { timeout: 10000 });
 
             const job = await jobPage.evaluate(() => {
-                const getText = sel => document.querySelector(sel)?.innerText.trim() || '';
+                const getText = (sel) => document.querySelector(sel)?.innerText.trim() || '';
 
                 const gridItems = document.querySelectorAll('div.grid > div');
 
@@ -102,15 +102,28 @@ class VirtualGalaxyJobsScraper {
                         experience = value;
                     }
                 });
+
+                // ✅ Fix for Job Description
+                let description = '';
+                const sections = document.querySelectorAll('div.mt-10');
+                sections.forEach(section => {
+                    const heading = section.querySelector('h3.font-extrabold');
+                    if (heading && heading.textContent.trim().toLowerCase() === 'job description') {
+                        const para = section.querySelector('p');
+                        if (para) description = para.innerText.trim();
+                    }
+                });
+
                 return {
                     title: getText('h1.text-xl.font-black span.text-primary-red'),
                     company: 'Virtual Galaxy',
-                    location: location,
-                    experience: experience,
-                    description: getText('div.mt-10 > h3.font-extrabold:contains("Job Description") + p'),
-                    url: window.location.href
+                    location,
+                    experience,
+                    description,
+                    url: window.location.href,
                 };
             });
+
 
             console.log("Before enriching job=", job);
 
