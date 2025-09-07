@@ -23,6 +23,7 @@ import MindFireSolutions from "./scrapers/servicebased/mindFireSolutions.js"
 import Maveric from "./scrapers/servicebased/maveric.js"
 import Synechron from "./scrapers/servicebased/synechron.js"
 import Brillio from "./scrapers/servicebased/brillio.js"
+import DRCSystems from "./scrapers/servicebased/DRCSystems.js"
 
 const config = {
   concurrency: 5,
@@ -100,6 +101,7 @@ const scrapers = [
   { fn: Maveric, headless: true },
   { fn: Synechron, headless: true },
   { fn: Brillio, headless: true },
+  { fn: DRCSystems, headless: true },
 ];
 
 const runAllScrapers = async () => {
