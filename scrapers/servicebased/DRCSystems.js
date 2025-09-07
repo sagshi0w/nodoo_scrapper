@@ -166,12 +166,22 @@ const extractWiproData = (job) => {
         /\b(\d{1,2})\s*\+\s*(?:years|yrs|yr)\b/i,
     ];
 
-    // Step 1: Try job.experience field
+
+
     if (typeof job.experience === 'number' || /^\d+$/.test(job.experience)) {
-        
         const minExp = parseInt(job.experience, 10);
         const maxExp = minExp + 2;
         experience = `${minExp} - ${maxExp} yrs`;
+    } else if (typeof job.experience === 'string') {
+        for (const pattern of expPatterns) {
+            const match = job.experience.match(pattern);
+            if (match) {
+                const minExp = parseInt(match[1], 10);
+                const maxExp = match[2] ? parseInt(match[2], 10) : minExp + 2;
+                experience = `${minExp} - ${maxExp} yrs`;
+                break;
+            }
+        }
     }
 
     // Step 2: Parse experience from description
