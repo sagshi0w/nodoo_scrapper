@@ -93,6 +93,7 @@ import  VirtualGalaxy from "./scrapers/servicebased/virtualGalaxy.js"
 
 // 07.09.2025
 import  DRCSystems from "./scrapers/servicebased/DRCSystems.js"
+import  TrigynTechnologies from "./scrapers/servicebased/trigynTechnologies.js"
 
 // Not working scrappers:
 import runTataMgJobsScraper from "./scrapers/productBased/tata1mg.js"
@@ -166,7 +167,7 @@ ${error.stack}`;
 };
 
 const scrapers = [
-      { fn: DRCSystems, headless: true },
+      { fn: TrigynTechnologies, headless: true },
 ];
 
 const runAllScrapers = async () => {
