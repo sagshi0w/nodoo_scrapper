@@ -168,6 +168,7 @@ const extractWiproData = (job) => {
 
     // Step 1: Try job.experience field
     if (typeof job.experience === 'number' || /^\d+$/.test(job.experience)) {
+        console.log("job.exp=",job.experience);
         const minExp = parseInt(job.experience, 10);
         const maxExp = minExp + 2;
         experience = `${minExp} - ${maxExp} yrs`;
