@@ -207,13 +207,14 @@ const extractWiproData = (job) => {
     // Step 3: Clean description
     if (cleanedDescription) {
         cleanedDescription = cleanedDescription
-            // Remove "About RS Software" and "Why RS Software?" sections with their content
+            // Remove "About RS Software" section
             .replace(
-                /(About\s+RS\s+Software[\s\S]*?)(?=\n{2,}[A-Z][^\n]*|\n{2,}$)/gi,
+                /About\s+RS\s+Software[\s\S]*?(?=(?:\n{2,}[A-Z][^\n]*|$))/gi,
                 ''
             )
+            // Remove "Why RS Software?" section
             .replace(
-                /(Why\s+RS\s+Software\??[\s\S]*?)(?=\n{2,}[A-Z][^\n]*|\n{2,}$)/gi,
+                /Why\s+RS\s+Software\??[\s\S]*?(?=(?:\n{2,}[A-Z][^\n]*|$))/gi,
                 ''
             )
             // Remove unwanted headers/sections
