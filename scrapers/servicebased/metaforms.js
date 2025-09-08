@@ -96,6 +96,7 @@ class MetaformsJobsScraper {
                     company: 'Metaforms',
                     location: getText('div[role="row"][aria-labelledby=":r5:"] div[role="cell"] div[data-block-id] span'),
                     description: getText('div.notion-page-content'),
+                    experience: getText('div[role="row"][aria-labelledby=":r7:"] div[role="cell"] div[data-block-id] span'),
                     url: window.location.href
                 };
             });
