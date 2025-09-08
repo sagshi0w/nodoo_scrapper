@@ -119,10 +119,15 @@ class MetaformsJobsScraper {
             console.log(`📝 [${i + 1}/${this.allJobLinks.length}] Processing: ${url}`);
             const jobData = await this.extractJobDetailsFromLink(url);
             if (jobData && jobData.title) {
-                const enrichedJob = extractWiproData(jobData);
-                console.log("After enriching job=", enrichedJob);
-                this.allJobs.push(enrichedJob);
-                console.log(`✅ ${jobData.title}`);
+                // Ignore jobs with title "Open Roles"
+                if (jobData.title.toLowerCase() === "open roles") {
+                    console.log(`⛔ Skipping ${jobData.title}`);
+                } else {
+                    const enrichedJob = extractWiproData(jobData);
+                    console.log("After enriching job=", enrichedJob);
+                    this.allJobs.push(enrichedJob);
+                    console.log(`✅ ${jobData.title}`);
+                }
             }
             await delay(1000);
         }
@@ -184,10 +189,7 @@ const extractWiproData = (job) => {
             )
 
             // Remove unwanted headers/sections
-            .replace(
-                /(Current Openings|Job Summary|About\s+RateGain)[\s\S]*?(?:Apply\.?\s*)?(?=\n{2,}|$)/gi,
-                ''
-            )
+            .replace(/Job Summary\s*/gi, '')
 
             // Remove application form
             .replace(
