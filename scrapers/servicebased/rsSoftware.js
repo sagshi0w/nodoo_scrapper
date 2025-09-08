@@ -212,16 +212,25 @@ const extractWiproData = (job) => {
                 /About\s+RS\s+Software[\s\S]*?(?=(?:\n{2,}[A-Z][^\n]*|$))/gi,
                 ''
             )
+
             // Remove "Why RS Software?" section
             .replace(
                 /Why\s+RS\s+Software\??[\s\S]*?(?=(?:\n{2,}[A-Z][^\n]*|$))/gi,
                 ''
             )
+
             // Remove unwanted headers/sections
             .replace(
                 /(Current Openings|Job Summary|About\s+RateGain)[\s\S]*?(?:Apply\.?\s*)?(?=\n{2,}|$)/gi,
                 ''
             )
+
+            // Remove application form
+            .replace(
+                /Apply for this position[\s\S]*?(?:Allowed Type\(s\):.*?\n|By using this form[\s\S]*?\n)/gi,
+                ''
+            )
+
             // Remove "Job Description" phrase (case-insensitive)
             .replace(/\bJob\s+Description\b[:\-]?\s*/gi, '')
             // Add spacing for numbered lists

@@ -835,7 +835,7 @@ export default function extractSkillsAndExperience(job) {
         "Hubli", "Dharwad", "Nellore", "Thane", "Panaji", "Shimla", "Mangalore", "Bareilly", "Salem",
         "Aligarh", "Bhavnagar", "Kolhapur", "Ajmer", "Belgaum", "Tirupati", "Rourkela", "Bilaspur",
         "Anantapur", "Silchar", "Kochi", "Thiruvananthapuram", "Bhubaneswar", "Imphal", "Shillong",
-        "Aizawl", "Itanagar", "Kohima", "Gangtok", "Patiala", "Jammu", "Shimoga", "Muzaffarpur","Gandhinagar"
+        "Aizawl", "Itanagar", "Kohima", "Gangtok", "Patiala", "Jammu", "Shimoga", "Muzaffarpur", "Gandhinagar"
     ];
 
     const sectorKeywords = {
@@ -1338,6 +1338,8 @@ export default function extractSkillsAndExperience(job) {
     */
     function extractExperience(desc, job = {}) {
         if (!desc) return "Not specified";
+
+        if (job.experience) return;
 
         // If job object already has experience string, return it
         if (job.experience && typeof job.experience === "string" && job.experience.trim() !== "") {
