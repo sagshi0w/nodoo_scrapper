@@ -167,7 +167,8 @@ const extractWiproData = (job) => {
                 ''
             )
 
-            .replace(/^.*built over 30 years.*\n/gi, '')
+            // Remove any line containing "built over 30 years"
+            .replace(/^\s*.*built over 30 years.*\s*$/gim, '')
 
             // Remove "Why RS Software?" section
             .replace(
