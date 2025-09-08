@@ -158,53 +158,7 @@ const extractWiproData = (job) => {
     let experience = job.experience || '';
     let location = null;
 
-    const expPatterns = [
-        /\bminimum\s*(\d{1,2})\s*(?:years|yrs|yr)\b/i,
-        /\bmin(?:imum)?\s*(\d{1,2})\s*(?:years|yrs|yr)\b/i,
-        /\b(\d{1,2})\s*(?:to|–|-|–)\s*(\d{1,2})\s*(?:years|yrs|yr)\b/i,
-        /\b(?:at least|over)\s*(\d{1,2})\s*(?:years|yrs|yr)\b/i,
-        /\b(\d{1,2})\s*(?:years|yrs|yr)\s+experience\b/i,
-        /\bexperience\s*(?:of)?\s*(\d{1,2})\s*(?:years|yrs|yr)\b/i,
-        /\bexperience\s*(?:required)?\s*[:\-]?\s*(\d{1,2})\s*(?:[-to]+)?\s*(\d{1,2})?\s*(?:years|yrs|yr)?/i,
-        /\b(\d{1,2})\s*\+\s*(?:years|yrs|yr)\b/i,
-    ];
-
-    if (typeof job.experience === 'number' || /^\d+$/.test(job.experience)) {
-        const minExp = parseInt(job.experience, 10);
-        const maxExp = minExp + 2;
-        experience = `${minExp} - ${maxExp} yrs`;
-    } else if (typeof job.experience === 'string') {
-        for (const pattern of expPatterns) {
-            const match = job.experience.match(pattern);
-            if (match) {
-                const minExp = parseInt(match[1], 10);
-                const maxExp = match[2] ? parseInt(match[2], 10) : minExp + 2;
-                experience = `${minExp} - ${maxExp} yrs`;
-                break;
-            }
-        }
-    }
-
-    // Step 2: Parse experience from description
-    if (!experience && cleanedDescription) {
-        for (const pattern of expPatterns) {
-            const match = cleanedDescription.match(pattern);
-            if (match) {
-                const min = match[1];
-                const max = match[2];
-
-                if (min && max) {
-                    experience = `${min} - ${max} yrs`;
-                } else if (min && !max) {
-                    const estMax = parseInt(min) + 2;
-                    experience = `${min} - ${estMax} yrs`;
-                }
-                break;
-            }
-        }
-    }
-
-    // Step 3: Clean description
+    // Step 1: Clean description
     if (cleanedDescription) {
         cleanedDescription = cleanedDescription
             // Remove "About RS Software" section
@@ -212,6 +166,8 @@ const extractWiproData = (job) => {
                 /About\s+RS\s+Software[\s\S]*?(?=(?:\n{2,}[A-Z][^\n]*|$))/gi,
                 ''
             )
+
+            .replace(/^.*built over 30 years.*\n/gi, '')
 
             // Remove "Why RS Software?" section
             .replace(
@@ -258,6 +214,53 @@ const extractWiproData = (job) => {
         cleanedDescription = 'Description not available\n';
     }
 
+    const expPatterns = [
+        /\bminimum\s*(\d{1,2})\s*(?:years|yrs|yr)\b/i,
+        /\bmin(?:imum)?\s*(\d{1,2})\s*(?:years|yrs|yr)\b/i,
+        /\b(\d{1,2})\s*(?:to|–|-|–)\s*(\d{1,2})\s*(?:years|yrs|yr)\b/i,
+        /\b(?:at least|over)\s*(\d{1,2})\s*(?:years|yrs|yr)\b/i,
+        /\b(\d{1,2})\s*(?:years|yrs|yr)\s+experience\b/i,
+        /\bexperience\s*(?:of)?\s*(\d{1,2})\s*(?:years|yrs|yr)\b/i,
+        /\bexperience\s*(?:required)?\s*[:\-]?\s*(\d{1,2})\s*(?:[-to]+)?\s*(\d{1,2})?\s*(?:years|yrs|yr)?/i,
+        /\b(\d{1,2})\s*\+\s*(?:years|yrs|yr)\b/i,
+    ];
+
+    if (typeof job.experience === 'number' || /^\d+$/.test(job.experience)) {
+        const minExp = parseInt(job.experience, 10);
+        const maxExp = minExp + 2;
+        experience = `${minExp} - ${maxExp} yrs`;
+    } else if (typeof job.experience === 'string') {
+        for (const pattern of expPatterns) {
+            const match = job.experience.match(pattern);
+            if (match) {
+                const minExp = parseInt(match[1], 10);
+                const maxExp = match[2] ? parseInt(match[2], 10) : minExp + 2;
+                experience = `${minExp} - ${maxExp} yrs`;
+                break;
+            }
+        }
+    }
+
+    // Step 2: Parse experience from description
+    if (!experience && cleanedDescription) {
+        for (const pattern of expPatterns) {
+            const match = cleanedDescription.match(pattern);
+            if (match) {
+                const min = match[1];
+                const max = match[2];
+
+                if (min && max) {
+                    experience = `${min} - ${max} yrs`;
+                } else if (min && !max) {
+                    const estMax = parseInt(min) + 2;
+                    experience = `${min} - ${estMax} yrs`;
+                }
+                break;
+            }
+        }
+    }
+
+
     if (job.title && cleanedDescription.startsWith(job.title)) {
         const match = cleanedDescription.match(/Primary Skills\s*[:\-–]?\s*/i);
         if (match) {
@@ -268,7 +271,7 @@ const extractWiproData = (job) => {
         }
     }
 
-    // Step 4: Extract city from location string
+    // Step 3: Extract city from location string
     if (job.location) {
         const cityMatch = job.location.match(/^([^,\n]+)/);
         if (cityMatch) {
