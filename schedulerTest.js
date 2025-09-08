@@ -97,6 +97,7 @@ import  TrigynTechnologies from "./scrapers/servicebased/trigynTechnologies.js"
 
 // 08.09.2025
 import  RSSoftware from "./scrapers/servicebased/rsSoftware.js"
+import  SarvamAI from "./scrapers/servicebased/sarvam-ai.js"
 
 // Not working scrappers:
 import runTataMgJobsScraper from "./scrapers/productBased/tata1mg.js"
@@ -170,7 +171,7 @@ ${error.stack}`;
 };
 
 const scrapers = [
-      { fn: RSSoftware, headless: true },
+      { fn: SarvamAI, headless: true },
 ];
 
 const runAllScrapers = async () => {
