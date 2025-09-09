@@ -102,7 +102,7 @@ class AtomicworkJobsScraper {
                             paragraphs.push(child.innerText.trim());
                         }
                     }
-                    description = paragraphs.join('\n\n');z
+                    description = paragraphs.join('\n\n');
                 }
 
                 return {
