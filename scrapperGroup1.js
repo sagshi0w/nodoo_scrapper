@@ -19,6 +19,7 @@ import SarvamAI from "./scrapers/servicebased/sarvam-ai.js"
 import MetaForms from "./scrapers/servicebased/metaforms.js"
 import Atomicwork from "./scrapers/servicebased/atomicwork.js"
 import TrueFoundary from "./scrapers/servicebased/trueFoundary.js"
+import Repello from "./scrapers/servicebased/repelloAI.js"
 
 const config = {
     concurrency: 5,
@@ -92,6 +93,7 @@ const scrapers = [
     { fn: MetaForms, headless: true },
     { fn: Atomicwork, headless: true },
     { fn: TrueFoundary, headless: true },
+    { fn: Repello, headless: true },
 ];
 
 const runAllScrapers = async () => {
