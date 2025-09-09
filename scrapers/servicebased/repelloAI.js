@@ -180,6 +180,8 @@ const extractWiproData = (job) => {
                 ''
             )
 
+            .replace(/📍What You'll Be Doing & Your Impact:\s*/gi, '')
+
             .replace(
                 /About\s+TrueFoundry:[\s\S]*?(?=Role summary\b)/gi,
                 ''
