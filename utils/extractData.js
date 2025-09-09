@@ -97,7 +97,6 @@ export default function extractSkillsAndExperience(job) {
         , 'Linux'
         , 'Shell Scripting'
         , 'Python'
-        , 'Go'
         , 'CI/CD Pipelines'
         , 'Jenkins'
         , 'GitHub Actions'
@@ -819,8 +818,6 @@ export default function extractSkillsAndExperience(job) {
         , 'SurveyMonkey'
         , 'Typeform'
         , 'Loom (for Customer Tutorials)'
-
-
         , 'G-Suite'
     ];
 
