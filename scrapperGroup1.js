@@ -17,6 +17,7 @@ const nodemailer = require('nodemailer');
 import RSSoftware from "./scrapers/servicebased/rsSoftware.js"
 import SarvamAI from "./scrapers/servicebased/sarvam-ai.js"
 import MetaForms from "./scrapers/servicebased/metaforms.js"
+import Atomicwork from "./scrapers/servicebased/atomicwork.js"
 
 const config = {
     concurrency: 5,
@@ -88,6 +89,7 @@ const scrapers = [
     { fn: RSSoftware, headless: true },
     { fn: SarvamAI, headless: true },
     { fn: MetaForms, headless: true },
+    { fn: Atomicwork, headless: true },
 ];
 
 const runAllScrapers = async () => {
