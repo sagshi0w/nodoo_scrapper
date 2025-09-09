@@ -100,6 +100,9 @@ import  RSSoftware from "./scrapers/servicebased/rsSoftware.js"
 import  SarvamAI from "./scrapers/servicebased/sarvam-ai.js"
 import  MetaForms from "./scrapers/servicebased/metaforms.js"
 
+// 09.09.2025
+import  Atomicwork from "./scrapers/servicebased/atomicwork.js"
+
 // Not working scrappers:
 import runTataMgJobsScraper from "./scrapers/productBased/tata1mg.js"
 import runGlobalLogicJobsScraper from "./scrapers/servicebased/GlobalLogic.js"
@@ -172,7 +175,7 @@ ${error.stack}`;
 };
 
 const scrapers = [
-      { fn: MetaForms, headless: true },
+      { fn: Atomicwork, headless: true },
 ];
 
 const runAllScrapers = async () => {
