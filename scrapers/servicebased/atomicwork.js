@@ -91,25 +91,11 @@ class AtomicworkJobsScraper {
                 let rawTitle = getText('h2.heading_h2.u-white1-txt');
                 let title = rawTitle.trim();
 
-                // Extract and clean job description (only intro paragraphs before first <h3>)
-                const descriptionContainer = document.querySelector('div.blog-rich-text.w-richtext');
-                let description = '';
-                if (descriptionContainer) {
-                    const paragraphs = [];
-                    for (const child of descriptionContainer.children) {
-                        if (child.tagName.toLowerCase() === 'h3') break;
-                        if (child.tagName.toLowerCase() === 'p') {
-                            paragraphs.push(child.innerText.trim());
-                        }
-                    }
-                    description = paragraphs.join('\n\n');
-                }
-
                 return {
                     title,
                     company: 'Atomicwork',
                     location: getText('div.loation_txt'),
-                    description,
+                    description: getText('div.blog-rich-text.w-richtext'),
                     url: window.location.href
                 };
             });
