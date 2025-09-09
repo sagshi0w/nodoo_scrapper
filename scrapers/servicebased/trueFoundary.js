@@ -172,8 +172,9 @@ const extractWiproData = (job) => {
                 /About\s+RS\s+Software[\s\S]*?(?=(?:\n{2,}[A-Z][^\n]*|$))/gi,
                 ''
             )
+
             .replace(
-                /About\s+TrueFoundry:[\s\S]*?(?=\n{2,}Role summary\b)/gi,
+                /About\s+TrueFoundry:[\s\S]*?(?=Role summary\b)/gi,
                 ''
             )
 
