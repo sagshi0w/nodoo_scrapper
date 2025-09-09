@@ -173,6 +173,11 @@ const extractWiproData = (job) => {
                 ''
             )
 
+        replace(
+            /About Repello AI[\s\S]*?(?=Why This Role Matters)/gi,
+            ''
+        )
+
             .replace(/Location:[\s\S]*?(?=What You'll Be Doing & Your Impact:)/gi, '')
 
             .replace(
