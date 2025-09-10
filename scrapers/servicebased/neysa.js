@@ -167,15 +167,18 @@ const extractWiproData = (job) => {
     if (cleanedDescription) {
         // Extract location value
         const locationMatch = cleanedDescription.match(/Location:\s*(.*)/i);
-        location = locationMatch ? locationMatch[1].trim() : 'India';
+        const location = locationMatch ? locationMatch[1].trim() : 'India';
 
         cleanedDescription = cleanedDescription
             // Remove "Job Title:", "Location:", "Type:", "About Neysa:", and "Position Overview:"
             .replace(/Job\s+Title:\s*.*\n?/gi, '')
             .replace(/Location:\s*.*\n?/gi, '')
             .replace(/Type:\s*.*\n?/gi, '')
-            .replace(/About Neysa:[\s\S]*?Position Overview:/gi, '') // Removes the full "About Neysa" section up to "Position Overview:"
+            .replace(/About Neysa:[\s\S]*?Position Overview:/gi, '')  // Removes "About Neysa" section up to "Position Overview:"
             .replace(/Position Overview:\s*/gi, '')
+
+            // Remove "Job\nExperience:About Neysa:" block and long company info paragraph
+            .replace(/Job\s*\n\s*Experience:\s*About\s+Neysa:[\s\S]*?\.\s+/gi, '')
 
             // Add spacing for numbered lists
             .replace(/(\n\s*)(\d+\.\s+)(.*?)(\n)/gi, '\n\n$1$2$3$4\n\n')
@@ -205,12 +208,12 @@ const extractWiproData = (job) => {
             cleanedDescription = 'Description not available\n';
         }
 
-        // Now we can store or return the location along with cleanedDescription
         console.log('Location:', location);
     } else {
         cleanedDescription = 'Description not available\n';
         console.log('Location:', 'Location not available');
     }
+
 
 
     const expPatterns = [
