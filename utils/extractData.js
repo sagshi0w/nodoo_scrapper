@@ -1469,9 +1469,8 @@ export default function extractSkillsAndExperience(job) {
 
         // Normalize known aliases before matching
         let lowerLoc = location.toLowerCase();
-        if (lowerLoc.includes("bengaluru") || lowerLoc.includes("bangaluru")) {
-            lowerLoc = lowerLoc.replace(/bengaluru|bangaluru/g, "Bangalore");
-        }
+        lowerLoc = lowerLoc.replace(/bengaluru|bangaluru/g, "Bangalore");
+        lowerLoc = lowerLoc.replace(/gurugram/g, "Gurgaon");
 
         for (const city of knownCities) {
             if (lowerLoc.includes(city.toLowerCase())) {
@@ -1481,6 +1480,7 @@ export default function extractSkillsAndExperience(job) {
 
         return "India";
     };
+
 
 
     function isEntryLevelJob(title, experience) {
