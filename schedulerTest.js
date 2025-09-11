@@ -105,6 +105,7 @@ import  Atomicwork from "./scrapers/servicebased/atomicwork.js"
 import  TrueFoundary from "./scrapers/servicebased/trueFoundary.js"
 import  Repello from "./scrapers/servicebased/repelloAI.js"
 import  Neysa from "./scrapers/servicebased/neysa.js"
+import  Realfast from "./scrapers/servicebased/realfast.js"
 
 // Not working scrappers:
 import runTataMgJobsScraper from "./scrapers/productBased/tata1mg.js"
@@ -178,7 +179,7 @@ ${error.stack}`;
 };
 
 const scrapers = [
-      { fn: Neysa, headless: true },
+      { fn: Realfast, headless: true },
 ];
 
 const runAllScrapers = async () => {
