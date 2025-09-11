@@ -21,6 +21,7 @@ import Atomicwork from "./scrapers/servicebased/atomicwork.js"
 import TrueFoundary from "./scrapers/servicebased/trueFoundary.js"
 import Repello from "./scrapers/servicebased/repelloAI.js"
 import Neysa from "./scrapers/servicebased/neysa.js"
+import Realfast from "./scrapers/servicebased/realfast.js"
 
 const config = {
     concurrency: 5,
@@ -96,6 +97,7 @@ const scrapers = [
     { fn: TrueFoundary, headless: true },
     { fn: Repello, headless: true },
     { fn: Neysa, headless: true },
+    { fn: Realfast, headless: true },
 ];
 
 const runAllScrapers = async () => {

@@ -2,7 +2,7 @@ name: Scrapper Group 1
 
 on:
   schedule:
-    - cron: "30 22 * * *"  # Runs at 04:00 AM IST
+    - cron: "30 0 * * *"  # Runs at 06:00 AM IST
   workflow_dispatch: # Manual trigger option
 
 jobs:
