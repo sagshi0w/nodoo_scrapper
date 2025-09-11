@@ -180,7 +180,7 @@ ${error.stack}`;
 };
 
 const scrapers = [
-      { fn: Spyne, headless: true },
+    //   { fn: Spyne, headless: true },
 ];
 
 const runAllScrapers = async () => {
