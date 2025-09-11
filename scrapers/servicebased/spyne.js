@@ -170,37 +170,23 @@ const extractWiproData = (job) => {
         const location = locationMatch ? locationMatch[1].trim() : 'India';
 
         cleanedDescription = cleanedDescription
-            // Remove "Job Title:", "Location:", "Type:", "About Neysa:", and "Position Overview:"
-            // Remove exact "Job Description" word followed by newline
             .replace(/Job Description\s*\n/gi, '')
             .replace(/Job\s+Title:\s*.*\n?/gi, '')
             .replace(/Location:\s*.*\n?/gi, '')
             .replace(/Type:\s*.*\n?/gi, '')
-            .replace(/About Neysa:[\s\S]*?Position Overview:/gi, '')  // Removes "About Neysa" section up to "Position Overview:"
+            .replace(/About Neysa:[\s\S]*?Position Overview:/gi, '')
             .replace(/Position Overview:\s*/gi, '')
-
-
-            // Remove "Job\nExperience:About Neysa:" block and long company info paragraph
             .replace(/Job\s*\n\s*Experience:\s*About\s+Neysa:[\s\S]*?\.\s+/gi, '')
 
-            // Add spacing for numbered lists
-            .replace(/(\n\s*)(\d+\.\s+)(.*?)(\n)/gi, '\n\n$1$2$3$4\n\n')
+            // Remove the "Who are we?" block up to "About the Role"
+            .replace(/Who are we\?[\s\S]*?About the Role/gi, '')
 
-            // Add spacing for bullets
-            .replace(/(\n\s*)([•\-]\s+)(.*?)(\n)/gi, '\n\n$1$2$3$4\n\n')
-
-            // Fix spacing after punctuation
+            .replace(/(\n\s*)(\d+\.\s+)(.*?)(\n)/gi, '\n\n$1$2$3$4')
+            .replace(/(\n\s*)([•\-]\s+)(.*?)(\n)/gi, '\n\n$1$2$3$4')
             .replace(/([.!?])\s+/g, '$1  ')
-
-            // Trim trailing spaces/tabs
             .replace(/[ \t]+$/gm, '')
-
-            // Limit multiple newlines
             .replace(/\n{3,}/g, '\n\n')
-
-            // Ensure spacing between lines
             .replace(/(\S)\n(\S)/g, '$1\n\n$2')
-
             .trim();
 
         if (cleanedDescription && !cleanedDescription.endsWith('\n')) {
@@ -216,6 +202,7 @@ const extractWiproData = (job) => {
         cleanedDescription = 'Description not available\n';
         console.log('Location:', 'Location not available');
     }
+
 
 
 
