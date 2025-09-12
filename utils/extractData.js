@@ -832,8 +832,7 @@ export default function extractSkillsAndExperience(job) {
         "Hubli", "Dharwad", "Nellore", "Thane", "Panaji", "Shimla", "Mangalore", "Bareilly", "Salem",
         "Aligarh", "Bhavnagar", "Kolhapur", "Ajmer", "Belgaum", "Tirupati", "Rourkela", "Bilaspur",
         "Anantapur", "Silchar", "Kochi", "Thiruvananthapuram", "Bhubaneswar", "Imphal", "Shillong",
-        "Aizawl", "Itanagar", "Kohima", "Gangtok", "Patiala", "Jammu", "Shimoga", "Muzaffarpur", "Gandhinagar",
-        "Gurugram"
+        "Aizawl", "Itanagar", "Kohima", "Gangtok", "Patiala", "Jammu", "Shimoga", "Muzaffarpur", "Gandhinagar"
     ];
 
     const sectorKeywords = {
