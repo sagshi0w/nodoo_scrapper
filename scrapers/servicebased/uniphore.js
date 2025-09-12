@@ -166,7 +166,7 @@ const extractWiproData = (job) => {
     // Step 1: Clean description
     if (cleanedDescription) {
         // Extract location value
-        const locationMatch = cleanedDescription.match(/Location preference:\s*(.*)/i);
+        const locationMatch = cleanedDescription.match(/Location preference:\s*\n\s*([^\n]+)/i);
         const location = locationMatch ? locationMatch[1].trim() : 'India';
 
         cleanedDescription = cleanedDescription
@@ -278,7 +278,7 @@ const extractWiproData = (job) => {
 
     // Step 3: Extract city from location string
     if (job.location || location) {
-        const cityMatch = job.location.match(/\|\s*(.+)$/);
+        const cityMatch = location.match(/\|\s*(.+)$/);
         if (cityMatch) {
             location = cityMatch[1].trim();
         }
