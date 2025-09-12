@@ -1,7 +1,7 @@
 // ✅ If you're using ESM (with "type": "module" in package.json)
 export default function extractSkillsAndExperience(job) {
 
-    console.log("job.location (4)= ",job.location)
+    console.log("job.location (4)= ", job.location)
     const commonSkills = [
         'JavaScript', 'Python', 'Java', 'React', 'Node.js', 'SQL', 'AWS',
         'Excel', 'Communication', 'Teamwork', 'Problem Solving', 'Leadership',
@@ -1468,6 +1468,8 @@ export default function extractSkillsAndExperience(job) {
     const extractCity = (location) => {
         if (!location || location.trim().toLowerCase() === "not specified") return "India";
 
+        console.log("location (1471) = ",location);
+
         // Normalize known aliases before matching
         let lowerLoc = location.toLowerCase();
         lowerLoc = lowerLoc.replace(/bengaluru|bangaluru/g, "Bangalore");
@@ -1481,6 +1483,7 @@ export default function extractSkillsAndExperience(job) {
 
         return "India";
     };
+
 
 
 
@@ -1592,7 +1595,7 @@ export default function extractSkillsAndExperience(job) {
         sector: categorizeJob(job.title, cleanDescription(job.description)),
         isEntryLevel: isEntryLevelJob(job.title, cleanDescription(job.description)),
         jobType: extractJobType(cleanDescription(job.description), extractExperience(cleanDescription(job.description))),
-        location: extractCity(job.location) || 'India',
+        location: extractCity(job.location),
         ...parseExperience(extractExperience(cleanDescription(job.description))),
         postedAt: getISOTimestamp()
     };
