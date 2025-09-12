@@ -107,6 +107,7 @@ import  Repello from "./scrapers/servicebased/repelloAI.js"
 import  Neysa from "./scrapers/servicebased/neysa.js"
 import  Realfast from "./scrapers/servicebased/realfast.js"
 import  Spyne from "./scrapers/servicebased/spyne.js"
+import  Procol from "./scrapers/servicebased/procol.js"
 
 // Not working scrappers:
 import runTataMgJobsScraper from "./scrapers/productBased/tata1mg.js"
@@ -180,7 +181,7 @@ ${error.stack}`;
 };
 
 const scrapers = [
-    //   { fn: Spyne, headless: true },
+      { fn: Procol, headless: true },
 ];
 
 const runAllScrapers = async () => {
