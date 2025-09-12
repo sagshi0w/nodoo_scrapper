@@ -94,7 +94,7 @@ class ProcolJobsScraper {
                 return {
                     title,
                     company: 'Procol',
-                    location: getText('.brxe-text-basic'),
+                    location: getText('p#brxe-ptnhoh.brxe-text-basic'),
                     experience: getText('#brxe-atercm .content > p'),
                     description: getText('#brxe-rexvny.text-job'),
                     url: window.location.href
