@@ -1,7 +1,7 @@
 // ✅ If you're using ESM (with "type": "module" in package.json)
 export default function extractSkillsAndExperience(job) {
 
-
+    console.log("job.location (4)= ",job.location)
     const commonSkills = [
         'JavaScript', 'Python', 'Java', 'React', 'Node.js', 'SQL', 'AWS',
         'Excel', 'Communication', 'Teamwork', 'Problem Solving', 'Leadership',
