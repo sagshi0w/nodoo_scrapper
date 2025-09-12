@@ -181,7 +181,7 @@ ${error.stack}`;
 };
 
 const scrapers = [
-      { fn: Procol, headless: true },
+    //   { fn: Procol, headless: true },
 ];
 
 const runAllScrapers = async () => {
