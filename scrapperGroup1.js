@@ -24,6 +24,7 @@ import Neysa from "./scrapers/servicebased/neysa.js"
 import Realfast from "./scrapers/servicebased/realfast.js"
 import Spyne from "./scrapers/servicebased/spyne.js"
 import Procol from "./scrapers/servicebased/procol.js"
+import Uniphore from "./scrapers/servicebased/uniphore.js"
 
 const config = {
     concurrency: 5,
@@ -102,6 +103,7 @@ const scrapers = [
     { fn: Realfast, headless: true },
     { fn: Spyne, headless: true },
     { fn: Procol, headless: true },
+    { fn: Uniphore, headless: true },
 ];
 
 const runAllScrapers = async () => {
