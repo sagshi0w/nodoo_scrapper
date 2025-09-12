@@ -280,7 +280,7 @@ const extractWiproData = (job) => {
 
     // Step 3: Extract city from location string
     if (job.location || location) {
-        const cityMatch = job.location.match(/^([^,\n]+)/);
+        const cityMatch = job.location.match(/\|\s*(.+)$/);
         if (cityMatch) {
             location = cityMatch[1].trim();
         }
