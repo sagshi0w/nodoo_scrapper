@@ -109,6 +109,7 @@ import  Realfast from "./scrapers/servicebased/realfast.js"
 import  Spyne from "./scrapers/servicebased/spyne.js"
 import  Procol from "./scrapers/servicebased/procol.js"
 import  Uniphore from "./scrapers/servicebased/uniphore.js"
+import  GoKwik from "./scrapers/servicebased/GoKwik.js"
 
 // Not working scrappers:
 import runTataMgJobsScraper from "./scrapers/productBased/tata1mg.js"
@@ -182,7 +183,7 @@ ${error.stack}`;
 };
 
 const scrapers = [
-      { fn: Uniphore, headless: true },
+      { fn: GoKwik, headless: true },
 ];
 
 const runAllScrapers = async () => {
