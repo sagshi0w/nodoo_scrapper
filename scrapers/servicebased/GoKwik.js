@@ -91,31 +91,43 @@ class GoKwikJobsScraper {
                     const container = document.querySelector('div[data-automation-id="jobPostingDescription"]');
                     if (!container) return '';
 
-                    const headersToRemove = [
+                    const headersToRemove = new Set([
                         "About GoKwik",
                         "Why This Role Matters",
+                        "What You'll Own",
+                        "Who You Are",
+                        "How You'll Thrive at GoKwik",
                         "Why GoKwik ?"
-                    ];
+                    ]);
 
-                    headersToRemove.forEach(headerText => {
-                        const headerEl = Array.from(container.querySelectorAll('strong')).find(el => el.textContent.trim() === headerText);
+                    const children = Array.from(container.children);
+                    let keep = true;
+                    const resultElements = [];
 
-                        if (headerEl) {
-                            let current = headerEl.parentElement;
+                    for (let i = 0; i < children.length; i++) {
+                        const el = children[i];
+                        const strongEl = el.querySelector('strong');
+                        const strongText = strongEl ? strongEl.textContent.trim() : '';
 
-                            // Remove current header and all sibling elements until next <strong> or end
-                            while (current && current.nextElementSibling) {
-                                const next = current.nextElementSibling;
-                                if (next.querySelector('strong')) break;
-                                next.remove();
-                            }
-
-                            // Remove the header element's parent container itself
-                            current.remove();
+                        if (headersToRemove.has(strongText)) {
+                            keep = false;  // Start skipping
+                            continue;
                         }
-                    });
 
-                    return container.innerText.trim();
+                        // If a new strong header shows up (but not in the list), start keeping again
+                        if (strongEl && !headersToRemove.has(strongText)) {
+                            keep = true;
+                        }
+
+                        if (keep) {
+                            resultElements.push(el.outerHTML);
+                        }
+                    }
+
+                    // Reconstruct innerHTML and extract clean text
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = resultElements.join('');
+                    return tempDiv.innerText.trim();
                 };
 
                 return {
@@ -125,7 +137,6 @@ class GoKwikJobsScraper {
                     url: window.location.href
                 };
             });
-
 
 
             console.log("Before enriching job=", job);
