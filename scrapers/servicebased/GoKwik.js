@@ -101,30 +101,31 @@ class GoKwikJobsScraper {
                     ]);
 
                     const children = Array.from(container.children);
-                    let keep = true;
                     const resultElements = [];
+
+                    let skipMode = false;
 
                     for (let i = 0; i < children.length; i++) {
                         const el = children[i];
+
                         const strongEl = el.querySelector('strong');
-                        const strongText = strongEl ? strongEl.textContent.trim() : '';
+                        const strongText = strongEl ? strongEl.textContent.trim() : null;
 
-                        if (headersToRemove.has(strongText)) {
-                            keep = false;  // Start skipping
-                            continue;
+                        if (strongText && headersToRemove.has(strongText)) {
+                            skipMode = true;
+                            continue;  // Start skipping from this header
                         }
 
-                        // If a new strong header shows up (but not in the list), start keeping again
-                        if (strongEl && !headersToRemove.has(strongText)) {
-                            keep = true;
+                        // Stop skipping when we hit any strong header (even unrelated), but not in headersToRemove
+                        if (strongText && !headersToRemove.has(strongText)) {
+                            skipMode = false;
                         }
 
-                        if (keep) {
+                        if (!skipMode) {
                             resultElements.push(el.outerHTML);
                         }
                     }
 
-                    // Reconstruct innerHTML and extract clean text
                     const tempDiv = document.createElement('div');
                     tempDiv.innerHTML = resultElements.join('');
                     return tempDiv.innerText.trim();
@@ -137,6 +138,7 @@ class GoKwikJobsScraper {
                     url: window.location.href
                 };
             });
+
 
 
             console.log("Before enriching job=", job);
