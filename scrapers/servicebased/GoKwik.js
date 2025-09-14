@@ -228,19 +228,6 @@ const extractWiproData = (job) => {
         const location = locationMatch ? locationMatch[1].trim() : 'India';
 
         cleanedDescription = cleanedDescription
-            // Remove "Job Title:", "Location:", "Type:", "About Neysa:", and "Position Overview:"
-            // Remove exact "Job Description" word followed by newline
-            .replace(/Job Description\s*\n/gi, '')
-            .replace(/Job\s+Title:\s*.*\n?/gi, '')
-            .replace(/Location:\s*.*\n?/gi, '')
-            .replace(/Type:\s*.*\n?/gi, '')
-            .replace(/About Neysa:[\s\S]*?Position Overview:/gi, '')  // Removes "About Neysa" section up to "Position Overview:"
-            .replace(/Position Overview:\s*/gi, '')
-
-
-            // Remove "Job\nExperience:About Neysa:" block and long company info paragraph
-            .replace(/Job\s*\n\s*Experience:\s*About\s+Neysa:[\s\S]*?\.\s+/gi, '')
-
             // Add spacing for numbered lists
             .replace(/(\n\s*)(\d+\.\s+)(.*?)(\n)/gi, '\n\n$1$2$3$4\n\n')
 
