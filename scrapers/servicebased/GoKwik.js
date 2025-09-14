@@ -86,24 +86,32 @@ class GoKwikJobsScraper {
 
             const job = await jobPage.evaluate(() => {
                 const getText = (sel) => document.querySelector(sel)?.innerText.trim() || '';
-                const getDescription = () => {
+
+                const getCleanDescription = () => {
                     const container = document.querySelector('div[data-automation-id="jobPostingDescription"]');
                     if (!container) return '';
 
                     const headersToRemove = [
                         "About GoKwik",
                         "Why This Role Matters",
-                        "What You'll Own",
-                        "Who You Are",
-                        "How You'll Thrive at GoKwik",
                         "Why GoKwik ?"
                     ];
 
-                    // Remove unwanted headers
                     headersToRemove.forEach(headerText => {
                         const headerEl = Array.from(container.querySelectorAll('strong')).find(el => el.textContent.trim() === headerText);
+
                         if (headerEl) {
-                            headerEl.remove();
+                            let current = headerEl.parentElement;
+
+                            // Remove current header and all sibling elements until next <strong> or end
+                            while (current && current.nextElementSibling) {
+                                const next = current.nextElementSibling;
+                                if (next.querySelector('strong')) break;
+                                next.remove();
+                            }
+
+                            // Remove the header element's parent container itself
+                            current.remove();
                         }
                     });
 
@@ -113,10 +121,11 @@ class GoKwikJobsScraper {
                 return {
                     title: getText('h1.font-large-5.font-weight-normal.kch-text-heading'),
                     company: 'GoKwik',
-                    description: getDescription(),
+                    description: getCleanDescription(),
                     url: window.location.href
                 };
             });
+
 
 
             console.log("Before enriching job=", job);
