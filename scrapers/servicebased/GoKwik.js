@@ -88,7 +88,7 @@ class GoKwikJobsScraper {
                 const getText = (sel) => document.querySelector(sel)?.innerText.trim() || '';
 
                 const getCleanDescription = () => {
-                    const container = document.querySelector('div[data-automation-id="jobPostingDescription"]');
+                    const container = document.querySelector('div.job-description-container.ql-editor');
                     if (!container) return '';
 
                     const headersToRemove = new Set([
@@ -138,6 +138,22 @@ class GoKwikJobsScraper {
                     url: window.location.href
                 };
             });
+
+
+            // const job = await jobPage.evaluate(() => {
+            //     const getText = sel => document.querySelector(sel)?.innerText.trim() || '';
+
+            //     // Extract and clean job title
+            //     let rawTitle = getText('h2[data-automation-id="jobPostingHeader"]');
+            //     let title = rawTitle.trim();
+
+            //     return {
+            //         title: getText('h1.font-large-5.font-weight-normal.kch-text-heading'),
+            //         company: 'GoKwik',
+            //         description: getText(''),
+            //         url: window.location.href
+            //     };
+            // });
 
 
 
