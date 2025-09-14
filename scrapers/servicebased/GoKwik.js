@@ -84,76 +84,76 @@ class GoKwikJobsScraper {
             await delay(5000);
             //await jobPage.waitForSelector('div.job__description.body', { timeout: 10000 });
 
-            const job = await jobPage.evaluate(() => {
-                const getText = (sel) => document.querySelector(sel)?.innerText.trim() || '';
-
-                const getCleanDescription = () => {
-                    const container = document.querySelector('div.job-description-container.ql-editor');
-                    if (!container) return '';
-
-                    const headersToRemove = new Set([
-                        "About GoKwik",
-                        "Why This Role Matters",
-                        "What You'll Own",
-                        "Who You Are",
-                        "How You'll Thrive at GoKwik",
-                        "Why GoKwik ?"
-                    ]);
-
-                    const children = Array.from(container.children);
-                    const resultElements = [];
-
-                    let skipMode = false;
-
-                    for (let i = 0; i < children.length; i++) {
-                        const el = children[i];
-
-                        const strongEl = el.querySelector('strong');
-                        const strongText = strongEl ? strongEl.textContent.trim() : null;
-
-                        if (strongText && headersToRemove.has(strongText)) {
-                            skipMode = true;
-                            continue;  // Start skipping from this header
-                        }
-
-                        // Stop skipping when we hit any strong header (even unrelated), but not in headersToRemove
-                        if (strongText && !headersToRemove.has(strongText)) {
-                            skipMode = false;
-                        }
-
-                        if (!skipMode) {
-                            resultElements.push(el.outerHTML);
-                        }
-                    }
-
-                    const tempDiv = document.createElement('div');
-                    tempDiv.innerHTML = resultElements.join('');
-                    return tempDiv.innerText.trim();
-                };
-
-                return {
-                    title: getText('h1.font-large-5.font-weight-normal.kch-text-heading'),
-                    company: 'GoKwik',
-                    description: getCleanDescription(),
-                    url: window.location.href
-                };
-            });
-
-
             // const job = await jobPage.evaluate(() => {
-            //     const getText = sel => document.querySelector(sel)?.innerText.trim() || '';
+            //     const getText = (sel) => document.querySelector(sel)?.innerText.trim() || '';
 
-            //     // Extract and clean job title
-            //     let rawTitle = getText('h2[data-automation-id="jobPostingHeader"]');
-            //     let title = rawTitle.trim();
+            //     const getCleanDescription = () => {
+            //         const container = document.querySelector('div.job-description-container.ql-editor');
+            //         if (!container) return '';
+
+            //         const headersToRemove = new Set([
+            //             "About GoKwik",
+            //             "Why This Role Matters",
+            //             "What You'll Own",
+            //             "Who You Are",
+            //             "How You'll Thrive at GoKwik",
+            //             "Why GoKwik ?"
+            //         ]);
+
+            //         const children = Array.from(container.children);
+            //         const resultElements = [];
+
+            //         let skipMode = false;
+
+            //         for (let i = 0; i < children.length; i++) {
+            //             const el = children[i];
+
+            //             const strongEl = el.querySelector('strong');
+            //             const strongText = strongEl ? strongEl.textContent.trim() : null;
+
+            //             if (strongText && headersToRemove.has(strongText)) {
+            //                 skipMode = true;
+            //                 continue;  // Start skipping from this header
+            //             }
+
+            //             // Stop skipping when we hit any strong header (even unrelated), but not in headersToRemove
+            //             if (strongText && !headersToRemove.has(strongText)) {
+            //                 skipMode = false;
+            //             }
+
+            //             if (!skipMode) {
+            //                 resultElements.push(el.outerHTML);
+            //             }
+            //         }
+
+            //         const tempDiv = document.createElement('div');
+            //         tempDiv.innerHTML = resultElements.join('');
+            //         return tempDiv.innerText.trim();
+            //     };
 
             //     return {
             //         title: getText('h1.font-large-5.font-weight-normal.kch-text-heading'),
             //         company: 'GoKwik',
-            //         description: getText(''),
+            //         description: getCleanDescription(),
             //         url: window.location.href
             //     };
             // });
+
+
+            const job = await jobPage.evaluate(() => {
+                const getText = sel => document.querySelector(sel)?.innerText.trim() || '';
+
+                // Extract and clean job title
+                let rawTitle = getText('h1.font-large-5.font-weight-normal.kch-text-heading');
+                let title = rawTitle.trim();
+
+                return {
+                    title,
+                    company: 'GoKwik',
+                    description: getText('div.job-description-container.ql-editor'),
+                    url: window.location.href
+                };
+            });
 
 
 
