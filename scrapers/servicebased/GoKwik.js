@@ -93,19 +93,8 @@ class GoKwikJobsScraper {
                 // Extract description
                 let description = getText('div.job-description-container.ql-editor');
 
-                // Extract experience
-                const experienceElement = Array.from(document.querySelectorAll('div.m-0.font-regular.row.align-items-center > div'))
-                    .find(div => div.querySelector('span.icon.ki-user-tie'));
-                const experience = experienceElement
-                    ? experienceElement.querySelector('span.text-white').innerText.trim()
-                    : 'Not specified';
-
-                // Extract location
-                const locationElement = Array.from(document.querySelectorAll('div.m-0.font-regular.row.align-items-center > div'))
-                    .find(div => div.querySelector('span.icon.ki-location'));
-                const location = locationElement
-                    ? locationElement.querySelector('span.text-white').innerText.trim()
-                    : 'Delhi';
+                const experience = document.querySelector('div.m-0.font-regular.row.align-items-center > div:nth-child(1) > span.text-white')?.innerText.trim() || 'Not specified';
+                const location = document.querySelector('div.m-0.font-regular.row.align-items-center > div:nth-child(2) > span.text-white')?.innerText.trim() || 'Delhi';
 
                 return {
                     title,
@@ -182,7 +171,6 @@ const extractWiproData = (job) => {
 
     let cleanedDescription = job.description || '';
     let experience = job.experience || '';
-    let location = null;
 
     if (cleanedDescription) {
         // Remove "About GoKwik" section along with its content
@@ -208,8 +196,6 @@ const extractWiproData = (job) => {
         if (!cleanedDescription.trim()) {
             cleanedDescription = 'Description not available\n';
         }
-
-        console.log('Location:', location);
     } else {
         cleanedDescription = 'Description not available\n';
         console.log('Location:', 'Location not available');
