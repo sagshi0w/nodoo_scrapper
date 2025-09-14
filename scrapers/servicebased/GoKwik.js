@@ -221,31 +221,21 @@ const extractWiproData = (job) => {
     let experience = job.experience || '';
     let location = null;
 
-    // Step 1: Clean description
     if (cleanedDescription) {
-        // Extract location value
-        const locationMatch = cleanedDescription.match(/Location preference:\s*\n\s*([^\n]+)/i);
-        const location = locationMatch ? locationMatch[1].trim() : 'India';
+        // Remove "About GoKwik" section along with its content
+        cleanedDescription = cleanedDescription.replace(
+            /About GoKwik\s*\n+[\s\S]*?(?=\n{2,}[A-Z])/i,
+            ''
+        ).trim();
 
+        // Your existing formatting steps
         cleanedDescription = cleanedDescription
-            // Add spacing for numbered lists
-            .replace(/(\n\s*)(\d+\.\s+)(.*?)(\n)/gi, '\n\n$1$2$3$4\n\n')
-
-            // Add spacing for bullets
-            .replace(/(\n\s*)([•\-]\s+)(.*?)(\n)/gi, '\n\n$1$2$3$4\n\n')
-
-            // Fix spacing after punctuation
+            .replace(/(\n\s*)(\d+\.\s+)(.*?)(\n)/gi, '\n\n$1$2$3$4')
+            .replace(/(\n\s*)([•\-]\s+)(.*?)(\n)/gi, '\n\n$1$2$3$4')
             .replace(/([.!?])\s+/g, '$1  ')
-
-            // Trim trailing spaces/tabs
             .replace(/[ \t]+$/gm, '')
-
-            // Limit multiple newlines
             .replace(/\n{3,}/g, '\n\n')
-
-            // Ensure spacing between lines
             .replace(/(\S)\n(\S)/g, '$1\n\n$2')
-
             .trim();
 
         if (cleanedDescription && !cleanedDescription.endsWith('\n')) {
@@ -261,6 +251,7 @@ const extractWiproData = (job) => {
         cleanedDescription = 'Description not available\n';
         console.log('Location:', 'Location not available');
     }
+
 
 
 
