@@ -261,33 +261,11 @@ const extractWiproData = (job) => {
         }
     }
 
-    // Step 3: Extract city from location string
-    if (job.location || location) {
-        const cityMatch = location.match(/\|\s*(.+)$/);
-        if (cityMatch) {
-            location = cityMatch[1].trim();
-        }
-    }
-
-    // Fallback: extract from description if location is still empty
-    if (!location && job.description) {
-        const descLocationMatch = job.description.match(/Location:\s*(.+)/i);
-        if (descLocationMatch) {
-            location = descLocationMatch[1].split('\n')[0].trim();
-        }
-    }
-
-    // Optional: fallback default
-    if (!location) {
-        location = 'India';
-    }
-
 
     return {
         ...job,
         title: job.title?.trim(),
         experience,
-        location,
         description: cleanedDescription,
     };
 };
