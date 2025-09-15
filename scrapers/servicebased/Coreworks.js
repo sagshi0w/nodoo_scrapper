@@ -192,6 +192,10 @@ const extractWiproData = (job) => {
             .replace(/Type:\s*.*\n?/i, '')
             .replace(/Experience:\s*.*\n?/i, '')
             .replace(/About Us\s*\n+[\s\S]*?(?=\n{2,}[A-Z])/i, '') // Remove About Us intro until next section
+            .replace(
+                /About Us\s*\n+[\s\S]*?We’re building a powerful natural language query engine \+ spreadsheet interface to help finance teams model, analyze, and automate reporting like never before\./,
+                ''
+            )
 
             // Existing formatting steps
             .replace(/(\n\s*)(\d+\.\s+)(.*?)(\n)/gi, '\n\n$1$2$3$4')
