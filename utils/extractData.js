@@ -1334,38 +1334,34 @@ export default function extractSkillsAndExperience(job) {
     * @returns {string} Formatted experience range or default text
     */
     function extractExperience(desc, job = {}) {
-        //if (!desc) return "Not specified";
-
-        if (job.experience) return;
-
-        // If job object already has experience string, return it
-        if (job.experience && typeof job.experience === "string" && job.experience.trim() !== "") {
-            return job.experience.trim();
+        // If job.experience exists as number or string, convert to number
+        if (job.experience != null) {
+            const expNum = Number(job.experience);
+            if (!isNaN(expNum)) return { min: expNum, max: expNum };
         }
 
-        // Match patterns like "3-5 years", "2+ years", "at least 4 years", etc.
-        const numRegex = /(\d+)\s*[-to]{0,3}\s*(\d*)\s*(?:\+?\s*)?(?:years?|yrs?)/i;
+        if (!desc || typeof desc !== 'string') return { min: null, max: null };
+
+        // Match patterns like "3-5 years", "2+ years", "at least 4 years"
+        const numRegex = /(\d+)\s*(?:[-to]{0,3})\s*(\d*)\s*\+?\s*(?:years?|yrs?)/i;
         const match = desc.match(numRegex);
 
         if (match) {
             const min = parseInt(match[1]);
             let max = match[2] ? parseInt(match[2]) : null;
 
-            // If format was like "5+ years", convert to "5-7 yrs"
-            if (!max && /\+/.test(desc)) {
-                max = min + 2;
-            }
+            if (!max && /\+/.test(desc)) max = min + 2; // e.g., "5+ years" => 5-7
 
-            return max ? `${min}-${max} yrs` : `${min} yrs`;
+            return { min, max: max || min };
         }
 
-        // Match words for numbers (e.g., "three years", "three to five years")
+        // Match words for numbers like "three to five years"
         const wordToNum = {
             one: 1, two: 2, three: 3, four: 4, five: 5,
             six: 6, seven: 7, eight: 8, nine: 9, ten: 10
         };
         const wordRegex = new RegExp(
-            `\\b(${Object.keys(wordToNum).join("|")})\\b\\s+(?:to\\s+(${Object.keys(wordToNum).join("|")})\\s+)?years?`,
+            `\\b(${Object.keys(wordToNum).join("|")})\\b\\s*(?:to\\s*(${Object.keys(wordToNum).join("|")})\\s*)?years?`,
             "i"
         );
         const wordMatch = desc.match(wordRegex);
@@ -1374,16 +1370,14 @@ export default function extractSkillsAndExperience(job) {
             const min = wordToNum[wordMatch[1].toLowerCase()];
             let max = wordMatch[2] ? wordToNum[wordMatch[2].toLowerCase()] : null;
 
-            // If format was like "five+ years", assume +2 years
-            if (!max && /\+/.test(desc)) {
-                max = min + 2;
-            }
+            if (!max && /\+/.test(desc)) max = min + 2;
 
-            return max ? `${min}-${max} yrs` : `${min} yrs`;
+            return { min, max: max || min };
         }
 
-        return "Not specified";
+        return { min: null, max: null };
     }
+
 
     // Preprocess job description:
     // function cleanDescription(desc) {
@@ -1467,7 +1461,7 @@ export default function extractSkillsAndExperience(job) {
     const extractCity = (location) => {
         if (!location || location.trim().toLowerCase() === "not specified") return "India";
 
-        console.log("location (1471) = ",location);
+        console.log("location (1471) = ", location);
 
         // Normalize known aliases before matching
         let lowerLoc = location.toLowerCase();
