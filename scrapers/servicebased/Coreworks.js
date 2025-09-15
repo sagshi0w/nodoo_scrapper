@@ -109,7 +109,7 @@ class CoreworksJobsScraper {
                 return {
                     title,
                     company: 'Coreworks',
-                    description: description.trim(),
+                    description: description,
                     experience,
                     location,
                     url: window.location.href
