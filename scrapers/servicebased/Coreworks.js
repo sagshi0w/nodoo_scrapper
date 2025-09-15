@@ -104,7 +104,7 @@ class CoreworksJobsScraper {
                 const experience = match ? match[1] : '';
 
                 // Extract target sections
-                const description = document.querySelector('div.notion-page-content');
+                const description = getText('div.notion-page-content');
 
                 return {
                     title,
