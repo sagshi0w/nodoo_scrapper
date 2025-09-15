@@ -103,28 +103,34 @@ class CoreworksJobsScraper {
                 const match = experienceText.match(/(\d+\s*[–-]\s*\d+\s*(?:years|yrs))/i);
                 const experience = match ? match[1] : '';
 
-                // Extract the full description HTML content
+                // Extract target sections
                 const notionContent = document.querySelector('div.notion-page-content');
                 let description = '';
 
                 if (notionContent) {
-                    const sections = Array.from(notionContent.querySelectorAll('div[data-block-id] div[contenteditable="false"]'));
-                    const targetSections = ['Skills & Qualifications', 'Responsibilities', 'What You’ll Build'];
-                    let capture = false;
+                    const blocks = Array.from(notionContent.querySelectorAll('div[data-block-id] div[contenteditable="false"]'));
 
-                    sections.forEach((el) => {
+                    let capture = false;
+                    let currentSection = '';
+
+                    blocks.forEach((el) => {
                         const text = el.innerText.trim();
 
-                        if (targetSections.some(header => text.toLowerCase().includes(header.toLowerCase()))) {
+                        // Start capturing when target section is found
+                        if (['Skills & Qualifications', 'Responsibilities', 'What You’ll Build'].includes(text)) {
                             capture = true;
-                            description += `\n\n**${text}**\n`;
-                        } else if (capture) {
-                            // Stop capturing when next section header is found that's not target section
-                            if (text.match(/^[A-Z][A-Za-z ]+:$/)) {
-                                capture = false;
-                            } else {
-                                description += `${text}\n`;
-                            }
+                            currentSection = text;
+                            description += `\n\n**${currentSection}**\n`;
+                            return;
+                        }
+
+                        // Stop capturing if a completely new section is found (like About Us or other headers)
+                        if (capture && ['About Us', 'Other Sections', 'Company Overview'].includes(text)) {
+                            capture = false;
+                        }
+
+                        if (capture) {
+                            description += `${text}\n`;
                         }
                     });
                 }
@@ -138,6 +144,7 @@ class CoreworksJobsScraper {
                     url: window.location.href
                 };
             });
+
 
 
 
@@ -264,6 +271,8 @@ const extractWiproData = (job) => {
             }
         }
     }
+
+    console.log("experience(275)=",experience);
 
     // Step 2: Parse experience from description
     if (!experience && cleanedDescription) {
