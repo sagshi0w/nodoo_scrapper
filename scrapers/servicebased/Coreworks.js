@@ -104,36 +104,7 @@ class CoreworksJobsScraper {
                 const experience = match ? match[1] : '';
 
                 // Extract target sections
-                const notionContent = document.querySelector('div.notion-page-content');
-                let description = '';
-
-                if (notionContent) {
-                    const blocks = Array.from(notionContent.querySelectorAll('div[data-block-id] div[contenteditable="false"]'));
-
-                    let capture = false;
-                    let currentSection = '';
-
-                    blocks.forEach((el) => {
-                        const text = el.innerText.trim();
-
-                        // Start capturing when target section is found
-                        if (['Skills & Qualifications', 'Responsibilities', 'What You’ll Build'].includes(text)) {
-                            capture = true;
-                            currentSection = text;
-                            description += `\n\n**${currentSection}**\n`;
-                            return;
-                        }
-
-                        // Stop capturing if a completely new section is found (like About Us or other headers)
-                        if (capture && ['About Us', 'Other Sections', 'Company Overview'].includes(text)) {
-                            capture = false;
-                        }
-
-                        if (capture) {
-                            description += `${text}\n`;
-                        }
-                    });
-                }
+                const description = document.querySelector('div.notion-page-content');
 
                 return {
                     title,
@@ -271,8 +242,6 @@ const extractWiproData = (job) => {
             }
         }
     }
-
-    console.log("experience(275)=",experience);
 
     // Step 2: Parse experience from description
     if (!experience && cleanedDescription) {
