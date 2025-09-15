@@ -1334,7 +1334,7 @@ export default function extractSkillsAndExperience(job) {
     * @returns {string} Formatted experience range or default text
     */
     function extractExperience(desc, job = {}) {
-        if (!desc) return "Not specified";
+        //if (!desc) return "Not specified";
 
         if (job.experience) return;
 
