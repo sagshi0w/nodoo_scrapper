@@ -26,6 +26,7 @@ import Spyne from "./scrapers/servicebased/spyne.js"
 import Procol from "./scrapers/servicebased/procol.js"
 import Uniphore from "./scrapers/servicebased/uniphore.js"
 import GoKwik from "./scrapers/servicebased/GoKwik.js"
+import Coreworks from "./scrapers/servicebased/Coreworks.js"
 
 const config = {
     concurrency: 5,
@@ -106,6 +107,7 @@ const scrapers = [
     { fn: Procol, headless: true },
     { fn: Uniphore, headless: true },
     { fn: GoKwik, headless: true },
+    { fn: Coreworks, headless: true },
 ];
 
 const runAllScrapers = async () => {
