@@ -85,31 +85,32 @@ import MotivityLabs from "./scrapers/servicebased/motivityLabs.js"
 import Accelya from "./scrapers/servicebased/accelya.js"
 
 // 04.09.2025
-import  SoftTech from "./scrapers/servicebased/softTech.js"
-import  Cybertech from "./scrapers/servicebased/cybertech.js"
+import SoftTech from "./scrapers/servicebased/softTech.js"
+import Cybertech from "./scrapers/servicebased/cybertech.js"
 
 // 05.09.2025
-import  VirtualGalaxy from "./scrapers/servicebased/virtualGalaxy.js"
+import VirtualGalaxy from "./scrapers/servicebased/virtualGalaxy.js"
 
 // 07.09.2025
-import  DRCSystems from "./scrapers/servicebased/DRCSystems.js"
-import  TrigynTechnologies from "./scrapers/servicebased/trigynTechnologies.js"
+import DRCSystems from "./scrapers/servicebased/DRCSystems.js"
+import TrigynTechnologies from "./scrapers/servicebased/trigynTechnologies.js"
 
 // 08.09.2025
-import  RSSoftware from "./scrapers/servicebased/rsSoftware.js"
-import  SarvamAI from "./scrapers/servicebased/sarvam-ai.js"
-import  MetaForms from "./scrapers/servicebased/metaforms.js"
+import RSSoftware from "./scrapers/servicebased/rsSoftware.js"
+import SarvamAI from "./scrapers/servicebased/sarvam-ai.js"
+import MetaForms from "./scrapers/servicebased/metaforms.js"
 
 // 09.09.2025
-import  Atomicwork from "./scrapers/servicebased/atomicwork.js"
-import  TrueFoundary from "./scrapers/servicebased/trueFoundary.js"
-import  Repello from "./scrapers/servicebased/repelloAI.js"
-import  Neysa from "./scrapers/servicebased/neysa.js"
-import  Realfast from "./scrapers/servicebased/realfast.js"
-import  Spyne from "./scrapers/servicebased/spyne.js"
-import  Procol from "./scrapers/servicebased/procol.js"
-import  Uniphore from "./scrapers/servicebased/uniphore.js"
-import  GoKwik from "./scrapers/servicebased/GoKwik.js"
+import Atomicwork from "./scrapers/servicebased/atomicwork.js"
+import TrueFoundary from "./scrapers/servicebased/trueFoundary.js"
+import Repello from "./scrapers/servicebased/repelloAI.js"
+import Neysa from "./scrapers/servicebased/neysa.js"
+import Realfast from "./scrapers/servicebased/realfast.js"
+import Spyne from "./scrapers/servicebased/spyne.js"
+import Procol from "./scrapers/servicebased/procol.js"
+import Uniphore from "./scrapers/servicebased/uniphore.js"
+import GoKwik from "./scrapers/servicebased/GoKwik.js"
+import Coreworks from "./scrapers/servicebased/Coreworks.js"
 
 // Not working scrappers:
 import runTataMgJobsScraper from "./scrapers/productBased/tata1mg.js"
@@ -183,7 +184,7 @@ ${error.stack}`;
 };
 
 const scrapers = [
-      { fn: GoKwik, headless: true },
+    { fn: Coreworks, headless: true },
 ];
 
 const runAllScrapers = async () => {
