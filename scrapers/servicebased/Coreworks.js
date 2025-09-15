@@ -185,14 +185,15 @@ const extractWiproData = (job) => {
     let experience = job.experience || '';
 
     if (cleanedDescription) {
-        // Remove "About GoKwik" section along with its content
-        cleanedDescription = cleanedDescription.replace(
-            /About GoKwik\s*\n+[\s\S]*?(?=\n{2,}[A-Z])/i,
-            ''
-        ).trim();
-
-        // Your existing formatting steps
+        // Remove sections like Job Title, Location, Type, Experience, About Us intro
         cleanedDescription = cleanedDescription
+            .replace(/Job\s+Title:\s*.*\n?/i, '')
+            .replace(/Location:\s*.*\n?/i, '')
+            .replace(/Type:\s*.*\n?/i, '')
+            .replace(/Experience:\s*.*\n?/i, '')
+            .replace(/About Us\s*\n+[\s\S]*?(?=\n{2,}[A-Z])/i, '') // Remove About Us intro until next section
+
+            // Existing formatting steps
             .replace(/(\n\s*)(\d+\.\s+)(.*?)(\n)/gi, '\n\n$1$2$3$4')
             .replace(/(\n\s*)([•\-]\s+)(.*?)(\n)/gi, '\n\n$1$2$3$4')
             .replace(/([.!?])\s+/g, '$1  ')
@@ -212,6 +213,7 @@ const extractWiproData = (job) => {
         cleanedDescription = 'Description not available\n';
         console.log('Location:', 'Location not available');
     }
+
 
 
 
