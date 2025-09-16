@@ -35,7 +35,7 @@ class JhanaJobsScraper {
 
         while (true) {
             // Collect job links on current page
-            const jobLinks = await this.page.$$eval(`a[data-framer-name="Default"]`, anchors =>
+            const jobLinks = await this.page.$$eval(`a.MuiButtonBase-root.MuiButton-containedPrimary.css-1jpytnf[href^="/careers/"]`, anchors =>
                 anchors.map(a => a.href)
             );
 
