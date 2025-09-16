@@ -187,7 +187,7 @@ ${error.stack}`;
 };
 
 const scrapers = [
-    { fn: Jhana, headless: true },
+    // { fn: Jhana, headless: true },
 ];
 
 const runAllScrapers = async () => {
