@@ -186,7 +186,15 @@ ${error.stack}`;
 };
 
 const scrapers = [
-     { fn: Coreworks, headless: true },
+    { fn: Coreworks, headless: true },
+    { fn: GoKwik, headless: true },
+    { fn: Uniphore, headless: true },
+    { fn: Procol, headless: true },
+    { fn: Spyne, headless: true },
+    { fn: Realfast, headless: true },
+    { fn: Neysa, headless: true },
+    { fn: Repello, headless: true },
+    { fn: TrueFoundary, headless: true },
 ];
 
 const runAllScrapers = async () => {
