@@ -92,7 +92,6 @@ class JhanaJobsScraper {
 
                 let rawLocation = getText('div.MuiGrid-container > div.MuiGrid-item:nth-child(3) span.MuiChip-label');
                 let location = rawLocation.trim();
-                
                 // Use Bangalore as fallback if location is missing
                 if (!location) {
                     location = 'Bangalore';
@@ -124,11 +123,14 @@ class JhanaJobsScraper {
                 
                 // Combine both sections as description
                 let description = '';
+                let gotTargetSections = false;
                 if (aboutRoleContent) {
                     description += aboutRoleContent + '\n\n';
+                    gotTargetSections = true;
                 }
                 if (aboutYouContent) {
                     description += aboutYouContent;
+                    gotTargetSections = true;
                 }
                 
                 // Fallback to main content area if specific sections not found
@@ -141,33 +143,31 @@ class JhanaJobsScraper {
                     }
                 }
                 
-                // Clean up description - remove footer content, form application text, and navigation
+                // Clean up description
                 if (description) {
-                    description = description
-                        .replace(/Apply using this form[\s\S]*?FOUNDED AT HARVARD IN 2022[\s\S]*?ALL RIGHTS RESERVED[\s\S]*?$/g, '')
-                        .replace(/Apply using this form[\s\S]*?Compliant with ISO 27001[\s\S]*?$/g, '')
-                        .replace(/\*Complete our abbreviated application[\s\S]*?please do not email us separately\./g, '')
-                        .replace(/COMPANY[\s\S]*?Service Status/g, '')
-                        .replace(/FOUNDED AT HARVARD IN 2022[\s\S]*?ALL RIGHTS RESERVED\./g, '')
-                        .replace(/Compliant with the Digital Personal Data Protection Act[\s\S]*?currently under audit for rating\./g, '')
-                        .replace(/Features[\s\S]*?Login/g, '') // Remove navigation menu
-                        .replace(/About jhana[\s\S]*?More details are available to candidates\./g, '') // Remove company description
-                        .replace(/About jhana[\s\S]*?excellence\./g, '') // Remove additional company description
-                        .replace(/About[\s\S]*?Service Status/g, '') // Remove additional footer navigation
-                        .replace(/FOUNDED AT HARVARD IN 2022\.\s*MADE IN INDIA\.\s*COPYRIGHT © 2024 JHANA\.AI\.\s*ALL RIGHTS RESERVED\./g, '') // Remove copyright
-                        .replace(/Compliant with the Digital Personal Data Protection Act, 2023, and the SDPI Rules of the IT Act, 2000\./g, '') // Remove compliance text
-                        .replace(/Compliant with ISO 27001 and SOC 2 Types I and II security standards; currently under audit for rating\./g, '') // Remove security standards
-                        .replace(/Your Pick the Title[\s\S]*?Position Overview\n/g, '') // Remove duplicate job listings
-                        .replace(/Senior Business Account Executive[\s\S]*?Position Overview\n/g, '') // Remove duplicate job listings
-                        .replace(/Business Account Manager[\s\S]*?Position Overview\n/g, '') // Remove duplicate job listings
-                        .replace(/Business Account Executive[\s\S]*?Position Overview\n/g, '') // Remove duplicate job listings
-                        .replace(/Senior Sales Development Representative[\s\S]*?Position Overview\n/g, '') // Remove duplicate job listings
-                        .replace(/Sales Development Representative[\s\S]*?Position Overview\n/g, '') // Remove duplicate job listings
-                        .replace(/Sales Intern[\s\S]*?Position Overview\n/g, '') // Remove duplicate job listings
-                        .replace(/In-House Counsel[\s\S]*?Position Overview\n/g, '') // Remove duplicate job listings
-                        .replace(/Pick Your Own Title[\s\S]*?About the role\n/g, '') // Remove duplicate job listings
-                        .replace(/\n{3,}/g, '\n\n')
-                        .trim();
+                    if (gotTargetSections) {
+                        // Minimal cleanup when we have the exact sections
+                        description = description
+                            .replace(/\n{3,}/g, '\n\n')
+                            .trim();
+                    } else {
+                        // Conservative removals for page-wide noise
+                        description = description
+                            .replace(/(?:Apply using this form|COMPANY|RESOURCES|FOUNDED AT HARVARD IN 2022)[\s\S]*$/i, '')
+                            .replace(/Features[\s\S]*?Login/i, '')
+                            .replace(/About jhana[\s\S]*?(?:More details are available to candidates\.|excellence\.)/i, '')
+                            .replace(/Your Pick the Title[\s\S]*?Position Overview\n/gi, '')
+                            .replace(/Senior Business Account Executive[\s\S]*?Position Overview\n/gi, '')
+                            .replace(/Business Account Manager[\s\S]*?Position Overview\n/gi, '')
+                            .replace(/Business Account Executive[\s\S]*?Position Overview\n/gi, '')
+                            .replace(/Senior Sales Development Representative[\s\S]*?Position Overview\n/gi, '')
+                            .replace(/Sales Development Representative[\s\S]*?Position Overview\n/gi, '')
+                            .replace(/Sales Intern[\s\S]*?Position Overview\n/gi, '')
+                            .replace(/In-House Counsel[\s\S]*?Position Overview\n/gi, '')
+                            .replace(/Pick Your Own Title[\s\S]*?About the role\n/gi, '')
+                            .replace(/\n{3,}/g, '\n\n')
+                            .trim();
+                    }
                 }
 
                 return {
