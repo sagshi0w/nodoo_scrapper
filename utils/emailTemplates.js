@@ -1,50 +1,44 @@
 export function buildInsertedJobsEmailHTML(jobs = [], summary = null) {
-  const inserted = (summary && Array.isArray(summary.insertedJobs)) ? summary.insertedJobs : [];
+  const perCompany = (summary && summary.perCompany) ? summary.perCompany : {};
+  const insertedJobs = (summary && Array.isArray(summary.insertedJobs)) ? summary.insertedJobs : [];
 
-  const rows = inserted.map(j => `
-    <tr>
-      <td style="border:1px solid #ddd;padding:8px;">${j.company || ''}</td>
-      <td style="border:1px solid #ddd;padding:8px;">${j.title || ''}</td>
-    </tr>
-  `).join('');
+  const companySet = new Set([
+    ...Object.keys(perCompany),
+    ...insertedJobs.map(j => j.company || 'Unknown')
+  ].filter(Boolean));
 
-  const totals = summary || {
-    totalScraped: jobs.length,
-    totalUnique: jobs.length,
-    totalInserted: inserted.length
-  };
+  const companyRows = Array.from(companySet).sort().map((companyName, index) => {
+    const stats = perCompany[companyName] || { scraped: 0, unique: 0 };
+    const insertedCount = insertedJobs.filter(j => (j.company || 'Unknown') === companyName).length;
+    return `
+      <tr>
+        <td style="border:1px solid #ddd;padding:8px;">${index + 1}</td>
+        <td style="border:1px solid #ddd;padding:8px;">${companyName}</td>
+        <td style="border:1px solid #ddd;padding:8px;">${stats.scraped}</td>
+        <td style="border:1px solid #ddd;padding:8px;">${stats.unique}</td>
+        <td style="border:1px solid #ddd;padding:8px;">${insertedCount}</td>
+      </tr>`;
+  }).join('');
 
-  const totalsTable = `
-    <table style="border-collapse:collapse;width:100%;margin-top:16px;">
-      <thead>
-        <tr>
-          <th style="border:1px solid #ddd;padding:8px;text-align:left;">Metric</th>
-          <th style="border:1px solid #ddd;padding:8px;text-align:left;">Count</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr><td style="border:1px solid #ddd;padding:8px;">Total Scraped</td><td style="border:1px solid #ddd;padding:8px;">${totals.totalScraped}</td></tr>
-        <tr><td style="border:1px solid #ddd;padding:8px;">Total Unique (by Name and Company)</td><td style="border:1px solid #ddd;padding:8px;">${totals.totalUnique}</td></tr>
-        <tr><td style="border:1px solid #ddd;padding:8px;">Total Jobs Inserted to DB</td><td style="border:1px solid #ddd;padding:8px;">${totals.totalInserted}</td></tr>
-      </tbody>
-    </table>`;
+  const bodyRows = companyRows || '<tr><td colspan="5" style="border:1px solid #ddd;padding:8px;">No companies to display</td></tr>';
 
   return `
     <div style="font-family:Arial, sans-serif;">
-      <h3 style="margin:0 0 8px 0;">Newly Inserted Jobs</h3>
+      <h3 style="margin:0 0 8px 0;">Job Insert Summary</h3>
       <table style="border-collapse:collapse;width:100%;">
         <thead>
           <tr>
+            <th style="border:1px solid #ddd;padding:8px;text-align:left;">SR No</th>
             <th style="border:1px solid #ddd;padding:8px;text-align:left;">Company</th>
-            <th style="border:1px solid #ddd;padding:8px;text-align:left;">Job Title</th>
+            <th style="border:1px solid #ddd;padding:8px;text-align:left;">Total Scraped</th>
+            <th style="border:1px solid #ddd;padding:8px;text-align:left;">Total Unique</th>
+            <th style="border:1px solid #ddd;padding:8px;text-align:left;">Total Inserted</th>
           </tr>
         </thead>
         <tbody>
-          ${rows || '<tr><td colspan="2" style="border:1px solid #ddd;padding:8px;">No new jobs inserted</td></tr>'}
+          ${bodyRows}
         </tbody>
       </table>
-      <h3 style="margin:16px 0 8px 0;">Summary</h3>
-      ${totalsTable}
     </div>
   `;
 }
