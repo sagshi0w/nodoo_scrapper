@@ -126,6 +126,26 @@ class JhanaJobsScraper {
                 if (!description.trim()) {
                     description = getText('div.MuiBox-root');
                 }
+                
+                // Clean up description - remove footer content, form application text, and navigation
+                if (description) {
+                    description = description
+                        .replace(/Apply using this form[\s\S]*?FOUNDED AT HARVARD IN 2022[\s\S]*?ALL RIGHTS RESERVED[\s\S]*?$/g, '')
+                        .replace(/Apply using this form[\s\S]*?Compliant with ISO 27001[\s\S]*?$/g, '')
+                        .replace(/\*Complete our abbreviated application[\s\S]*?please do not email us separately\./g, '')
+                        .replace(/COMPANY[\s\S]*?Service Status/g, '')
+                        .replace(/FOUNDED AT HARVARD IN 2022[\s\S]*?ALL RIGHTS RESERVED\./g, '')
+                        .replace(/Compliant with the Digital Personal Data Protection Act[\s\S]*?currently under audit for rating\./g, '')
+                        .replace(/Features[\s\S]*?Login/g, '') // Remove navigation menu
+                        .replace(/About jhana[\s\S]*?More details are available to candidates\./g, '') // Remove company description
+                        .replace(/About jhana[\s\S]*?excellence\./g, '') // Remove additional company description
+                        .replace(/About[\s\S]*?Service Status/g, '') // Remove additional footer navigation
+                        .replace(/FOUNDED AT HARVARD IN 2022\.\s*MADE IN INDIA\.\s*COPYRIGHT © 2024 JHANA\.AI\.\s*ALL RIGHTS RESERVED\./g, '') // Remove copyright
+                        .replace(/Compliant with the Digital Personal Data Protection Act, 2023, and the SDPI Rules of the IT Act, 2000\./g, '') // Remove compliance text
+                        .replace(/Compliant with ISO 27001 and SOC 2 Types I and II security standards; currently under audit for rating\./g, '') // Remove security standards
+                        .replace(/\n{3,}/g, '\n\n')
+                        .trim();
+                }
 
                 return {
                     title,
