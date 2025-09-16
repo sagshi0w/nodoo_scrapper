@@ -184,7 +184,7 @@ ${error.stack}`;
 };
 
 const scrapers = [
-    // { fn: Coreworks, headless: true },
+     { fn: Coreworks, headless: true },
 ];
 
 const runAllScrapers = async () => {
