@@ -117,6 +117,19 @@ export default async function sendToBackend(jobs) {
 
   console.log(`✅ Finished sending jobs: ${totalSent}/${uniqueJobs.length}`);
 
+  // Derive per-company unique (pre-insert unique count as per requirement: totalScraped - matched = inserted)
+  const perCompanyInsertedCount = insertedJobs.reduce((acc, j) => {
+    const company = j.company || 'Unknown';
+    acc[company] = (acc[company] || 0) + 1;
+    return acc;
+  }, {});
+
+  Object.keys(perCompany).forEach(company => {
+    const insertedCount = perCompanyInsertedCount[company] || 0;
+    // unique before insert (new to DB) equals inserted count
+    perCompany[company].unique = insertedCount;
+  });
+
   return {
     totalScraped: jobs.length,
     totalUnique: uniqueJobs.length,
