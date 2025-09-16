@@ -107,10 +107,10 @@ class JhanaJobsScraper {
                     sections.forEach(section => {
                         const heading = section.querySelector('h4');
                         if (heading) {
-                            const headingText = heading.textContent.trim();
-                            if (headingText === 'About the Role') {
+                            const headingText = heading.textContent.trim().toLowerCase();
+                            if (headingText.includes('about the role')) {
                                 aboutRoleContent = section.textContent.trim();
-                            } else if (headingText === 'About You') {
+                            } else if (headingText.includes('about you')) {
                                 aboutYouContent = section.textContent.trim();
                             }
                         }
@@ -119,11 +119,14 @@ class JhanaJobsScraper {
                 
                 // Combine both sections as description
                 let description = '';
+                let gotTargetSections = false;
                 if (aboutRoleContent) {
                     description += aboutRoleContent + '\n\n';
+                    gotTargetSections = true;
                 }
                 if (aboutYouContent) {
                     description += aboutYouContent;
+                    gotTargetSections = true;
                 }
                 
                 // Fallback to main content area if specific sections not found
@@ -136,24 +139,48 @@ class JhanaJobsScraper {
                     }
                 }
                 
-                // Clean up description - remove footer content, form application text, and navigation
+                // Clean up description - avoid removing valid content
                 if (description) {
-                    description = description
-                        .replace(/Apply using this form[\s\S]*?FOUNDED AT HARVARD IN 2022[\s\S]*?ALL RIGHTS RESERVED[\s\S]*?$/g, '')
-                        .replace(/Apply using this form[\s\S]*?Compliant with ISO 27001[\s\S]*?$/g, '')
-                        .replace(/\*Complete our abbreviated application[\s\S]*?please do not email us separately\./g, '')
-                        .replace(/COMPANY[\s\S]*?Service Status/g, '')
-                        .replace(/FOUNDED AT HARVARD IN 2022[\s\S]*?ALL RIGHTS RESERVED\./g, '')
-                        .replace(/Compliant with the Digital Personal Data Protection Act[\s\S]*?currently under audit for rating\./g, '')
-                        .replace(/Features[\s\S]*?Login/g, '') // Remove navigation menu
-                        .replace(/About jhana[\s\S]*?More details are available to candidates\./g, '') // Remove company description
-                        .replace(/About jhana[\s\S]*?excellence\./g, '') // Remove additional company description
-                        .replace(/About[\s\S]*?Service Status/g, '') // Remove additional footer navigation
-                        .replace(/FOUNDED AT HARVARD IN 2022\.\s*MADE IN INDIA\.\s*COPYRIGHT © 2024 JHANA\.AI\.\s*ALL RIGHTS RESERVED\./g, '') // Remove copyright
-                        .replace(/Compliant with the Digital Personal Data Protection Act, 2023, and the SDPI Rules of the IT Act, 2000\./g, '') // Remove compliance text
-                        .replace(/Compliant with ISO 27001 and SOC 2 Types I and II security standards; currently under audit for rating\./g, '') // Remove security standards
-                        .replace(/\n{3,}/g, '\n\n')
-                        .trim();
+                    const originalDescription = description;
+                    if (gotTargetSections) {
+                        // Minimal cleanup when we have exact sections
+                        description = description
+                            .replace(/\n{3,}/g, '\n\n')
+                            .trim();
+                    } else {
+                        // Conservative removals for page-wide noise: truncate tail after first footer marker
+                        const original = description;
+                        const lower = description.toLowerCase();
+                        const markers = [
+                            'apply using this form',
+                            'company\n',
+                            'resources\n',
+                            'founded at harvard in 2022',
+                            'privacy policy',
+                            'terms & conditions',
+                            'service status'
+                        ];
+                        let cutIndex = -1;
+                        for (const m of markers) {
+                            const idx = lower.indexOf(m);
+                            if (idx !== -1) {
+                                cutIndex = cutIndex === -1 ? idx : Math.min(cutIndex, idx);
+                            }
+                        }
+                        if (cutIndex !== -1) {
+                            description = description.slice(0, cutIndex);
+                        }
+                        description = description
+                            .replace(/\n{3,}/g, '\n\n')
+                            .trim();
+                        if (description.length < 80) {
+                            description = original.trim();
+                        }
+                    }
+                    // Safeguard: if we accidentally wiped it, revert to original
+                    if (!description.trim()) {
+                        description = originalDescription.trim();
+                    }
                 }
 
                 return {
