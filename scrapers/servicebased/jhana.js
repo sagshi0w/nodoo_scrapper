@@ -92,26 +92,35 @@ class JhanaJobsScraper {
 
                 let rawLocation = getText('div.MuiGrid-container > div.MuiGrid-item:nth-child(3) span.MuiChip-label');
                 let location = rawLocation.trim();
+                
+                // Use Bangalore as fallback if location is missing
+                if (!location) {
+                    location = 'Bangalore';
+                }
 
                 // let rawExperience = getText('div.MuiTypography-root.MuiTypography-body1');
                 // let experience = rawExperience.trim();
 
-                // Extract About the Role and About You sections
-                const allSections = document.querySelectorAll('div.MuiPaper-root');
+                // Extract About the Role and About You sections from the main job content area
+                // Look for sections within the main job page content, not from other job cards
+                const mainContent = document.querySelector('div.MuiBox-root > div.MuiGrid-container');
                 let aboutRoleContent = '';
                 let aboutYouContent = '';
                 
-                allSections.forEach(section => {
-                    const heading = section.querySelector('h4');
-                    if (heading) {
-                        const headingText = heading.textContent.trim();
-                        if (headingText === 'About the Role') {
-                            aboutRoleContent = section.textContent.trim();
-                        } else if (headingText === 'About You') {
-                            aboutYouContent = section.textContent.trim();
+                if (mainContent) {
+                    const sections = mainContent.querySelectorAll('div.MuiPaper-root');
+                    sections.forEach(section => {
+                        const heading = section.querySelector('h4');
+                        if (heading) {
+                            const headingText = heading.textContent.trim();
+                            if (headingText === 'About the Role') {
+                                aboutRoleContent = section.textContent.trim();
+                            } else if (headingText === 'About You') {
+                                aboutYouContent = section.textContent.trim();
+                            }
                         }
-                    }
-                });
+                    });
+                }
                 
                 // Combine both sections as description
                 let description = '';
@@ -122,9 +131,14 @@ class JhanaJobsScraper {
                     description += aboutYouContent;
                 }
                 
-                // Fallback to full content if specific sections not found
+                // Fallback to main content area if specific sections not found
                 if (!description.trim()) {
-                    description = getText('div.MuiBox-root');
+                    const mainContentArea = document.querySelector('div.MuiBox-root > div.MuiGrid-container');
+                    if (mainContentArea) {
+                        description = mainContentArea.textContent.trim();
+                    } else {
+                        description = getText('div.MuiBox-root');
+                    }
                 }
                 
                 // Clean up description - remove footer content, form application text, and navigation
@@ -143,6 +157,15 @@ class JhanaJobsScraper {
                         .replace(/FOUNDED AT HARVARD IN 2022\.\s*MADE IN INDIA\.\s*COPYRIGHT © 2024 JHANA\.AI\.\s*ALL RIGHTS RESERVED\./g, '') // Remove copyright
                         .replace(/Compliant with the Digital Personal Data Protection Act, 2023, and the SDPI Rules of the IT Act, 2000\./g, '') // Remove compliance text
                         .replace(/Compliant with ISO 27001 and SOC 2 Types I and II security standards; currently under audit for rating\./g, '') // Remove security standards
+                        .replace(/Your Pick the Title[\s\S]*?Position Overview\n/g, '') // Remove duplicate job listings
+                        .replace(/Senior Business Account Executive[\s\S]*?Position Overview\n/g, '') // Remove duplicate job listings
+                        .replace(/Business Account Manager[\s\S]*?Position Overview\n/g, '') // Remove duplicate job listings
+                        .replace(/Business Account Executive[\s\S]*?Position Overview\n/g, '') // Remove duplicate job listings
+                        .replace(/Senior Sales Development Representative[\s\S]*?Position Overview\n/g, '') // Remove duplicate job listings
+                        .replace(/Sales Development Representative[\s\S]*?Position Overview\n/g, '') // Remove duplicate job listings
+                        .replace(/Sales Intern[\s\S]*?Position Overview\n/g, '') // Remove duplicate job listings
+                        .replace(/In-House Counsel[\s\S]*?Position Overview\n/g, '') // Remove duplicate job listings
+                        .replace(/Pick Your Own Title[\s\S]*?About the role\n/g, '') // Remove duplicate job listings
                         .replace(/\n{3,}/g, '\n\n')
                         .trim();
                 }
