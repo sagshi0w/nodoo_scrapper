@@ -30,6 +30,7 @@ export default async function sendToBackend(jobs) {
 
   let totalSent = 0;
   let totalInsertedReported = 0;
+  const insertedJobs = [];
 
   // Per-company counts
   const perCompany = {};
@@ -64,14 +65,33 @@ export default async function sendToBackend(jobs) {
       // Try to infer inserted count from common backend response shapes
       const data = response && response.data ? response.data : {};
       let insertedThisBatch = 0;
+      let insertedUrls = new Set();
       if (typeof data.insertedCount === 'number') insertedThisBatch = data.insertedCount;
       else if (typeof data.createdCount === 'number') insertedThisBatch = data.createdCount;
       else if (typeof data.upsertedCount === 'number') insertedThisBatch = data.upsertedCount;
       else if (Array.isArray(data.insertedIds)) insertedThisBatch = data.insertedIds.length;
-      else if (Array.isArray(data.results)) {
-        insertedThisBatch = data.results.filter(r => r && (r.inserted === true || r.created === true || r.upserted === true)).length;
+      if (Array.isArray(data.insertedUrls)) data.insertedUrls.forEach(u => insertedUrls.add(u));
+      if (Array.isArray(data.createdUrls)) data.createdUrls.forEach(u => insertedUrls.add(u));
+      if (Array.isArray(data.results)) {
+        data.results.forEach(r => {
+          if (r && (r.inserted === true || r.created === true || r.upserted === true)) {
+            if (r.url) insertedUrls.add(r.url);
+          }
+        });
+        if (insertedThisBatch === 0) {
+          insertedThisBatch = Array.from(insertedUrls).length;
+        }
       }
       totalInsertedReported += insertedThisBatch;
+
+      // Map inserted URLs back to job objects for reporting
+      if (insertedUrls.size > 0) {
+        const urlToJob = new Map(batch.map(j => [j.url, j]));
+        insertedUrls.forEach(u => {
+          const j = urlToJob.get(u);
+          if (j) insertedJobs.push({ title: j.title, company: j.company, url: j.url });
+        });
+      }
     } catch (error) {
       console.error(`❌ Failed to send batch ${Math.floor(i / BATCH_SIZE) + 1}`);
 
@@ -94,7 +114,8 @@ export default async function sendToBackend(jobs) {
     totalScraped: jobs.length,
     totalUnique: uniqueJobs.length,
     totalInserted: totalInsertedReported,
-    perCompany
+    perCompany,
+    insertedJobs
   };
 }
 
