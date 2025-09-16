@@ -112,6 +112,7 @@ import Procol from "./scrapers/servicebased/procol.js"
 import Uniphore from "./scrapers/servicebased/uniphore.js"
 import GoKwik from "./scrapers/servicebased/GoKwik.js"
 import Coreworks from "./scrapers/servicebased/Coreworks.js"
+import Jhana from "./scrapers/servicebased/jhana.js"
 
 // Not working scrappers:
 import runTataMgJobsScraper from "./scrapers/productBased/tata1mg.js"
@@ -186,15 +187,7 @@ ${error.stack}`;
 };
 
 const scrapers = [
-    { fn: Coreworks, headless: true },
-    { fn: GoKwik, headless: true },
-    { fn: Uniphore, headless: true },
-    { fn: Procol, headless: true },
-    { fn: Spyne, headless: true },
-    { fn: Realfast, headless: true },
-    { fn: Neysa, headless: true },
-    { fn: Repello, headless: true },
-    { fn: TrueFoundary, headless: true },
+    { fn: Jhana, headless: true },
 ];
 
 const runAllScrapers = async () => {
@@ -247,7 +240,7 @@ const runAllScrapers = async () => {
             enrichedJobs = allJobs.map(job => extractData(job));
             console.log("enrichedJobs=", enrichedJobs);
             try {
-                backendSummary = await sendToBackend(enrichedJobs);
+                // backendSummary = await sendToBackend(enrichedJobs);
                 console.log(`📤 Backend summary:`, backendSummary);
             } catch (e) {
                 console.error('❌ Sending to backend failed:', e);
