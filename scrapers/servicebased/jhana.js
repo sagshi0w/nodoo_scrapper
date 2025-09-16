@@ -92,6 +92,9 @@ class JhanaJobsScraper {
 
                 let rawLocation = getText('div.MuiGrid-container > div.MuiGrid-item:nth-child(3) span.MuiChip-label');
                 let location = rawLocation.trim();
+                if (!location) {
+                    location = 'Bangalore';
+                }
 
                 // let rawExperience = getText('div.MuiTypography-root.MuiTypography-body1');
                 // let experience = rawExperience.trim();
@@ -128,6 +131,30 @@ class JhanaJobsScraper {
                 // Fallback to primary content container when sections aren't detected
                 if (!description.trim()) {
                     description = getText('div.notion-page-content') || getText('div.MuiBox-root') || '';
+                }
+                // Remove specific unwanted blocks from description
+                if (description) {
+                    description = description
+                        // Navigation chunk
+                        .replace(/Features[\s\S]*?Login\s*/gi, '')
+                        // Header/job summary lines that leak in
+                        .replace(/^(Senior Business Account Executive|Business Account Executive|Business Account Manager|Growth and Alliances|Legal\s*&\s*Sales|Full-Time|Bangalore\s*\/\s*Chennai\s*\/\s*New Delhi|Bangalore\s*\/\s*New Delhi)\s*$/gmi, '')
+                        // Also remove those tokens even if not at line start
+                        .replace(/(?:^|\n)\s*(Business Account Manager)\s*(?=\n|$)/g, '')
+                        .replace(/(?:^|\n)\s*(Business Account Executive)\s*(?=\n|$)/g, '')
+                        .replace(/(?:^|\n)\s*(Legal\s*&\s*Sales)\s*(?=\n|$)/g, '')
+                        .replace(/(?:^|\n)\s*(Growth and Alliances)\s*(?=\n|$)/g, '')
+                        .replace(/(?:^|\n)\s*(Full-Time)\s*(?=\n|$)/g, '')
+                        .replace(/(?:^|\n)\s*(Bangalore\s*\/\s*New Delhi)\s*(?=\n|$)/g, '')
+                        // About jhana heading and company blurb variants
+                        .replace(/About jhana[\s\S]*?(?:More details are available to candidates\.|\n{2,}|$)/gmi, '')
+                        .replace(/jhana is an early-stage[\s\S]*?excellence\./gmi, '')
+                        // Application form and footer sections
+                        .replace(/Apply using this form[\s\S]*$/gmi, '')
+                        .replace(/COMPANY[\s\S]*?(?:Service Status|FOUNDED AT HARVARD IN 2022|$)/gmi, '')
+                        .replace(/RESOURCES[\s\S]*?(?:Service Status|FOUNDED AT HARVARD IN 2022|$)/gmi, '')
+                        .replace(/FOUNDED AT HARVARD IN 2022[\s\S]*?$/gmi, '')
+                        .trim();
                 }
                 
                 // No cleaning logic; return description as extracted
