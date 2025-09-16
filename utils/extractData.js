@@ -1543,7 +1543,7 @@ export default function extractSkillsAndExperience(job) {
         }
 
         // Normalize input
-        let str = String(expString).toLowerCase().trim();
+        let str = expString.toLowerCase().trim();
 
         // Remove words like "yrs", "years", "year", "experience"
         str = str.replace(/(yrs?|years?|experience)/g, "").trim();
