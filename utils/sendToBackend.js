@@ -67,6 +67,7 @@ export default async function sendToBackend(jobs) {
       let insertedThisBatch = 0;
       let insertedUrls = new Set();
       if (typeof data.insertedCount === 'number') insertedThisBatch = data.insertedCount;
+      else if (typeof data.inserted === 'number') insertedThisBatch = data.inserted; // backend field
       else if (typeof data.createdCount === 'number') insertedThisBatch = data.createdCount;
       else if (typeof data.upsertedCount === 'number') insertedThisBatch = data.upsertedCount;
       else if (Array.isArray(data.insertedIds)) insertedThisBatch = data.insertedIds.length;
