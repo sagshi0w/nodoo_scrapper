@@ -104,14 +104,22 @@ class JhanaJobsScraper {
                 
                 if (mainContent) {
                     const sections = mainContent.querySelectorAll('div.MuiPaper-root');
+                    const extractSectionText = (section) => {
+                        const lines = [];
+                        section.querySelectorAll('p, li').forEach(node => {
+                            const t = (node.innerText || node.textContent || '').trim();
+                            if (t) lines.push(t);
+                        });
+                        return lines.join('\n');
+                    };
                     sections.forEach(section => {
                         const heading = section.querySelector('h4');
                         if (heading) {
                             const headingText = heading.textContent.trim().toLowerCase();
                             if (headingText.includes('about the role')) {
-                                aboutRoleContent = section.textContent.trim();
+                                aboutRoleContent = extractSectionText(section);
                             } else if (headingText.includes('about you')) {
-                                aboutYouContent = section.textContent.trim();
+                                aboutYouContent = extractSectionText(section);
                             }
                         }
                     });
@@ -139,49 +147,7 @@ class JhanaJobsScraper {
                     }
                 }
                 
-                // Clean up description - avoid removing valid content
-                if (description) {
-                    const originalDescription = description;
-                    if (gotTargetSections) {
-                        // Minimal cleanup when we have exact sections
-                        description = description
-                            .replace(/\n{3,}/g, '\n\n')
-                            .trim();
-                    } else {
-                        // Conservative removals for page-wide noise: truncate tail after first footer marker
-                        const original = description;
-                        const lower = description.toLowerCase();
-                        const markers = [
-                            'apply using this form',
-                            'company\n',
-                            'resources\n',
-                            'founded at harvard in 2022',
-                            'privacy policy',
-                            'terms & conditions',
-                            'service status'
-                        ];
-                        let cutIndex = -1;
-                        for (const m of markers) {
-                            const idx = lower.indexOf(m);
-                            if (idx !== -1) {
-                                cutIndex = cutIndex === -1 ? idx : Math.min(cutIndex, idx);
-                            }
-                        }
-                        if (cutIndex !== -1) {
-                            description = description.slice(0, cutIndex);
-                        }
-                        description = description
-                            .replace(/\n{3,}/g, '\n\n')
-                            .trim();
-                        if (description.length < 80) {
-                            description = original.trim();
-                        }
-                    }
-                    // Safeguard: if we accidentally wiped it, revert to original
-                    if (!description.trim()) {
-                        description = originalDescription.trim();
-                    }
-                }
+                // No cleaning logic; return description as extracted
 
                 return {
                     title,
