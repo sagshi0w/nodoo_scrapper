@@ -96,8 +96,39 @@ class JhanaJobsScraper {
                 // let rawExperience = getText('div.MuiTypography-root.MuiTypography-body1');
                 // let experience = rawExperience.trim();
 
-                // Simple description: take primary content container, no cleaning
-                let description = getText('div.notion-page-content') || getText('div.MuiBox-root') || '';
+                // Build description from "About the Role" and "About You" sections
+                let description = '';
+                const mainContent = document.querySelector('div.MuiBox-root');
+                if (mainContent) {
+                    let aboutRoleContent = '';
+                    let aboutYouContent = '';
+                    const sections = mainContent.querySelectorAll('div.MuiPaper-root');
+                    const extractSectionText = (section) => {
+                        const lines = [];
+                        section.querySelectorAll('p, li').forEach(node => {
+                            const t = (node.innerText || node.textContent || '').trim();
+                            if (t) lines.push(t);
+                        });
+                        return lines.join('\n');
+                    };
+                    sections.forEach(section => {
+                        const heading = section.querySelector('h4');
+                        if (!heading) return;
+                        const headingText = (heading.textContent || '').trim().toLowerCase();
+                        if (headingText.includes('about the role')) {
+                            aboutRoleContent = extractSectionText(section);
+                        }
+                        if (headingText.includes('about you')) {
+                            aboutYouContent = extractSectionText(section);
+                        }
+                    });
+                    if (aboutRoleContent) description += aboutRoleContent;
+                    if (aboutYouContent) description += (description ? '\n\n' : '') + aboutYouContent;
+                }
+                // Fallback to primary content container when sections aren't detected
+                if (!description.trim()) {
+                    description = getText('div.notion-page-content') || getText('div.MuiBox-root') || '';
+                }
                 
                 // No cleaning logic; return description as extracted
 
