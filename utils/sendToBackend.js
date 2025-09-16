@@ -29,6 +29,22 @@ export default async function sendToBackend(jobs) {
   console.log(`📦 Preparing to send ${uniqueJobs.length} jobs in batches of ${BATCH_SIZE}...`);
 
   let totalSent = 0;
+  let totalInsertedReported = 0;
+
+  // Per-company counts
+  const perCompany = {};
+  // scraped (pre-dedupe)
+  jobs.forEach(job => {
+    const company = job.company || 'Unknown';
+    if (!perCompany[company]) perCompany[company] = { scraped: 0, unique: 0 };
+    perCompany[company].scraped += 1;
+  });
+  // unique (post-dedupe)
+  uniqueJobs.forEach(job => {
+    const company = job.company || 'Unknown';
+    if (!perCompany[company]) perCompany[company] = { scraped: 0, unique: 0 };
+    perCompany[company].unique += 1;
+  });
 
   for (let i = 0; i < uniqueJobs.length; i += BATCH_SIZE) {
     const batch = uniqueJobs.slice(i, i + BATCH_SIZE);
@@ -44,6 +60,18 @@ export default async function sendToBackend(jobs) {
       const response = await retryableRequest(requestConfig);
       console.log(`✅ Batch ${Math.floor(i / BATCH_SIZE) + 1} success:`, response.data);
       totalSent += batch.length;
+
+      // Try to infer inserted count from common backend response shapes
+      const data = response && response.data ? response.data : {};
+      let insertedThisBatch = 0;
+      if (typeof data.insertedCount === 'number') insertedThisBatch = data.insertedCount;
+      else if (typeof data.createdCount === 'number') insertedThisBatch = data.createdCount;
+      else if (typeof data.upsertedCount === 'number') insertedThisBatch = data.upsertedCount;
+      else if (Array.isArray(data.insertedIds)) insertedThisBatch = data.insertedIds.length;
+      else if (Array.isArray(data.results)) {
+        insertedThisBatch = data.results.filter(r => r && (r.inserted === true || r.created === true || r.upserted === true)).length;
+      }
+      totalInsertedReported += insertedThisBatch;
     } catch (error) {
       console.error(`❌ Failed to send batch ${Math.floor(i / BATCH_SIZE) + 1}`);
 
@@ -61,6 +89,13 @@ export default async function sendToBackend(jobs) {
   }
 
   console.log(`✅ Finished sending jobs: ${totalSent}/${uniqueJobs.length}`);
+
+  return {
+    totalScraped: jobs.length,
+    totalUnique: uniqueJobs.length,
+    totalInserted: totalInsertedReported,
+    perCompany
+  };
 }
 
 async function retryableRequest(config, retriesLeft = MAX_RETRIES, delay = INITIAL_RETRY_DELAY) {

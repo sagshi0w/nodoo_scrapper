@@ -140,7 +140,7 @@ const transporter = nodemailer.createTransport({
 });
 
 const notify = {
-    success: async (stats) => {
+    success: async (stats, htmlContent) => {
         const summaryText = `✅ Scraping completed at ${stats.endTime}
 ⏱ Duration: ${stats.duration} minutes
 🟢 Successful scrapers: ${stats.successCount}
@@ -158,7 +158,8 @@ ${stats.scraperBreakdown.map(s => `- ${s.name}: ${s.count} jobs`).join('\n')}
             from: `"Job Scraper" <${config.notification.email.user}>`,
             to: config.notification.email.recipients,
             subject: `✅ Job Scraping Success (${stats.successCount} scrapers)`,
-            text: summaryText
+            text: summaryText,
+            html: htmlContent || undefined
         });
 
         console.log("📧 Success notification email sent.");
@@ -230,11 +231,66 @@ const runAllScrapers = async () => {
         stats.totalJobs = allJobs.length;
         console.log('Number of jobs found = ', allJobs.length)
 
+        let enrichedJobs = [];
+        let backendSummary = null;
+        let emailHTML = null;
         if (allJobs.length > 0) {
-            const enrichedJobs = allJobs.map(job => extractData(job));
+            enrichedJobs = allJobs.map(job => extractData(job));
             console.log("enrichedJobs=", enrichedJobs);
-            await sendToBackend(enrichedJobs);
-            console.log(`📤 Sent ${enrichedJobs.length} jobs to backend`);
+            try {
+                backendSummary = await sendToBackend(enrichedJobs);
+                console.log(`📤 Backend summary:`, backendSummary);
+            } catch (e) {
+                console.error('❌ Sending to backend failed:', e);
+            }
+
+            // Build HTML email content
+            const buildEmailHTML = (jobs, summary) => {
+                const rows = jobs.map(j => `
+                    <tr>
+                        <td style="border:1px solid #ddd;padding:8px;">${j.company || ''}</td>
+                        <td style="border:1px solid #ddd;padding:8px;">${j.title || ''}</td>
+                    </tr>
+                `).join('');
+
+                const totals = summary || { totalScraped: jobs.length, totalUnique: jobs.length, totalInserted: 0 };
+
+                const totalsTable = `
+                    <table style="border-collapse:collapse;width:100%;margin-top:16px;">
+                        <thead>
+                            <tr>
+                                <th style="border:1px solid #ddd;padding:8px;text-align:left;">Metric</th>
+                                <th style="border:1px solid #ddd;padding:8px;text-align:left;">Count</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td style="border:1px solid #ddd;padding:8px;">Total Scraped</td><td style="border:1px solid #ddd;padding:8px;">${totals.totalScraped}</td></tr>
+                            <tr><td style="border:1px solid #ddd;padding:8px;">Total Unique (by URL)</td><td style="border:1px solid #ddd;padding:8px;">${totals.totalUnique}</td></tr>
+                            <tr><td style="border:1px solid #ddd;padding:8px;">Total Inserted to DB</td><td style="border:1px solid #ddd;padding:8px;">${totals.totalInserted}</td></tr>
+                        </tbody>
+                    </table>`;
+
+                return `
+                    <div style="font-family:Arial, sans-serif;">
+                        <h3 style="margin:0 0 8px 0;">Jobs</h3>
+                        <table style="border-collapse:collapse;width:100%;">
+                            <thead>
+                                <tr>
+                                    <th style="border:1px solid #ddd;padding:8px;text-align:left;">Company</th>
+                                    <th style="border:1px solid #ddd;padding:8px;text-align:left;">Job Title</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${rows}
+                            </tbody>
+                        </table>
+                        <h3 style="margin:16px 0 8px 0;">Summary</h3>
+                        ${totalsTable}
+                    </div>
+                `;
+            };
+
+            emailHTML = buildEmailHTML(enrichedJobs, backendSummary);
         }
 
         const endTime = moment().tz("Asia/Kolkata");
@@ -247,7 +303,7 @@ const runAllScrapers = async () => {
     - Total jobs: ${stats.totalJobs}
     - Duration: ${stats.duration} mins`);
 
-        await notify.success(stats);
+        await notify.success(stats, emailHTML);
         return stats;
 
     } catch (error) {
