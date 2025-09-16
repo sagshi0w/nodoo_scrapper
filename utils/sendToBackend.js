@@ -71,6 +71,12 @@ export default async function sendToBackend(jobs) {
       else if (typeof data.createdCount === 'number') insertedThisBatch = data.createdCount;
       else if (typeof data.upsertedCount === 'number') insertedThisBatch = data.upsertedCount;
       else if (Array.isArray(data.insertedIds)) insertedThisBatch = data.insertedIds.length;
+      // If backend includes insertedJobs directly, use them for titles
+      if (Array.isArray(data.insertedJobs)) {
+        data.insertedJobs.forEach(j => {
+          if (j && (j.title || j.url)) insertedJobs.push({ title: j.title, company: j.company, url: j.url });
+        });
+      }
       if (Array.isArray(data.insertedUrls)) data.insertedUrls.forEach(u => insertedUrls.add(u));
       if (Array.isArray(data.createdUrls)) data.createdUrls.forEach(u => insertedUrls.add(u));
       if (Array.isArray(data.results)) {
