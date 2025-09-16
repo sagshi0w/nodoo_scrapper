@@ -96,56 +96,8 @@ class JhanaJobsScraper {
                 // let rawExperience = getText('div.MuiTypography-root.MuiTypography-body1');
                 // let experience = rawExperience.trim();
 
-                // Extract About the Role and About You sections from the main job content area
-                // Look for sections within the main job page content, not from other job cards
-                const mainContent = document.querySelector('div.MuiBox-root > div.MuiGrid-container');
-                let aboutRoleContent = '';
-                let aboutYouContent = '';
-                
-                if (mainContent) {
-                    const sections = mainContent.querySelectorAll('div.MuiPaper-root');
-                    const extractSectionText = (section) => {
-                        const lines = [];
-                        section.querySelectorAll('p, li').forEach(node => {
-                            const t = (node.innerText || node.textContent || '').trim();
-                            if (t) lines.push(t);
-                        });
-                        return lines.join('\n');
-                    };
-                    sections.forEach(section => {
-                        const heading = section.querySelector('h4');
-                        if (heading) {
-                            const headingText = heading.textContent.trim().toLowerCase();
-                            if (headingText.includes('about the role')) {
-                                aboutRoleContent = extractSectionText(section);
-                            } else if (headingText.includes('about you')) {
-                                aboutYouContent = extractSectionText(section);
-                            }
-                        }
-                    });
-                }
-                
-                // Combine both sections as description
-                let description = '';
-                let gotTargetSections = false;
-                if (aboutRoleContent) {
-                    description += aboutRoleContent + '\n\n';
-                    gotTargetSections = true;
-                }
-                if (aboutYouContent) {
-                    description += aboutYouContent;
-                    gotTargetSections = true;
-                }
-                
-                // Fallback to main content area if specific sections not found
-                if (!description.trim()) {
-                    const mainContentArea = document.querySelector('div.MuiBox-root > div.MuiGrid-container');
-                    if (mainContentArea) {
-                        description = mainContentArea.textContent.trim();
-                    } else {
-                        description = getText('div.MuiBox-root');
-                    }
-                }
+                // Simple description: take primary content container, no cleaning
+                let description = getText('div.notion-page-content') || getText('div.MuiBox-root') || '';
                 
                 // No cleaning logic; return description as extracted
 
