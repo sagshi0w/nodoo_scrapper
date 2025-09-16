@@ -1537,13 +1537,25 @@ export default function extractSkillsAndExperience(job) {
     const getISOTimestamp = () => new Date().toISOString();
 
     // Get miniExperience and maxExperience fields:
-    function parseExperience(expString = "") {
-        if (!expString) {
+    function parseExperience(expInput = "") {
+        if (!expInput) {
             return { miniExperience: null, maxExperience: null };
         }
 
-        // Normalize input
-        let str = expString.toLowerCase().trim();
+        // If already an object with min/max, map directly
+        if (typeof expInput === 'object' && expInput !== null) {
+            const hasMin = Object.prototype.hasOwnProperty.call(expInput, 'min');
+            const hasMax = Object.prototype.hasOwnProperty.call(expInput, 'max');
+            if (hasMin || hasMax) {
+                return {
+                    miniExperience: expInput.min ?? null,
+                    maxExperience: expInput.max ?? null
+                };
+            }
+        }
+
+        // Normalize input assuming string-like
+        let str = String(expInput).toLowerCase().trim();
 
         // Remove words like "yrs", "years", "year", "experience"
         str = str.replace(/(yrs?|years?|experience)/g, "").trim();
@@ -1580,16 +1592,27 @@ export default function extractSkillsAndExperience(job) {
     }
 
 
+    const cleanedDesc = cleanDescription(job.description);
+    const experienceRange = extractExperience(cleanedDesc);
+    const experienceString = experienceRange.min != null
+        ? (experienceRange.max != null && experienceRange.max !== experienceRange.min
+            ? `${experienceRange.min}-${experienceRange.max}`
+            : `${experienceRange.min}`)
+        : "Not specified";
+
+    // Sector should be an array per schema
+    const sectorSingle = categorizeJob(job.title, cleanedDesc);
+
     return {
         ...job,
-        description: cleanDescription(job.description),
-        skills: extractSkills(cleanDescription(job.description)),
-        experience: extractExperience(cleanDescription(job.description)),
-        sector: categorizeJob(job.title, cleanDescription(job.description)),
-        isEntryLevel: isEntryLevelJob(job.title, cleanDescription(job.description)),
-        jobType: extractJobType(cleanDescription(job.description), extractExperience(cleanDescription(job.description))),
+        description: cleanedDesc,
+        skills: extractSkills(cleanedDesc),
+        experience: experienceString,
+        sector: sectorSingle ? [sectorSingle] : [],
+        isEntryLevel: isEntryLevelJob(job.title, experienceString),
+        jobType: extractJobType(cleanedDesc, experienceRange.min ?? null),
         location: extractCity(job.location),
-        ...parseExperience(extractExperience(cleanDescription(job.description))),
+        ...parseExperience(experienceRange),
         postedAt: getISOTimestamp()
     };
 }

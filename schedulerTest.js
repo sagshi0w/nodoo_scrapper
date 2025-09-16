@@ -184,7 +184,7 @@ ${error.stack}`;
 };
 
 const scrapers = [
-     { fn: GoKwik, headless: true },
+     { fn: Coreworks, headless: true },
 ];
 
 const runAllScrapers = async () => {
