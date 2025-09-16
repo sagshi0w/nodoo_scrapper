@@ -4,6 +4,7 @@ import { createRequire } from 'module';
 import fs from 'fs';
 import extractData from "./utils/extractData.js";
 import sendToBackend from "./utils/sendToBackend.js";
+import { buildInsertedJobsEmailHTML } from "./utils/emailTemplates.js";
 import shuffleJobsAvoidStackingSameCompany from "./utils/jobShuffler.js";
 import dotenv from 'dotenv';
 
@@ -41,7 +42,7 @@ const transporter = nodemailer.createTransport({
 });
 
 const notify = {
-  success: async (stats) => {
+  success: async (stats, htmlContent) => {
     const summaryText = `✅ Scraping completed at ${stats.endTime}
 ⏱ Duration: ${stats.duration} minutes
 🟢 Successful scrapers: ${stats.successCount}
@@ -59,7 +60,8 @@ ${stats.scraperBreakdown.map(s => `- ${s.name}: ${s.count} jobs`).join('\n')}
       from: `"Job Scraper" <${config.notification.email.user}>`,
       to: config.notification.email.recipients,
       subject: `✅ Job Scraping Success (${stats.successCount} scrapers)`,
-      text: summaryText
+      text: summaryText,
+      html: htmlContent || undefined
     });
 
     console.log("📧 Success notification email sent.");
@@ -133,10 +135,17 @@ const runAllScrapers = async () => {
     stats.totalJobs = allJobs.length;
     console.log('Number of jobs found = ', allJobs.length)
 
+    let emailHTML = null;
     if (allJobs.length > 0) {
       const enrichedJobs = allJobs.map(job => extractData(job));
       const shuffledJobs = shuffleJobsAvoidStackingSameCompany(enrichedJobs);
-      await sendToBackend(shuffledJobs);
+      let backendSummary = null;
+      try {
+        backendSummary = await sendToBackend(shuffledJobs);
+      } catch (e) {
+        backendSummary = null;
+      }
+      emailHTML = buildInsertedJobsEmailHTML(enrichedJobs, backendSummary);
     }
 
     const endTime = moment().tz("Asia/Kolkata");
@@ -149,7 +158,7 @@ const runAllScrapers = async () => {
     - Total jobs: ${stats.totalJobs}
     - Duration: ${stats.duration} mins`);
 
-    await notify.success(stats);
+    await notify.success(stats, emailHTML);
     return stats;
 
   } catch (error) {
