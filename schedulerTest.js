@@ -246,14 +246,14 @@ const runAllScrapers = async () => {
 
             // Build HTML email content
             const buildEmailHTML = (jobs, summary) => {
-                const rows = jobs.map(j => `
+                const inserted = (summary && Array.isArray(summary.insertedJobs)) ? summary.insertedJobs : [];
+                const rows = inserted.map(j => `
                     <tr>
-                        <td style="border:1px solid #ddd;padding:8px;">${j.company || ''}</td>
                         <td style="border:1px solid #ddd;padding:8px;">${j.title || ''}</td>
                     </tr>
                 `).join('');
 
-                const totals = summary || { totalScraped: jobs.length, totalUnique: jobs.length, totalInserted: 0 };
+                const totals = summary || { totalScraped: jobs.length, totalUnique: jobs.length, totalInserted: inserted.length };
 
                 const totalsTable = `
                     <table style="border-collapse:collapse;width:100%;margin-top:16px;">
@@ -272,16 +272,15 @@ const runAllScrapers = async () => {
 
                 return `
                     <div style="font-family:Arial, sans-serif;">
-                        <h3 style="margin:0 0 8px 0;">Jobs</h3>
+                        <h3 style="margin:0 0 8px 0;">Inserted Job Titles</h3>
                         <table style="border-collapse:collapse;width:100%;">
                             <thead>
                                 <tr>
-                                    <th style="border:1px solid #ddd;padding:8px;text-align:left;">Company</th>
                                     <th style="border:1px solid #ddd;padding:8px;text-align:left;">Job Title</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                ${rows}
+                                ${rows || '<tr><td style="border:1px solid #ddd;padding:8px;">No new jobs inserted</td></tr>'}
                             </tbody>
                         </table>
                         <h3 style="margin:16px 0 8px 0;">Summary</h3>
