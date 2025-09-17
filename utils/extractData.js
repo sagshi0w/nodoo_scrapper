@@ -1596,8 +1596,8 @@ export default function extractSkillsAndExperience(job) {
     const experienceRange = extractExperience(cleanedDesc);
     const experienceString = experienceRange.min != null
         ? (experienceRange.max != null && experienceRange.max !== experienceRange.min
-            ? `${experienceRange.min}-${experienceRange.max}`
-            : `${experienceRange.min}`)
+            ? `${experienceRange.min} - ${experienceRange.max} yrs`
+            : `${experienceRange.min} - ${experienceRange.min + 2} yrs`)
         : "Not specified";
 
     // Sector should be an array per schema
