@@ -115,6 +115,7 @@ import Coreworks from "./scrapers/servicebased/Coreworks.js"
 import Jhana from "./scrapers/servicebased/jhana.js"
 import Spendflo from "./scrapers/servicebased/Spendflo.js"
 import Securden from "./scrapers/servicebased/Securden.js"
+import RevenueHero from "./scrapers/servicebased/RevenueHero.js"
 
 // Not working scrappers:
 import runTataMgJobsScraper from "./scrapers/productBased/tata1mg.js"
@@ -189,7 +190,7 @@ ${error.stack}`;
 };
 
 const scrapers = [
-    { fn: Securden, headless: true },
+    { fn: RevenueHero, headless: true },
 ];
 
 const runAllScrapers = async () => {
