@@ -30,6 +30,7 @@ import GoKwik from "./scrapers/servicebased/GoKwik.js"
 import Coreworks from "./scrapers/servicebased/Coreworks.js"
 import Jhana from "./scrapers/servicebased/jhana.js"
 import Spendflo from "./scrapers/servicebased/Spendflo.js"
+import RevenueHero from "./scrapers/servicebased/RevenueHero.js"
 
 const config = {
     concurrency: 5,
@@ -114,6 +115,7 @@ const scrapers = [
     { fn: Coreworks, headless: true },
     { fn: Jhana, headless: true },
     { fn: Spendflo, headless: true },
+    { fn: RevenueHero, headless: true },
 ];
 
 const runAllScrapers = async () => {
