@@ -182,20 +182,15 @@ const extractWiproData = (job) => {
 
     if (cleanedDescription) {
         // Remove sections like Job Title, Location, Type, Experience, About Us intro, Why Join Us
-        cleanedDescription = cleanedDescription
-            .replace(/Job\s+Title:\s*.*\n?/i, '')
-            .replace(/Location:\s*.*\n?/i, '')
-            .replace(/Type:\s*.*\n?/i, '')
-            .replace(/Experience:\s*.*\n?/i, '')
-            .replace(/About Us\s*\n+[\s\S]*?(?=\n{2,}[A-Z])/i, '') // Remove About Us intro until next section
-            .replace(
-                /About Us\s*\n+[\s\S]*?We're building a powerful natural language query engine \+ spreadsheet interface to help finance teams model, analyze, and automate reporting like never before\./,
-                ''
-            )
-            .replace(
-                /Why Join Us\s*\n+This is a unique opportunity to join a category-defining company at a pivotal stage\. You'll get to build impactful products, work alongside high-performing teams, and help shape the future of how businesses manage procurement\.\s*\n+\s*If you're excited by complex challenges, want to own meaningful product surfaces, and are ready to modernise the procurement industry, we'd love to talk to you\./i,
-                ''
-            )
+        cleanedDescription = cleanedDescription// Remove About Us intro until next section
+            // .replace(
+            //     /About Us\s*\n+[\s\S]*?We're building a powerful natural language query engine \+ spreadsheet interface to help finance teams model, analyze, and automate reporting like never before\./,
+            //     ''
+            // )
+            // .replace(
+            //     /Why Join Us\s*\n+This is a unique opportunity to join a category-defining company at a pivotal stage\. You'll get to build impactful products, work alongside high-performing teams, and help shape the future of how businesses manage procurement\.\s*\n+\s*If you're excited by complex challenges, want to own meaningful product surfaces, and are ready to modernise the procurement industry, we'd love to talk to you\./i,
+            //     ''
+            // )
 
             // Existing formatting steps
             .replace(/(\n\s*)(\d+\.\s+)(.*?)(\n)/gi, '\n\n$1$2$3$4')
