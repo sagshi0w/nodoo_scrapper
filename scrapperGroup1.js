@@ -29,6 +29,7 @@ import Uniphore from "./scrapers/servicebased/uniphore.js"
 import GoKwik from "./scrapers/servicebased/GoKwik.js"
 import Coreworks from "./scrapers/servicebased/Coreworks.js"
 import Jhana from "./scrapers/servicebased/jhana.js"
+import Spendflo from "./scrapers/servicebased/Spendflo.js"
 
 const config = {
     concurrency: 5,
@@ -112,6 +113,7 @@ const scrapers = [
     { fn: GoKwik, headless: true },
     { fn: Coreworks, headless: true },
     { fn: Jhana, headless: true },
+    { fn: Spendflo, headless: true },
 ];
 
 const runAllScrapers = async () => {
