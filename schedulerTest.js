@@ -113,6 +113,7 @@ import Uniphore from "./scrapers/servicebased/uniphore.js"
 import GoKwik from "./scrapers/servicebased/GoKwik.js"
 import Coreworks from "./scrapers/servicebased/Coreworks.js"
 import Jhana from "./scrapers/servicebased/jhana.js"
+import Spendflo from "./scrapers/servicebased/Spendflo.js"
 
 // Not working scrappers:
 import runTataMgJobsScraper from "./scrapers/productBased/tata1mg.js"
@@ -187,7 +188,7 @@ ${error.stack}`;
 };
 
 const scrapers = [
-    // { fn: Jhana, headless: true },
+    { fn: Spendflo, headless: true },
 ];
 
 const runAllScrapers = async () => {
