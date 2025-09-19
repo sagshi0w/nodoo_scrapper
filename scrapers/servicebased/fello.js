@@ -231,7 +231,7 @@ const extractFelloData = (job) => {
                 ''
             )
             .replace(
-                /About Fello:\s*\n+Fello is a profitable, hyper-growth, VC-backed B2B SaaS startup on a mission to empower businesses with data-driven intelligence\. Our AI-powered marketing automation platform helps businesses optimize engagement, make smarter decisions, and stay ahead in a competitive market\.\s*\n+\s*With massive growth potential and a track record of success, we're just getting started\. If you're passionate about innovation and want to be part of an industry-defining team, Fello is the place to be\.\s*\n+\s*/i,
+                /About Fello:\s*\n+\s*Fello is a profitable, hyper-growth, VC-backed B2B SaaS startup on a mission to empower businesses with data-driven intelligence\. Our AI-powered marketing automation platform helps businesses optimize engagement, make smarter decisions, and stay ahead in a competitive market\.\s*\n+\s*With massive growth potential and a track record of success, we're just getting started\. If you're passionate about innovation and want to be part of an industry-defining team, Fello is the place to be\.\s*\n+\s*About You:\s*\n+\s*/i,
                 ''
             )
 
