@@ -191,7 +191,7 @@ ${error.stack}`;
 };
 
 const scrapers = [
-    { fn: Fello, headless: true },
+    // { fn: Fello, headless: true },
 ];
 
 const runAllScrapers = async () => {
