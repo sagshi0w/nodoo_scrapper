@@ -92,8 +92,189 @@ class BulletJobsScraper {
         return this.allJobLinks;
     }
 
+    cleanJobDescription(job) {
+        if (!job || !job.description) return job;
+        
+        const cleanedDescription = this.cleanDescriptionText(job.description);
+        
+        return {
+            ...job,
+            description: cleanedDescription
+        };
+    }
 
+    cleanDescriptionText(description, company = 'Bullet') {
+        if (!description) return 'Description not available\n';
+        
+        let cleaned = description.trim();
+        
+        // 1. Remove company boilerplate and promotional text
+        cleaned = cleaned
+            // Remove company intro paragraphs
+            .replace(/^[^.]*We're scaling[^.]*\.\s*/gi, '')
+            .replace(/^[^.]*strives to hire[^.]*\.\s*/gi, '')
+            .replace(/^[^.]*currently seeking[^.]*\.\s*/gi, '')
+            .replace(/^[^.]*looking for[^.]*\.\s*/gi, '')
+            
+            // Remove promotional content
+            .replace(/We want someone who's hungry[^.]*\./gi, '')
+            .replace(/If you know how to test[^.]*\./gi, '')
+            .replace(/this is your playground[^.]*\./gi, '')
+            .replace(/let's talk[^.]*\./gi, '');
+        
+        // 2. Standardize section headers
+        cleaned = cleaned
+            .replace(/🎯\s*What you'll own:\s*/gi, '\n\nResponsibilities:\n')
+            .replace(/🧰\s*Stack you'll vibe with:\s*/gi, '\n\nTechnical Stack:\n')
+            .replace(/Key Responsibilities?:\s*/gi, '\n\nResponsibilities:\n')
+            .replace(/Qualifications and Skills?:\s*/gi, '\n\nRequirements:\n')
+            .replace(/Qualifications\s*[–-]\s*/gi, '\n\nQualifications:\n')
+            .replace(/Skills Required:\s*/gi, '\n\nSkills:\n')
+            .replace(/Technical Skills:\s*/gi, '\n\nTechnical Skills:\n')
+            .replace(/Key Competencies?:\s*/gi, '\n\nKey Competencies:\n')
+            .replace(/What you'll do:\s*/gi, '\n\nResponsibilities:\n')
+            .replace(/Must Have:\s*/gi, '\n\nRequirements:\n')
+            .replace(/Required Skills:\s*/gi, '\n\nSkills:\n')
+            .replace(/Essential Skills:\s*/gi, '\n\nSkills:\n');
+        
+        // 3. Standardize bullet points and formatting
+        cleaned = cleaned
+            // Convert various bullet styles to consistent format
+            .replace(/^[\s]*[•·▪▫‣⁃]\s*/gm, '• ')
+            .replace(/^[\s]*[-–—]\s*/gm, '• ')
+            .replace(/^[\s]*\*\s*/gm, '• ')
+            .replace(/^[\s]*\d+\.\s*/gm, (match) => match.trim() + ' ')
+            
+            // Fix spacing around bullet points
+            .replace(/\n\s*•\s*/g, '\n• ')
+            .replace(/\n\s*(\d+\.\s)/g, '\n$1')
+            
+            // Clean up excessive whitespace
+            .replace(/\n{3,}/g, '\n\n')
+            .replace(/[ \t]+$/gm, '')
+            .replace(/\n\s*\n/g, '\n\n');
+        
+        // 4. Structure the content better
+        const sections = this.extractSections(cleaned);
+        cleaned = this.restructureContent(sections);
+        
+        // 5. Final cleanup
+        cleaned = cleaned
+            .replace(/^\s+|\s+$/g, '') // trim start/end
+            .replace(/\n{3,}/g, '\n\n') // max 2 consecutive newlines
+            .replace(/([.!?])\s*\n\s*([A-Z])/g, '$1\n\n$2') // proper paragraph breaks
+            .replace(/[\n\r\t]+/g, '\n') // normalize line breaks
+            .replace(/[^\x20-\x7E\n]+/g, '') // remove non-printable chars
+            .trim();
+        
+        return cleaned + '\n';
+    }
 
+    extractSections(text) {
+        const sections = {
+            overview: '',
+            responsibilities: [],
+            requirements: [],
+            skills: [],
+            technicalStack: []
+        };
+        
+        // Extract overview (first paragraph)
+        const overviewMatch = text.match(/^([^•\n]+?)(?=\n\n|Responsibilities|Requirements|Skills|Technical Stack)/s);
+        if (overviewMatch) {
+            sections.overview = overviewMatch[1].trim();
+        }
+        
+        // Extract responsibilities
+        const respMatch = text.match(/Responsibilities?:\s*\n((?:•[^\n]+\n?)+)/i);
+        if (respMatch) {
+            sections.responsibilities = respMatch[1]
+                .split('\n')
+                .filter(line => line.trim().startsWith('•'))
+                .map(line => line.replace(/^•\s*/, '').trim())
+                .filter(line => line.length > 0);
+        }
+        
+        // Extract requirements
+        const reqMatch = text.match(/Requirements?:\s*\n((?:•[^\n]+\n?)+)/i);
+        if (reqMatch) {
+            sections.requirements = reqMatch[1]
+                .split('\n')
+                .filter(line => line.trim().startsWith('•'))
+                .map(line => line.replace(/^•\s*/, '').trim())
+                .filter(line => line.length > 0);
+        }
+        
+        // Extract skills
+        const skillsMatch = text.match(/Skills?:\s*\n((?:•[^\n]+\n?)+)/i);
+        if (skillsMatch) {
+            sections.skills = skillsMatch[1]
+                .split('\n')
+                .filter(line => line.trim().startsWith('•'))
+                .map(line => line.replace(/^•\s*/, '').trim())
+                .filter(line => line.length > 0);
+        }
+        
+        // Extract technical stack
+        const techMatch = text.match(/Technical Stack:\s*\n((?:[^\n]+\n?)+)/i);
+        if (techMatch) {
+            const techText = techMatch[1].trim();
+            // Split by comma and clean up
+            sections.technicalStack = techText
+                .split(',')
+                .map(item => item.trim())
+                .filter(item => item.length > 0);
+        }
+        
+        return sections;
+    }
+
+    restructureContent(sections) {
+        let result = '';
+        
+        // Add overview
+        if (sections.overview) {
+            result += sections.overview + '\n\n';
+        }
+        
+        // Add responsibilities
+        if (sections.responsibilities.length > 0) {
+            result += 'Responsibilities:\n';
+            sections.responsibilities.forEach(resp => {
+                result += `• ${resp}\n`;
+            });
+            result += '\n';
+        }
+        
+        // Add requirements
+        if (sections.requirements.length > 0) {
+            result += 'Requirements:\n';
+            sections.requirements.forEach(req => {
+                result += `• ${req}\n`;
+            });
+            result += '\n';
+        }
+        
+        // Add skills
+        if (sections.skills.length > 0) {
+            result += 'Skills:\n';
+            sections.skills.forEach(skill => {
+                result += `• ${skill}\n`;
+            });
+            result += '\n';
+        }
+        
+        // Add technical stack
+        if (sections.technicalStack.length > 0) {
+            result += 'Technical Stack:\n';
+            sections.technicalStack.forEach(tech => {
+                result += `• ${tech}\n`;
+            });
+            result += '\n';
+        }
+        
+        return result.trim();
+    }
 
     async extractJobDetailsFromLink(url) {
         const jobPage = await this.browser.newPage();
@@ -238,8 +419,11 @@ class BulletJobsScraper {
 
             console.log("Before enriching job=", job);
 
+            // Clean the job description
+            const cleanedJob = this.cleanJobDescription(job);
+
             await jobPage.close();
-            return job;
+            return cleanedJob;
         } catch (err) {
             await jobPage.close();
             console.warn(`❌ Failed to scrape ${url}: ${err.message}`);
