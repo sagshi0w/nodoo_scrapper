@@ -87,8 +87,8 @@ class BulletJobsScraper {
                 const getText = sel => document.querySelector(sel)?.innerText.trim() || '';
 
                 // Extract job title - try Framer selectors first
-                let title = getText('[data-framer-name="Title"] h5.framer-text') || 
-                           getText('[data-framer-name="Job Title"] .framer-text') || 
+                let title = getText('[data-framer-name="Job Title"] .framer-text') || 
+                           getText('[data-framer-name="Title"] h5.framer-text') || 
                            getText('.doqfy-service-para-1') || 
                            getText('h2.css-10i6wsd-H2Element') ||
                            getText('h1, h2, h3').trim();
@@ -143,7 +143,7 @@ class BulletJobsScraper {
                 let salary = '';
                 
                 // Try to extract job type from Framer structure
-                const framerJobType = document.querySelector('[data-framer-name="Job Time"] .framer-text');
+                const framerJobType = document.querySelector('[data-framer-name="Job Type"] .framer-text');
                 if (framerJobType) {
                     jobType = framerJobType.innerText.trim();
                 }
