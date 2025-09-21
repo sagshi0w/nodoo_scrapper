@@ -117,6 +117,7 @@ import Spendflo from "./scrapers/servicebased/Spendflo.js"
 import Securden from "./scrapers/servicebased/Securden.js"
 import RevenueHero from "./scrapers/servicebased/RevenueHero.js"
 import Fello from "./scrapers/servicebased/fello.js"
+import Doqfy from "./scrapers/servicebased/Doqfy.js"
 
 // Not working scrappers:
 import runTataMgJobsScraper from "./scrapers/productBased/tata1mg.js"
@@ -191,7 +192,7 @@ ${error.stack}`;
 };
 
 const scrapers = [
-    // { fn: Fello, headless: true },
+    { fn: Doqfy, headless: true },
 ];
 
 const runAllScrapers = async () => {
