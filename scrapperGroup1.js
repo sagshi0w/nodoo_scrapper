@@ -32,6 +32,7 @@ import Jhana from "./scrapers/servicebased/jhana.js"
 import Spendflo from "./scrapers/servicebased/Spendflo.js"
 import RevenueHero from "./scrapers/servicebased/RevenueHero.js"
 import Fello from "./scrapers/servicebased/fello.js"
+import Doqfy from "./scrapers/servicebased/Doqfy.js"
 
 const config = {
     concurrency: 5,
@@ -118,6 +119,7 @@ const scrapers = [
     { fn: Spendflo, headless: true },
     { fn: RevenueHero, headless: true },
     { fn: Fello, headless: true },
+    { fn: Doqfy, headless: true },
 ];
 
 const runAllScrapers = async () => {
