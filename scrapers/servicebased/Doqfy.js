@@ -35,7 +35,7 @@ class DoqfyJobsScraper {
 
         while (true) {
             // Collect job links on current page
-            const jobLinks = await this.page.$$eval(`.job-link`, anchors =>
+            const jobLinks = await this.page.$$eval(`a.view-job`, anchors =>
                 anchors.map(a => a.href)
             );
 
