@@ -33,11 +33,29 @@ class BulletJobsScraper {
         this.allJobLinks = [];
         const existingLinks = new Set();
 
+        // Wait for the page to fully load
+        await delay(3000);
+        
+        // Debug: Check if elements exist
+        const elementCount = await this.page.$$eval(`a[data-framer-name="tab"]`, elements => elements.length);
+        console.log(`🔍 Found ${elementCount} job link elements on page`);
+
         while (true) {
-            // Collect job links on current page
-            const jobLinks = await this.page.$$eval(`a[data-framer-name="tab"]`, anchors =>
+            // Collect job links on current page - try multiple selectors
+            let jobLinks = await this.page.$$eval(`a[data-framer-name="tab"]`, anchors =>
                 anchors.map(a => a.href)
             );
+
+            // Fallback selector if primary doesn't work
+            if (jobLinks.length === 0) {
+                console.log("🔄 Trying fallback selector...");
+                jobLinks = await this.page.$$eval(`a.framer-KqJUe`, anchors =>
+                    anchors.map(a => a.href)
+                );
+            }
+
+            console.log(`🔗 Raw job links found: ${jobLinks.length}`);
+            console.log(`🔗 Sample links:`, jobLinks.slice(0, 3));
 
             for (const link of jobLinks) {
                 if (!existingLinks.has(link)) {
