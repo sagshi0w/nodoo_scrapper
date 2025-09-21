@@ -105,7 +105,7 @@ class AccelyaJobsScraper {
             console.log(`📝 [${i + 1}/${this.allJobLinks.length}] Processing: ${url}`);
             const jobData = await this.extractJobDetailsFromLink(url);
             if (jobData && jobData.title) {
-                const enrichedJob = extractWiproData(jobData);
+                const enrichedJob = extractAccelyaData(jobData);
                 console.log("After enriching job=", enrichedJob);
                 this.allJobs.push(enrichedJob);
                 console.log(`✅ ${jobData.title}`);
@@ -139,13 +139,211 @@ class AccelyaJobsScraper {
     }
 }
 
-const extractWiproData = (job) => {
-    if (!job) return job;
+const cleanJobDescription = (description, company = 'Accelya') => {
+    if (!description) return 'Description not available\n';
+    
+    let cleaned = description.trim();
+    
+    // 1. Remove company boilerplate and legal text
+    cleaned = cleaned
+        // Remove company intro paragraphs
+        .replace(/^[^.]*For more than \d+ years[^.]*\.\s*/gi, '')
+        .replace(/^[^.]*strives to hire[^.]*\.\s*/gi, '')
+        .replace(/^[^.]*currently seeking[^.]*\.\s*/gi, '')
+        .replace(/^[^.]*looking for[^.]*\.\s*/gi, '')
+        
+        // Remove "About [Company]" sections
+        .replace(/About\s+[A-Za-z\s]+\s*[A-Za-z\s]*\$[\d.]+[^.]*\./gi, '')
+        .replace(/About\s+[A-Za-z\s]+\s*[A-Za-z\s]*[^.]*Visit us at[^.]*\./gi, '')
+        .replace(/About\s+[A-Za-z\s]+\s*[A-Za-z\s]*[^.]*\./gi, '')
+        
+        // Remove EEO and legal disclaimers
+        .replace(/Whenever possible[^.]*\./gi, '')
+        .replace(/Accelya recruiters[^.]*\./gi, '')
+        .replace(/Accelya endeavors[^.]*\./gi, '')
+        .replace(/Accelya is an equal opportunity[^.]*\./gi, '')
+        .replace(/For our EEO Policy[^.]*\./gi, '')
+        .replace(/If you'd like more information[^.]*\./gi, '')
+        .replace(/This contact information[^.]*\./gi, '')
+        .replace(/Equal opportunity employer[^.]*\./gi, '')
+        .replace(/Qualified applicants[^.]*\./gi, '')
+        
+        // Remove contact and application info
+        .replace(/Visit us at[^.]*\./gi, '')
+        .replace(/https?:\/\/[^\s]+/g, '')
+        .replace(/please click here/gi, '')
+        .replace(/please contact us[^.]*\./gi, '')
+        .replace(/contact us at[^.]*\./gi, '')
+        
+        // Remove job ID and reference numbers
+        .replace(/^Req ID:\s*\d+\s*/gi, '')
+        .replace(/^Job ID:\s*\d+\s*/gi, '')
+        .replace(/^Reference:\s*\w+\s*/gi, '')
+        
+        // Remove Accelya-specific boilerplate
+        .replace(/What does the future of the air transport industry[^.]*\./gi, '')
+        .replace(/Whether you're an industry veteran[^.]*\./gi, '')
+        .replace(/we want to make your ambitions[^.]*\./gi, '');
+    
+    // 2. Clean up job title and location repetition
+    cleaned = cleaned
+        .replace(/Position is for[^.]*\./gi, '')
+        .replace(/join our team in[^.]*\./gi, '')
+        .replace(/based in[^.]*\./gi, '')
+        .replace(/located in[^.]*\./gi, '');
+    
+    // 3. Standardize section headers
+    cleaned = cleaned
+        .replace(/Key Responsibilities?:\s*/gi, '\n\nResponsibilities:\n')
+        .replace(/Qualifications and Skills?:\s*/gi, '\n\nRequirements:\n')
+        .replace(/Qualifications\s*[–-]\s*/gi, '\n\nQualifications:\n')
+        .replace(/Skills Required:\s*/gi, '\n\nSkills:\n')
+        .replace(/Technical Skills:\s*/gi, '\n\nTechnical Skills:\n')
+        .replace(/Key Competencies?:\s*/gi, '\n\nKey Competencies:\n')
+        .replace(/What you'll do:\s*/gi, '\n\nResponsibilities:\n')
+        .replace(/Must Have:\s*/gi, '\n\nRequirements:\n')
+        .replace(/Required Skills:\s*/gi, '\n\nSkills:\n')
+        .replace(/Essential Skills:\s*/gi, '\n\nSkills:\n');
+    
+    // 4. Standardize bullet points and formatting
+    cleaned = cleaned
+        // Convert various bullet styles to consistent format
+        .replace(/^[\s]*[•·▪▫‣⁃]\s*/gm, '• ')
+        .replace(/^[\s]*[-–—]\s*/gm, '• ')
+        .replace(/^[\s]*\*\s*/gm, '• ')
+        .replace(/^[\s]*\d+\.\s*/gm, (match) => match.trim() + ' ')
+        
+        // Fix spacing around bullet points
+        .replace(/\n\s*•\s*/g, '\n• ')
+        .replace(/\n\s*(\d+\.\s)/g, '\n$1')
+        
+        // Clean up excessive whitespace
+        .replace(/\n{3,}/g, '\n\n')
+        .replace(/[ \t]+$/gm, '')
+        .replace(/\n\s*\n/g, '\n\n');
+    
+    // 5. Structure the content better
+    const sections = extractSections(cleaned);
+    cleaned = restructureContent(sections);
+    
+    // 6. Final cleanup
+    cleaned = cleaned
+        .replace(/^\s+|\s+$/g, '') // trim start/end
+        .replace(/\n{3,}/g, '\n\n') // max 2 consecutive newlines
+        .replace(/([.!?])\s*\n\s*([A-Z])/g, '$1\n\n$2') // proper paragraph breaks
+        .replace(/[\n\r\t]+/g, '\n') // normalize line breaks
+        .replace(/[^\x20-\x7E\n]+/g, '') // remove non-printable chars
+        .trim();
+    
+    return cleaned + '\n';
+};
 
-    let cleanedDescription = job.description || '';
-    let experience = null;
-    let location = null;
+const extractSections = (text) => {
+    const sections = {
+        overview: '',
+        responsibilities: [],
+        requirements: [],
+        skills: [],
+        competencies: []
+    };
+    
+    // Extract overview (first paragraph)
+    const overviewMatch = text.match(/^([^•\n]+?)(?=\n\n|Responsibilities|Requirements|Skills|Key Competencies)/s);
+    if (overviewMatch) {
+        sections.overview = overviewMatch[1].trim();
+    }
+    
+    // Extract responsibilities
+    const respMatch = text.match(/Responsibilities?:\s*\n((?:•[^\n]+\n?)+)/i);
+    if (respMatch) {
+        sections.responsibilities = respMatch[1]
+            .split('\n')
+            .filter(line => line.trim().startsWith('•'))
+            .map(line => line.replace(/^•\s*/, '').trim())
+            .filter(line => line.length > 0);
+    }
+    
+    // Extract requirements
+    const reqMatch = text.match(/Requirements?:\s*\n((?:•[^\n]+\n?)+)/i);
+    if (reqMatch) {
+        sections.requirements = reqMatch[1]
+            .split('\n')
+            .filter(line => line.trim().startsWith('•'))
+            .map(line => line.replace(/^•\s*/, '').trim())
+            .filter(line => line.length > 0);
+    }
+    
+    // Extract skills
+    const skillsMatch = text.match(/Skills?:\s*\n((?:•[^\n]+\n?)+)/i);
+    if (skillsMatch) {
+        sections.skills = skillsMatch[1]
+            .split('\n')
+            .filter(line => line.trim().startsWith('•'))
+            .map(line => line.replace(/^•\s*/, '').trim())
+            .filter(line => line.length > 0);
+    }
+    
+    // Extract competencies
+    const compMatch = text.match(/Key Competencies?:\s*\n((?:•[^\n]+\n?)+)/i);
+    if (compMatch) {
+        sections.competencies = compMatch[1]
+            .split('\n')
+            .filter(line => line.trim().startsWith('•'))
+            .map(line => line.replace(/^•\s*/, '').trim())
+            .filter(line => line.length > 0);
+    }
+    
+    return sections;
+};
 
+const restructureContent = (sections) => {
+    let result = '';
+    
+    // Add overview
+    if (sections.overview) {
+        result += sections.overview + '\n\n';
+    }
+    
+    // Add responsibilities
+    if (sections.responsibilities.length > 0) {
+        result += 'Responsibilities:\n';
+        sections.responsibilities.forEach(resp => {
+            result += `• ${resp}\n`;
+        });
+        result += '\n';
+    }
+    
+    // Add requirements
+    if (sections.requirements.length > 0) {
+        result += 'Requirements:\n';
+        sections.requirements.forEach(req => {
+            result += `• ${req}\n`;
+        });
+        result += '\n';
+    }
+    
+    // Add skills
+    if (sections.skills.length > 0) {
+        result += 'Skills:\n';
+        sections.skills.forEach(skill => {
+            result += `• ${skill}\n`;
+        });
+        result += '\n';
+    }
+    
+    // Add competencies
+    if (sections.competencies.length > 0) {
+        result += 'Key Competencies:\n';
+        sections.competencies.forEach(comp => {
+            result += `• ${comp}\n`;
+        });
+        result += '\n';
+    }
+    
+    return result.trim();
+};
+
+const extractExperience = (description) => {
     const expPatterns = [
         /\bminimum\s*(\d{1,2})\s*(?:years|yrs|yr)\b/i,
         /\bmin(?:imum)?\s*(\d{1,2})\s*(?:years|yrs|yr)\b/i,
@@ -157,71 +355,32 @@ const extractWiproData = (job) => {
         /\b(\d{1,2})\s*\+\s*(?:years|yrs|yr)\b/i,
     ];
 
-    // Step 1: Try job.experience field
-    if (typeof job.experience === 'number' || /^\d+$/.test(job.experience)) {
-        const minExp = parseInt(job.experience, 10);
-        const maxExp = minExp + 2;
-        experience = `${minExp} - ${maxExp} yrs`;
-    }
-
-    // Step 2: Parse experience from description
-    if (!experience && cleanedDescription) {
-        for (const pattern of expPatterns) {
-            const match = cleanedDescription.match(pattern);
-            if (match) {
-                const min = match[1];
-                const max = match[2];
-
-                if (min && max) {
-                    experience = `${min} - ${max} yrs`;
-                } else if (min && !max) {
-                    const estMax = parseInt(min) + 2;
-                    experience = `${min} - ${estMax} yrs`;
-                }
-                break;
-            }
-        }
-    }
-
-    // Step 3: Clean description
-    if (cleanedDescription) {
-        cleanedDescription = cleanedDescription.replace(
-            /(Current Openings|Job Summary|About\s+RateGain)[\s\S]*?(?:Apply\.?\s*)?(?=\n{2,}|$)/gi,
-            ''
-        );
-
-        cleanedDescription = cleanedDescription
-            .replace(/(\n\s*)(\d+\.\s+)(.*?)(\n)/gi, '\n\n$1$2$3$4\n\n')
-            .replace(/(\n\s*)([•\-]\s+)(.*?)(\n)/gi, '\n\n$1$2$3$4\n\n')
-            .replace(/([.!?])\s+/g, '$1  ')
-            .replace(/[ \t]+$/gm, '')
-            .replace(/\n{3,}/g, '\n\n')
-            .replace(/(\S)\n(\S)/g, '$1\n\n$2')
-            .trim();
-
-        if (cleanedDescription && !cleanedDescription.endsWith('\n')) {
-            cleanedDescription += '\n';
-        }
-
-        if (!cleanedDescription.trim()) {
-            cleanedDescription = 'Description not available\n';
-        }
-    } else {
-        cleanedDescription = 'Description not available\n';
-    }
-
-
-    if (job.title && cleanedDescription.startsWith(job.title)) {
-        const match = cleanedDescription.match(/Primary Skills\s*[:\-–]?\s*/i);
+    for (const pattern of expPatterns) {
+        const match = description.match(pattern);
         if (match) {
-            const index = match.index;
-            if (index > 0) {
-                cleanedDescription = cleanedDescription.slice(index).trimStart();
-            }
+            const minExp = parseInt(match[1], 10);
+            const maxExp = match[2] ? parseInt(match[2], 10) : minExp + 2;
+            return `${minExp} - ${maxExp} yrs`;
         }
     }
 
-    // Step 4: Extract city from location string
+    return '';
+};
+
+const extractAccelyaData = (job) => {
+    if (!job) return job;
+
+    let cleanedDescription = job.description || '';
+    let experience = null;
+    let location = null;
+
+    // Extract experience
+    experience = extractExperience(cleanedDescription);
+
+    // Clean description
+    cleanedDescription = cleanJobDescription(cleanedDescription);
+
+    // Extract city from location string
     if (job.location) {
         const cityMatch = job.location.match(/^([^,\n]+)/);
         if (cityMatch) {
