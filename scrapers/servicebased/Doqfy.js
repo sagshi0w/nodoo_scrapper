@@ -269,14 +269,10 @@ const extractDoqfyData = (job) => {
                 ''
             )
 
-            // Preserve bullet points and formatting
-            .replace(/(\n\s*)(\d+\.\s+)(.*?)(\n)/gi, '\n$1$2$3$4')
-            .replace(/(\n\s*)([•\-]\s+)(.*?)(\n)/gi, '\n$1$2$3$4')
+            // Simple formatting - preserve bullet points
+            .replace(/\n{3,}/g, '\n\n')
             .replace(/([.!?])\s+/g, '$1 ')
             .replace(/[ \t]+$/gm, '')
-            .replace(/\n{3,}/g, '\n\n')
-            .replace(/([.!?])\n([A-Z])/g, '$1\n\n$2')
-            .replace(/([.!?])\n([•\-])/g, '$1\n$2')
             .trim();
 
         if (cleanedDescription && !cleanedDescription.endsWith('\n')) {
