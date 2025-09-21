@@ -1563,8 +1563,8 @@ export default function extractSkillsAndExperience(job) {
         let miniExperience = null;
         let maxExperience = null;
 
-        // Case 1: Range (e.g., "2-3", "0 - 1")
-        const rangeMatch = str.match(/(\d+)\s*-\s*(\d+)/);
+        // Case 1: Range (e.g., "2-3", "0 - 1", "4 - 6")
+        const rangeMatch = str.match(/(\d+)\s*[-–]\s*(\d+)/);
         if (rangeMatch) {
             miniExperience = parseInt(rangeMatch[1], 10);
             maxExperience = parseInt(rangeMatch[2], 10);
