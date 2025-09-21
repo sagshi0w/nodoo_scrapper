@@ -105,45 +105,207 @@ class NttDataJobsScraper {
         console.log('✅ Completed scraping all pages.');
     }
 
-    cleanJobSummary(rawText) {
-        let cleaned = rawText;
-
-        const jobSummaryPattern = /job summary\s*:?/i;
-        const jobSummaryMatch = cleaned.match(jobSummaryPattern);
-        if (jobSummaryMatch) {
-            const idx = cleaned.toLowerCase().indexOf(jobSummaryMatch[0].toLowerCase());
-            if (idx !== -1) {
-                cleaned = cleaned.substring(idx + jobSummaryMatch[0].length);
-            }
-        } else {
-            const sectionPatterns = [
-                /about company\s*:?/i,
-                /about us\s*:?/i,
-                /company overview\s*:?/i,
-                /the company\s*:?/i
-            ];
-            let cutIndex = cleaned.length;
-            for (const pattern of sectionPatterns) {
-                const match = cleaned.match(pattern);
-                if (match && match.index < cutIndex) {
-                    cutIndex = match.index;
-                }
-            }
-            cleaned = cleaned.substring(0, cutIndex);
-        }
-
-        cleaned = cleaned.replace(/^.*meet your team.*$/gim, '');
-
-        const benefitsIndex = cleaned.indexOf("Our Benefits:");
-        if (benefitsIndex !== -1) {
-            cleaned = cleaned.substring(0, benefitsIndex);
-        }
-
-        return cleaned
-            .replace(/[\n\r\t]+/g, '\n')
-            .replace(/[^\x20-\x7E\n]+/g, '')
-            .replace(/\n{2,}/g, '\n\n')
+    cleanJobDescription(description, company = 'NTT Data') {
+        if (!description) return 'Description not available\n';
+        
+        let cleaned = description.trim();
+        
+        // 1. Remove company boilerplate and legal text
+        cleaned = cleaned
+            // Remove company intro paragraphs
+            .replace(/^[^.]*strives to hire[^.]*\.\s*/gi, '')
+            .replace(/^[^.]*currently seeking[^.]*\.\s*/gi, '')
+            .replace(/^[^.]*looking for[^.]*\.\s*/gi, '')
+            
+            // Remove "About [Company]" sections
+            .replace(/About\s+[A-Za-z\s]+\s*[A-Za-z\s]*\$[\d.]+[^.]*\./gi, '')
+            .replace(/About\s+[A-Za-z\s]+\s*[A-Za-z\s]*[^.]*Visit us at[^.]*\./gi, '')
+            .replace(/About\s+[A-Za-z\s]+\s*[A-Za-z\s]*[^.]*\./gi, '')
+            
+            // Remove EEO and legal disclaimers
+            .replace(/Whenever possible[^.]*\./gi, '')
+            .replace(/NTT DATA recruiters[^.]*\./gi, '')
+            .replace(/NTT DATA endeavors[^.]*\./gi, '')
+            .replace(/NTT DATA is an equal opportunity[^.]*\./gi, '')
+            .replace(/For our EEO Policy[^.]*\./gi, '')
+            .replace(/If you'd like more information[^.]*\./gi, '')
+            .replace(/This contact information[^.]*\./gi, '')
+            .replace(/Equal opportunity employer[^.]*\./gi, '')
+            .replace(/Qualified applicants[^.]*\./gi, '')
+            
+            // Remove contact and application info
+            .replace(/Visit us at[^.]*\./gi, '')
+            .replace(/https?:\/\/[^\s]+/g, '')
+            .replace(/please click here/gi, '')
+            .replace(/please contact us[^.]*\./gi, '')
+            .replace(/contact us at[^.]*\./gi, '')
+            
+            // Remove job ID and reference numbers
+            .replace(/^Req ID:\s*\d+\s*/gi, '')
+            .replace(/^Job ID:\s*\d+\s*/gi, '')
+            .replace(/^Reference:\s*\w+\s*/gi, '');
+        
+        // 2. Clean up job title and location repetition
+        cleaned = cleaned
+            .replace(/Position is for[^.]*\./gi, '')
+            .replace(/join our team in[^.]*\./gi, '')
+            .replace(/based in[^.]*\./gi, '')
+            .replace(/located in[^.]*\./gi, '');
+        
+        // 3. Standardize section headers
+        cleaned = cleaned
+            .replace(/Job Responsibilities?:\s*/gi, '\n\nResponsibilities:\n')
+            .replace(/External Skills Required:\s*/gi, '\n\nRequirements:\n')
+            .replace(/Qualifications\s*[–-]\s*/gi, '\n\nQualifications:\n')
+            .replace(/Skills Required:\s*/gi, '\n\nSkills:\n')
+            .replace(/Technical Skills:\s*/gi, '\n\nTechnical Skills:\n')
+            .replace(/Key Responsibilities?:\s*/gi, '\n\nResponsibilities:\n')
+            .replace(/What you'll do:\s*/gi, '\n\nResponsibilities:\n')
+            .replace(/Must Have:\s*/gi, '\n\nRequirements:\n')
+            .replace(/Required Skills:\s*/gi, '\n\nSkills:\n')
+            .replace(/Essential Skills:\s*/gi, '\n\nSkills:\n');
+        
+        // 4. Standardize bullet points and formatting
+        cleaned = cleaned
+            // Convert various bullet styles to consistent format
+            .replace(/^[\s]*[•·▪▫‣⁃]\s*/gm, '• ')
+            .replace(/^[\s]*[-–—]\s*/gm, '• ')
+            .replace(/^[\s]*\*\s*/gm, '• ')
+            .replace(/^[\s]*\d+\.\s*/gm, (match) => match.trim() + ' ')
+            
+            // Fix spacing around bullet points
+            .replace(/\n\s*•\s*/g, '\n• ')
+            .replace(/\n\s*(\d+\.\s)/g, '\n$1')
+            
+            // Clean up excessive whitespace
+            .replace(/\n{3,}/g, '\n\n')
+            .replace(/[ \t]+$/gm, '')
+            .replace(/\n\s*\n/g, '\n\n');
+        
+        // 5. Structure the content better
+        const sections = this.extractSections(cleaned);
+        cleaned = this.restructureContent(sections);
+        
+        // 6. Final cleanup
+        cleaned = cleaned
+            .replace(/^\s+|\s+$/g, '') // trim start/end
+            .replace(/\n{3,}/g, '\n\n') // max 2 consecutive newlines
+            .replace(/([.!?])\s*\n\s*([A-Z])/g, '$1\n\n$2') // proper paragraph breaks
+            .replace(/[\n\r\t]+/g, '\n') // normalize line breaks
+            .replace(/[^\x20-\x7E\n]+/g, '') // remove non-printable chars
             .trim();
+        
+        return cleaned + '\n';
+    }
+
+    extractSections(text) {
+        const sections = {
+            overview: '',
+            responsibilities: [],
+            requirements: [],
+            skills: [],
+            experience: ''
+        };
+        
+        // Extract overview (first paragraph)
+        const overviewMatch = text.match(/^([^•\n]+?)(?=\n\n|Responsibilities|Requirements|Skills)/s);
+        if (overviewMatch) {
+            sections.overview = overviewMatch[1].trim();
+        }
+        
+        // Extract responsibilities
+        const respMatch = text.match(/Responsibilities:\s*\n((?:•[^\n]+\n?)+)/i);
+        if (respMatch) {
+            sections.responsibilities = respMatch[1]
+                .split('\n')
+                .filter(line => line.trim().startsWith('•'))
+                .map(line => line.replace(/^•\s*/, '').trim())
+                .filter(line => line.length > 0);
+        }
+        
+        // Extract requirements
+        const reqMatch = text.match(/Requirements?:\s*\n((?:•[^\n]+\n?)+)/i);
+        if (reqMatch) {
+            sections.requirements = reqMatch[1]
+                .split('\n')
+                .filter(line => line.trim().startsWith('•'))
+                .map(line => line.replace(/^•\s*/, '').trim())
+                .filter(line => line.length > 0);
+        }
+        
+        // Extract skills
+        const skillsMatch = text.match(/Skills?:\s*\n((?:•[^\n]+\n?)+)/i);
+        if (skillsMatch) {
+            sections.skills = skillsMatch[1]
+                .split('\n')
+                .filter(line => line.trim().startsWith('•'))
+                .map(line => line.replace(/^•\s*/, '').trim())
+                .filter(line => line.length > 0);
+        }
+        
+        return sections;
+    }
+
+    restructureContent(sections) {
+        let result = '';
+        
+        // Add overview
+        if (sections.overview) {
+            result += sections.overview + '\n\n';
+        }
+        
+        // Add responsibilities
+        if (sections.responsibilities.length > 0) {
+            result += 'Responsibilities:\n';
+            sections.responsibilities.forEach(resp => {
+                result += `• ${resp}\n`;
+            });
+            result += '\n';
+        }
+        
+        // Add requirements
+        if (sections.requirements.length > 0) {
+            result += 'Requirements:\n';
+            sections.requirements.forEach(req => {
+                result += `• ${req}\n`;
+            });
+            result += '\n';
+        }
+        
+        // Add skills
+        if (sections.skills.length > 0) {
+            result += 'Skills:\n';
+            sections.skills.forEach(skill => {
+                result += `• ${skill}\n`;
+            });
+            result += '\n';
+        }
+        
+        return result.trim();
+    }
+
+    extractExperience(description) {
+        const expPatterns = [
+            /\bminimum\s*(\d{1,2})\s*(?:years|yrs|yr)\b/i,
+            /\bmin(?:imum)?\s*(\d{1,2})\s*(?:years|yrs|yr)\b/i,
+            /\b(\d{1,2})\s*(?:to|–|-|–)\s*(\d{1,2})\s*(?:years|yrs|yr)\b/i,
+            /\b(?:at least|over)\s*(\d{1,2})\s*(?:years|yrs|yr)\b/i,
+            /\b(\d{1,2})\s*(?:years|yrs|yr)\s+experience\b/i,
+            /\bexperience\s*(?:of)?\s*(\d{1,2})\s*(?:years|yrs|yr)\b/i,
+            /\bexperience\s*(?:required)?\s*[:\-]?\s*(\d{1,2})\s*(?:[-to]+)?\s*(\d{1,2})?\s*(?:years|yrs|yr)?/i,
+            /\b(\d{1,2})\s*\+\s*(?:years|yrs|yr)\b/i,
+        ];
+
+        for (const pattern of expPatterns) {
+            const match = description.match(pattern);
+            if (match) {
+                const minExp = parseInt(match[1], 10);
+                const maxExp = match[2] ? parseInt(match[2], 10) : minExp + 2;
+                return `${minExp} - ${maxExp} yrs`;
+            }
+        }
+
+        return '';
     }
 
     async extractJobDetailsFromCard(cardHandle) {
@@ -162,13 +324,15 @@ class NttDataJobsScraper {
             };
         });
 
-        //const cleanedSummary = this.cleanJobSummary(rawData.summaryText);
+        const cleanedDescription = this.cleanJobDescription(rawData.summaryText);
+        const experience = this.extractExperience(cleanedDescription);
 
         return {
             title: rawData.title,
             company: 'NTT Data',
             location: rawData.location,
-            description: rawData.summaryText,
+            description: cleanedDescription,
+            experience: experience,
             url: rawData.url
         };
     }
