@@ -182,6 +182,29 @@ const extractExperience = (description) => {
     return '';
 };
 
+// Minimal removal of SKF boilerplate sections only
+const removeSKFBoilerplate = (text) => {
+    if (!text) return text;
+    let t = text;
+    // About SKF block up to the next blank line (includes the www.skf.com/in line)
+    t = t.replace(/About\s+SKF[\s\S]*?(?:\n\s*\n|$)/gi, '');
+    // About Technology Development block
+    t = t.replace(/About\s+Technology\s+Development[\s\S]*?(?:\n\s*\n|$)/gi, '');
+    // TD Competencies block
+    t = t.replace(/TD\s+Competencies[\s\S]*?(?:\n\s*\n|$)/gi, '');
+    // SKF Purpose Statement block
+    t = t.replace(/SKF\s+Purpose\s+Statement[\s\S]*?(?:\n\s*\n|$)/gi, '');
+    // Also drop plain www.skf.com mentions on their own lines
+    t = t.replace(/^.*www\.skf\.com.*$/gim, '');
+    // Remove label lines like Job Title:, Reports To:, Role Type:, Location:
+    t = t.replace(/^\s*(?:Job\s*Title|Reports\s*To|Role\s*Type|Location)\s*:\s*.*$/gim, '');
+    // Trim trailing spaces and collapse multiple blank lines to a single blank line
+    t = t.replace(/[ \t]+$/gm, '');
+    t = t.replace(/\n\s*\n+/g, '\n\n');
+    t = t.trim();
+    return t;
+};
+
 const extractSKFData = (job) => {
     if (!job) return job;
 
@@ -192,7 +215,8 @@ const extractSKFData = (job) => {
     // Extract experience
     experience = extractExperience(cleanedDescription);
 
-    // No additional cleaning per request
+    // Remove only explicit boilerplate sections requested
+    cleanedDescription = removeSKFBoilerplate(cleanedDescription);
 
     // Extract city from location string
     if (job.location) {
