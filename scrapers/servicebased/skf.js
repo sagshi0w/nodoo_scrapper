@@ -188,16 +188,33 @@ const removeSKFBoilerplate = (text) => {
     let t = text;
     // About SKF block up to the next blank line (includes the www.skf.com/in line)
     t = t.replace(/About\s+SKF[\s\S]*?(?:\n\s*\n|$)/gi, '');
+    // Explicit SKF intro paragraphs
+    t = t.replace(/SKF\s+started\s+its\s+operations\s+in\s+India\s+in\s+1923\.[\s\S]*?business\s+excellence\./gi, '');
+    t = t.replace(/SKF's\s+solutions\s+provide\s+sustainable\s+ways[\s\S]*?five\s+technology\s+platforms\./gi, '');
     // About Technology Development block
     t = t.replace(/About\s+Technology\s+Development[\s\S]*?(?:\n\s*\n|$)/gi, '');
+    // Explicit TD intro line
+    t = t.replace(/The\s+TD\s+team\s+for\s+ISEA\s+is\s+focused[\s\S]*?Portfolio\s+Management\s+etc\./gi, '');
     // TD Competencies block
     t = t.replace(/TD\s+Competencies[\s\S]*?(?:\n\s*\n|$)/gi, '');
+    // Explicit bullet/lines under TD Competencies
+    t = t.replace(/^\s*·\s*Engineering\s*&\s*Research\s*Centre\s*$/gim, '');
+    t = t.replace(/Product\s+Development\s*&\s+Engineering[\s\S]*?higher\s+performance\s+products\./gi, '');
+    t = t.replace(/^\s*·\s*Testing:[\s\S]*?requirements\.?$/gim, '');
+    t = t.replace(/^\s*·\s*Global\s+Metallurgy\s*&\s+Chemistry\s+Laboratory\s*\(GMC\)\s*$/gim, '');
+    t = t.replace(/^\s*·\s*Future\s+Factory\s*\(Manufacturing\s*4\.0\)[\s\S]*?Digital\.?$/gim, '');
+    t = t.replace(/^\s*·\s*Manufacturing\s+Process\s*&\s+Development[\s\S]*?automation\.?$/gim, '');
+    t = t.replace(/^\s*·\s*Connected\s+Technologies[\s\S]*?assets\.?$/gim, '');
     // SKF Purpose Statement block
     t = t.replace(/SKF\s+Purpose\s+Statement[\s\S]*?(?:\n\s*\n|$)/gi, '');
+    t = t.replace(/Together,\s*we\s*re-imagine\s*rotation\s*for\s*a\s*better\s*tomorrow\.?/gi, '');
+    t = t.replace(/By\s*creating\s*intelligent\s*and\s*clean\s*solutions\s*for\s*people\s*and\s*the\s*planet\.?/gi, '');
     // Also drop plain www.skf.com mentions on their own lines
     t = t.replace(/^.*www\.skf\.com.*$/gim, '');
     // Remove label lines like Job Title:, Reports To:, Role Type:, Location:
     t = t.replace(/^\s*(?:Job\s*Title|Reports\s*To|Role\s*Type|Location)\s*:\s*.*$/gim, '');
+    // Remove 'JOB DESCRIPTION' heading lines
+    t = t.replace(/^\s*JOB\s*DESCRIPTION\s*$/gim, '');
     // Trim trailing spaces and collapse multiple blank lines to a single blank line
     t = t.replace(/[ \t]+$/gm, '');
     t = t.replace(/\n\s*\n+/g, '\n\n');
