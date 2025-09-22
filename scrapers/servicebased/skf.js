@@ -199,12 +199,18 @@ const removeSKFBoilerplate = (text) => {
     t = t.replace(/TD\s+Competencies[\s\S]*?(?:\n\s*\n|$)/gi, '');
     // Explicit bullet/lines under TD Competencies
     t = t.replace(/^\s*·\s*Engineering\s*&\s*Research\s*Centre\s*$/gim, '');
+    t = t.replace(/^\s*Engineering\s*&\s*Research\s*Centre\s*$/gim, '');
     t = t.replace(/Product\s+Development\s*&\s+Engineering[\s\S]*?higher\s+performance\s+products\./gi, '');
     t = t.replace(/^\s*·\s*Testing:[\s\S]*?requirements\.?$/gim, '');
+    t = t.replace(/^\s*Testing:[\s\S]*?requirements\.?$/gim, '');
     t = t.replace(/^\s*·\s*Global\s+Metallurgy\s*&\s+Chemistry\s+Laboratory\s*\(GMC\)\s*$/gim, '');
+    t = t.replace(/^\s*Global\s+Metallurgy\s*&\s+Chemistry\s+Laboratory\s*\(GMC\)\s*$/gim, '');
     t = t.replace(/^\s*·\s*Future\s+Factory\s*\(Manufacturing\s*4\.0\)[\s\S]*?Digital\.?$/gim, '');
+    t = t.replace(/^\s*Future\s+Factory\s*\(Manufacturing\s*4\.0\)[\s\S]*?Digital\.?$/gim, '');
     t = t.replace(/^\s*·\s*Manufacturing\s+Process\s*&\s+Development[\s\S]*?automation\.?$/gim, '');
+    t = t.replace(/^\s*Manufacturing\s+Process\s*&\s+Development[\s\S]*?automation\.?$/gim, '');
     t = t.replace(/^\s*·\s*Connected\s+Technologies[\s\S]*?assets\.?$/gim, '');
+    t = t.replace(/^\s*Connected\s+Technologies[\s\S]*?assets\.?$/gim, '');
     // SKF Purpose Statement block
     t = t.replace(/SKF\s+Purpose\s+Statement[\s\S]*?(?:\n\s*\n|$)/gi, '');
     t = t.replace(/Together,\s*we\s*re-imagine\s*rotation\s*for\s*a\s*better\s*tomorrow\.?/gi, '');
