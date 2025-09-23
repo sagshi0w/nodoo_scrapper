@@ -1500,8 +1500,6 @@ export default function extractSkillsAndExperience(job) {
     };
 
 
-
-
     function isEntryLevelJob(title, experience) {
         const normalizedTitle = title.toLowerCase();
 
