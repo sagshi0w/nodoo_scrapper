@@ -189,6 +189,13 @@ const removeCumminsBoilerplate = (text) => {
     let t = text;
     // Remove promotional paragraph about continuous learning/benefits/growth
     t = t.replace(/As\s+Cummins\s+continues\s+to\s+grow,[\s\S]*?long-term\s+growth\./i, '');
+    // Remove CTA lines/buttons from sidebar or footer copied into description
+    t = t.replace(/^\s*APPLY\s*$/gim, '');
+    t = t.replace(/^\s*JOIN\s+OUR\s+TALENT\s+COMMUNITY\s*$/gim, '');
+    t = t.replace(/^\s*EMPLOYEES\s+REFER\s+A\s+FRIEND\s*$/gim, '');
+    t = t.replace(/^\s*REQUEST\s+AN\s+ACCOMMODATION\s*$/gim, '');
+    // Collapse excess blank lines
+    t = t.replace(/[ \t]+$/gm, '').replace(/\n\s*\n+/g, '\n\n').trim();
     return t;
 };
 
