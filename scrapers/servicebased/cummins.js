@@ -33,7 +33,7 @@ class CumminsJobsScraper {
         this.allJobLinks = [];
         const existingLinks = new Set();
 
-        while (true) {
+        while (existingLinks.size < 10) {
             // Collect job links on current page
             const jobLinks = await this.page.$$eval(`li.border-gray-light a[href*="/job/"]`, anchors =>
                 anchors.map(a => a.href)
@@ -48,29 +48,28 @@ class CumminsJobsScraper {
 
             console.log(`📄 Collected ${this.allJobLinks.length} unique job links so far...`);
 
-            // Check if "Load more jobs" button exists and click it
-            const prevCount = await this.page.$$eval('li.border-gray-light a[href*="/job/"]', els => els.length);
-            const loadMoreBtn = await this.page.$('button[aria-label="Load more jobs"]');
-            if (!loadMoreBtn) {
-                console.log("✅ No more pages found. Pagination finished.");
-                break;
-            }
+            // Check if "Load more jobs" button exists and click it (commented out for testing)
+            // const prevCount = await this.page.$$eval('li.border-gray-light a[href*="/job/"]', els => els.length);
+            // const loadMoreBtn = await this.page.$('button[aria-label="Load more jobs"]');
+            // if (!loadMoreBtn) {
+            //     console.log("✅ No more pages found. Pagination finished.");
+            //     break;
+            // }
 
+            // await loadMoreBtn.click();
 
-            await loadMoreBtn.click();
-
-            // ⏳ Manually poll for new jobs or button disappearance to avoid timeouts
-            let retries = 0;
-            const maxRetries = 40; // ~20s at 500ms intervals
-            while (retries < maxRetries) {
-                const [currentCount, btnStillThere] = await Promise.all([
-                    this.page.$$eval('li.border-gray-light a[href*="/job/"]', els => els.length).catch(() => 0),
-                    this.page.$('button[aria-label="Load more jobs"]').then(b => !!b).catch(() => false),
-                ]);
-                if (currentCount > prevCount || !btnStillThere) break;
-                await delay(500);
-                retries++;
-            }
+            // // ⏳ Manually poll for new jobs or button disappearance to avoid timeouts
+            // let retries = 0;
+            // const maxRetries = 40; // ~20s at 500ms intervals
+            // while (retries < maxRetries) {
+            //     const [currentCount, btnStillThere] = await Promise.all([
+            //         this.page.$$eval('li.border-gray-light a[href*="/job/"]', els => els.length).catch(() => 0),
+            //         this.page.$('button[aria-label="Load more jobs"]').then(b => !!b).catch(() => false),
+            //     ]);
+            //     if (currentCount > prevCount || !btnStillThere) break;
+            //     await delay(500);
+            //     retries++;
+            // }
         }
 
         return this.allJobLinks;
