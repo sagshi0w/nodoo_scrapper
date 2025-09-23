@@ -194,6 +194,8 @@ const removeCumminsBoilerplate = (text) => {
     t = t.replace(/^\s*JOIN\s+OUR\s+TALENT\s+COMMUNITY\s*$/gim, '');
     t = t.replace(/^\s*EMPLOYEES\s+REFER\s+A\s+FRIEND\s*$/gim, '');
     t = t.replace(/^\s*REQUEST\s+AN\s+ACCOMMODATION\s*$/gim, '');
+    // Remove DESCRIPTION heading lines
+    t = t.replace(/^\s*DESCRIPTION\s*$/gim, '');
     // Collapse excess blank lines
     t = t.replace(/[ \t]+$/gm, '').replace(/\n\s*\n+/g, '\n\n').trim();
     return t;
