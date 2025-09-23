@@ -1,7 +1,5 @@
 // ✅ If you're using ESM (with "type": "module" in package.json)
 export default function extractSkillsAndExperience(job) {
-
-    console.log("job.location (4)= ", job.location)
     const commonSkills = [
         'JavaScript', 'Python', 'Java', 'React', 'Node.js', 'SQL', 'AWS',
         'Excel', 'Communication', 'Teamwork', 'Problem Solving', 'Leadership',
@@ -276,7 +274,6 @@ export default function extractSkillsAndExperience(job) {
         , 'Polygon'
         , 'Binance Smart Chain (BSC)'
         , 'Solana'
-        , 'Near'
         , 'Avalanche'
         , 'StarkNet'
         , 'zkSync'
@@ -718,7 +715,6 @@ export default function extractSkillsAndExperience(job) {
         , 'Tax Filing Platforms (e.g., ClearTax)'
         , 'Data Room Management'
 
-
         , 'Talent Acquisition'
         , 'Recruitment Strategy'
         , 'Sourcing Techniques'
@@ -752,7 +748,6 @@ export default function extractSkillsAndExperience(job) {
         , 'Naukri.com'
         , 'Indeed'
         , 'Greenhouse'
-        , 'Lever'
         , 'Zoho Recruit'
         , 'Workday'
         , 'BambooHR'
@@ -768,7 +763,9 @@ export default function extractSkillsAndExperience(job) {
         , 'HRIS Management'
         , 'ATS Management'
         , 'LMS Platforms'
-        , 'Survey Tools (e.g., CultureAmp, Officevibe)'
+        , 'Survey Tools'
+        , 'CultureAmp'
+        , 'Officevibe'
 
 
         , 'Customer Support'
@@ -1378,30 +1375,8 @@ export default function extractSkillsAndExperience(job) {
         return { min: null, max: null };
     }
 
-
-    // Preprocess job description:
-    // function cleanDescription(desc) {
-    //     if (!desc) return '';
-
-    //     return desc
-    //         .replace(/\r\n/g, '\n')                 // normalize line endings
-    //         .replace(/\t+/g, ' ')                   // remove tabs
-    //         .replace(/[ ]{2,}/g, ' ')               // collapse multiple spaces
-    //         .replace(/\n{3,}/g, '\n\n')             // collapse 3+ newlines into 2
-    //         .split('\n')
-    //         .map(line => line.trim())
-    //         .filter(line => !/^(\*|•|-|—)?\s*$/.test(line)) // remove lines that are only bullets or dashes
-    //         .trim();
-    // }
-
     function cleanDescription(desc) {
         if (!desc) return '';
-
-        return desc
-            .split('\n')                       // keep line breaks
-            .map(line => line.trim())          // trim spaces from each line
-            .filter(line => line.length > 0)   // remove empty lines
-            .join('\n');                       // join back with preserved formatting
     }
 
 
