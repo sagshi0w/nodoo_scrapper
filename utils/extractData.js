@@ -41,7 +41,7 @@ export default function extractSkillsAndExperience(job) {
         , 'Mocha'
         , 'JUnit'
         , 'Debugging'
-        , 'Object,Oriented Programming (OOP)'
+        , 'Object-Oriented Programming (OOP)'
         , 'Design Patterns'
         , 'Clean Code'
         , 'MVC'
@@ -57,7 +57,7 @@ export default function extractSkillsAndExperience(job) {
         , 'NumPy'
         , 'Matplotlib'
         , 'Seaborn'
-        , 'Scikit,learn'
+        , 'Scikit-learn'
         , 'TensorFlow'
         , 'Keras'
         , 'PyTorch'
@@ -1387,26 +1387,73 @@ export default function extractSkillsAndExperience(job) {
         const foundSkills = new Set();
         const lowercaseDesc = desc.toLowerCase();
 
-        // 1. First look for explicit skills sections
-        const skillsSections = desc.match(/(?:skills|qualifications|requirements|competencies)[:\s-]+([\s\S]+?)(?:\n\n|\.\s|\n\s*\n|$)/i);
+        // Remove duplicates from commonSkills array
+        const uniqueSkills = [...new Set(commonSkills)];
 
-        if (skillsSections) {
-            const sectionText = skillsSections[1].toLowerCase();
-            commonSkills.forEach(skill => {
-                if (sectionText.includes(skill.toLowerCase())) {
-                    foundSkills.add(skill);
+        // 1. First look for explicit skills sections with more flexible regex
+        const skillsSections = desc.match(/(?:skills|qualifications|requirements|competencies|technical\s+skills|key\s+skills)[:\s-]+([\s\S]+?)(?:\n\n|\.\s|\n\s*\n|$)/gi);
+
+        if (skillsSections && skillsSections.length > 0) {
+            // Process all found skills sections
+            skillsSections.forEach(section => {
+                const sectionMatch = section.match(/(?:skills|qualifications|requirements|competencies|technical\s+skills|key\s+skills)[:\s-]+([\s\S]+?)(?:\n\n|\.\s|\n\s*\n|$)/i);
+                if (sectionMatch) {
+                    const sectionText = sectionMatch[1].toLowerCase();
+                    uniqueSkills.forEach(skill => {
+                        if (sectionText.includes(skill.toLowerCase())) {
+                            foundSkills.add(skill);
+                        }
+                    });
                 }
             });
         }
 
-        // 2. If no skills section found, search entire description
-        if (foundSkills.size === 0) {
-            commonSkills.forEach(skill => {
-                if (lowercaseDesc.includes(skill.toLowerCase())) {
-                    foundSkills.add(skill);
-                }
+        // 2. Always search entire description (not just as fallback)
+        // This handles plain paragraph descriptions without formal sections
+        uniqueSkills.forEach(skill => {
+            const skillLower = skill.toLowerCase();
+            
+            // Use word boundary matching for better accuracy
+            const skillRegex = new RegExp(`\\b${skillLower.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+            
+            if (skillRegex.test(desc)) {
+                foundSkills.add(skill);
+            }
+        });
+
+        // 3. Additional fallback: look for bullet points or numbered lists
+        const bulletPoints = desc.match(/^[\s]*[•·▪▫‣⁃\-\*]\s*(.+)$/gm);
+        if (bulletPoints) {
+            bulletPoints.forEach(point => {
+                const pointText = point.toLowerCase();
+                uniqueSkills.forEach(skill => {
+                    if (pointText.includes(skill.toLowerCase())) {
+                        foundSkills.add(skill);
+                    }
+                });
             });
         }
+
+        // 4. Look for skills in sentences with common patterns
+        const skillPatterns = [
+            /(?:experience\s+with|knowledge\s+of|proficient\s+in|familiar\s+with|expertise\s+in)\s+([^.,\n]+)/gi,
+            /(?:must\s+have|required|preferred)\s*:?\s*([^.,\n]+)/gi,
+            /(?:technologies?|tools?|languages?|frameworks?)\s*:?\s*([^.,\n]+)/gi
+        ];
+
+        skillPatterns.forEach(pattern => {
+            const matches = desc.match(pattern);
+            if (matches) {
+                matches.forEach(match => {
+                    const skillText = match.toLowerCase();
+                    uniqueSkills.forEach(skill => {
+                        if (skillText.includes(skill.toLowerCase())) {
+                            foundSkills.add(skill);
+                        }
+                    });
+                });
+            }
+        });
 
         return Array.from(foundSkills);
     };
