@@ -58,15 +58,18 @@ class CumminsJobsScraper {
 
             await loadMoreBtn.click();
 
-            // ⏳ Wait for new jobs to load or button to disappear
-            await this.page.waitForFunction((selector, previous) => {
-                const button = document.querySelector('button[aria-label="Load more jobs"]');
-                const count = document.querySelectorAll(selector).length;
-                return count > previous || !button;
-            }, {}, 'li.border-gray-light a[href*="/job/"]', prevCount);
-
-            // Small delay to stabilize
-            await delay(500);
+            // ⏳ Manually poll for new jobs or button disappearance to avoid timeouts
+            let retries = 0;
+            const maxRetries = 40; // ~20s at 500ms intervals
+            while (retries < maxRetries) {
+                const [currentCount, btnStillThere] = await Promise.all([
+                    this.page.$$eval('li.border-gray-light a[href*="/job/"]', els => els.length).catch(() => 0),
+                    this.page.$('button[aria-label="Load more jobs"]').then(b => !!b).catch(() => false),
+                ]);
+                if (currentCount > prevCount || !btnStillThere) break;
+                await delay(500);
+                retries++;
+            }
         }
 
         return this.allJobLinks;
