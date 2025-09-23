@@ -1376,7 +1376,8 @@ export default function extractSkillsAndExperience(job) {
     }
 
     function cleanDescription(desc) {
-        if (!desc) return '';
+        // Return description exactly as provided (no cleaning) if present
+        return desc || '';
     }
 
 

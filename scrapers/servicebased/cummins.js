@@ -223,7 +223,7 @@ const extractCumminsData = (job) => {
 
     // Optional: fallback default
     if (!location) {
-        location = 'India';
+        location = 'Pune';
     }
 
     return {
