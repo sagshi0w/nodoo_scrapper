@@ -50,6 +50,9 @@ export default function extractSkillsAndExperience(job) {
         , 'Kanban'
         , 'Jira'
         , 'Trello'
+        , 'XML'
+        , 'HTML5'
+        , 'Bootstrap'
 
         , 'Python'
         , 'SQL'
@@ -319,9 +322,21 @@ export default function extractSkillsAndExperience(job) {
         , 'Infura'
         , 'Chainlink'
         , 'Graph Protocol'
-        , 'CI/CD for Smart Contracts'
+        , 'CI/CD'
         , 'Node Deployment'
         , 'RPC Management'
+        , 'WCAG'
+        , 'Visual Studio'
+        , 'VBScript'
+        , 'VB.NET'
+        , '.NET'
+        , 'RPA'
+        , 'Process Automation'
+        , 'System Integration'
+        , 'SDLC'
+        , 'SQL Server'
+        , 'SQL Server 2012'
+        , 'C#'
 
         , 'C++'
         , 'Embedded C'
@@ -408,6 +423,8 @@ export default function extractSkillsAndExperience(job) {
         , 'Product Analytics (Mixpanel / Amplitude / GA)'
         , 'User Interface (UI)'
         , 'User Experience (UX)'
+        , 'UI'
+        , 'UX'
         , 'Design Systems'
         , 'Component,Based Design'
         , 'Interaction Design'
@@ -416,6 +433,8 @@ export default function extractSkillsAndExperience(job) {
         , 'Responsive Design'
         , 'Mobile,First Design'
         , 'Prototyping'
+        , 'Prototypes'
+        , 'visualizations'
         , 'Figma'
         , 'Adobe XD'
         , 'Sketch'
@@ -1386,70 +1405,162 @@ export default function extractSkillsAndExperience(job) {
         if (!desc) return [];
 
         const foundSkills = new Set();
-        const lowercaseDesc = desc.toLowerCase();
 
-        // Remove duplicates from commonSkills array
-        const uniqueSkills = [...new Set(commonSkills)];
+        // Normalize separators and spacing (e.g., UI/UX, UI-UX -> UI UX)
+        const normalizedDesc = String(desc)
+            .replace(/[\u2013\u2014]/g, '-')
+            .replace(/[\/\-]/g, ' ')
+            .replace(/\s+/g, ' ');
+        const lowercaseDesc = normalizedDesc.toLowerCase();
 
-        // 1. First look for explicit skills sections with more flexible regex
-        const skillsSections = desc.match(/(?:skills|qualifications|requirements|competencies|technical\s+skills|key\s+skills)[:\s-]+([\s\S]+?)(?:\n\n|\.\s|\n\s*\n|$)/gi);
+        // Aliases map variations to canonical skills already in commonSkills
+        // NOTE: keep patterns specific and with boundaries to avoid false positives
+        const aliasPatterns = [
+            { pattern: /\bui\s*[\/\-]?\s*ux\b/i, targets: ['User Interface (UI)', 'User Experience (UX)'] },
+            { pattern: /\bux\s*[\/\-]?\s*ui\b/i, targets: ['User Interface (UI)', 'User Experience (UX)'] },
+            { pattern: /\buser\s+interface\b/i, targets: ['User Interface (UI)'] },
+            { pattern: /\buser\s+experience\b/i, targets: ['User Experience (UX)'] },
+            { pattern: /\badobe\s*xd\b/i, targets: ['Adobe XD'] },
+            { pattern: /\badobexd\b/i, targets: ['Adobe XD'] },
+            { pattern: /\bvisual\s+studio\s+ide\b/i, targets: ['Visual Studio'] },
+            { pattern: /\bvb\s*scripting\b/i, targets: ['VBScript'] },
+            { pattern: /\bvbscript\b/i, targets: ['VBScript'] },
+            { pattern: /\bvb\.?net\b/i, targets: ['VB.NET'] },
+            { pattern: /\b\.net\b/i, targets: ['.NET'] },
+            { pattern: /\brpa\b/i, targets: ['RPA'] },
+            { pattern: /\bprocess\s+automation\b/i, targets: ['Process Automation'] },
+            { pattern: /\bintegration\b/i, targets: ['System Integration'] },
+            { pattern: /\bsdlc\b/i, targets: ['SDLC'] },
+            { pattern: /\bsql\s*server\s*2012\b/i, targets: ['SQL Server 2012', 'SQL Server'] },
+            { pattern: /\bnode\s*js\b/i, targets: ['Node.js'] },
+            { pattern: /\bbit\s*bucket\b/i, targets: ['Bitbucket'] }
+            // Intentionally omit short aliases like 'js' or 'ts' to prevent overmatching
+        ];
 
+        // Remove duplicates from commonSkills array (case-insensitive, prefer first seen casing)
+        const canonicalSkillByLower = new Map();
+        for (const s of commonSkills) {
+            const key = String(s).toLowerCase();
+            if (!canonicalSkillByLower.has(key)) canonicalSkillByLower.set(key, s);
+        }
+        const uniqueSkills = Array.from(canonicalSkillByLower.values());
+
+        function addSkillIfValid(skill, contextText) {
+            // Reduce false positives for the word 'Go' (verb) vs language
+            if (skill === 'Go') {
+                const goOk = /\bgolang\b/i.test(contextText) || /\bgo\s+language\b/i.test(contextText);
+                if (!goOk) return;
+            }
+            foundSkills.add(skill);
+        }
+
+        function matchesSkill(contextText, skill) {
+            const escaped = skill.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+            const hasNonWord = /[^A-Za-z0-9\s]/.test(skill);
+            if (hasNonWord) {
+                // Surround with non-word char or boundaries without relying on \b
+                const pattern = `(^|[^A-Za-z0-9])${escaped}([^A-Za-z0-9]|$)`;
+                return new RegExp(pattern, 'i').test(contextText);
+            } else {
+                return new RegExp(`\\b${escaped}\\b`, 'i').test(contextText);
+            }
+        }
+
+        // 0) Apply alias patterns explicitly with regex boundaries
+        aliasPatterns.forEach(({ pattern, targets }) => {
+            if (pattern.test(normalizedDesc)) {
+                targets.forEach(t => addSkillIfValid(t, normalizedDesc));
+            }
+        });
+
+        // 1) First look for explicit skills sections
+        const skillsSections = normalizedDesc.match(/(?:skills|qualifications|requirements|competencies|technical\s+skills|key\s+skills)[:\s-]+([\s\S]+?)(?:\n\n|\.\s|\n\s*\n|$)/gi);
         if (skillsSections && skillsSections.length > 0) {
-            // Process all found skills sections
             skillsSections.forEach(section => {
                 const sectionMatch = section.match(/(?:skills|qualifications|requirements|competencies|technical\s+skills|key\s+skills)[:\s-]+([\s\S]+?)(?:\n\n|\.\s|\n\s*\n|$)/i);
                 if (sectionMatch) {
-                    const sectionText = sectionMatch[1].toLowerCase();
+                    const sectionText = sectionMatch[1];
                     uniqueSkills.forEach(skill => {
-                        if (sectionText.includes(skill.toLowerCase())) {
-                            foundSkills.add(skill);
+                        if (matchesSkill(sectionText, skill)) {
+                            addSkillIfValid(skill, sectionText);
                         }
                     });
                 }
             });
         }
 
-        // 2. Always search entire description (not just as fallback)
-        // This handles plain paragraph descriptions without formal sections
+        // 2) Search entire description (exact word match first)
+        const exactMatched = new Set();
         uniqueSkills.forEach(skill => {
-            const skillLower = skill.toLowerCase();
-            
-            // Use word boundary matching for better accuracy
-            const skillRegex = new RegExp(`\\b${skillLower.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
-            
-            if (skillRegex.test(desc)) {
-                foundSkills.add(skill);
+            if (matchesSkill(normalizedDesc, skill)) {
+                addSkillIfValid(skill, normalizedDesc);
+                exactMatched.add(skill);
             }
         });
 
-        // 3. Additional fallback: look for bullet points or numbered lists
-        const bulletPoints = desc.match(/^[\s]*[•·▪▫‣⁃\-\*]\s*(.+)$/gm);
+        // 2b) Fallback: controlled morphological variants only (s/es/ing/ed on last token)
+        function buildVariantRegexes(skill) {
+            const safe = skill.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+            const tokens = skill.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
+            if (tokens.length === 0) return [];
+            const last = tokens[tokens.length - 1];
+            const baseLast = last.replace(/s$/i, "");
+            const lastVariants = [last, `${baseLast}s`, `${baseLast}es`, `${baseLast}ing`, `${baseLast}ed`];
+            const prefix = tokens.slice(0, -1).map(t => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("\\s+");
+            const regexes = [];
+            lastVariants.forEach(v => {
+                const vSafe = v.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+                const pattern = prefix ? `\\b${prefix}\\s+${vSafe}\\b` : `\\b${vSafe}\\b`;
+                regexes.push(new RegExp(pattern, 'i'));
+            });
+            return regexes;
+        }
+
+        uniqueSkills.forEach(skill => {
+            if (exactMatched.has(skill)) return;
+            if (String(skill).length < 3) return;
+            const variantRegexes = buildVariantRegexes(skill);
+            if (variantRegexes.some(rx => rx.test(normalizedDesc))) {
+                addSkillIfValid(skill, normalizedDesc);
+            }
+        });
+
+        // 3) Fallbacks: bullets and comma/semicolon separated lists
+        const bulletPoints = normalizedDesc.match(/^[\s]*[•·▪▫‣⁃\-\*]\s*(.+)$/gmi);
         if (bulletPoints) {
             bulletPoints.forEach(point => {
-                const pointText = point.toLowerCase();
                 uniqueSkills.forEach(skill => {
-                    if (pointText.includes(skill.toLowerCase())) {
-                        foundSkills.add(skill);
+                    if (matchesSkill(point, skill)) {
+                        addSkillIfValid(skill, point);
                     }
                 });
             });
         }
 
-        // 4. Look for skills in sentences with common patterns
+        const listSegments = normalizedDesc.split(/\n|\.|;/).map(s => s.trim()).filter(Boolean);
+        listSegments.forEach(segment => {
+            if (/(,| and )/.test(segment)) {
+                uniqueSkills.forEach(skill => {
+                    if (matchesSkill(segment, skill)) {
+                        addSkillIfValid(skill, segment);
+                    }
+                });
+            }
+        });
+
+        // 4) Pattern-based sentences
         const skillPatterns = [
             /(?:experience\s+with|knowledge\s+of|proficient\s+in|familiar\s+with|expertise\s+in)\s+([^.,\n]+)/gi,
             /(?:must\s+have|required|preferred)\s*:?\s*([^.,\n]+)/gi,
             /(?:technologies?|tools?|languages?|frameworks?)\s*:?\s*([^.,\n]+)/gi
         ];
-
         skillPatterns.forEach(pattern => {
-            const matches = desc.match(pattern);
+            const matches = normalizedDesc.match(pattern);
             if (matches) {
                 matches.forEach(match => {
-                    const skillText = match.toLowerCase();
                     uniqueSkills.forEach(skill => {
-                        if (skillText.includes(skill.toLowerCase())) {
-                            foundSkills.add(skill);
+                        if (matchesSkill(match, skill)) {
+                            addSkillIfValid(skill, match);
                         }
                     });
                 });
