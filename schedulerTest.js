@@ -120,6 +120,7 @@ import Fello from "./scrapers/servicebased/fello.js"
 import Doqfy from "./scrapers/servicebased/Doqfy.js"
 import Bullet from "./scrapers/servicebased/Bullet.js"
 import SKF from "./scrapers/servicebased/skf.js"
+import Cummins from "./scrapers/servicebased/cummins.js"
 
 // Not working scrappers:
 import runTataMgJobsScraper from "./scrapers/productBased/tata1mg.js"
@@ -194,7 +195,7 @@ ${error.stack}`;
 };
 
 const scrapers = [
-    { fn: SKF, headless: true },
+    { fn: Cummins, headless: true },
 ];
 
 const runAllScrapers = async () => {
