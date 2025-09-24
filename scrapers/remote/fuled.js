@@ -23,7 +23,7 @@ class FuledJobsScraper {
 
     async navigateToJobsPage() {
         console.log('🌐 Navigating to Fuled Careers...');
-        await this.page.goto('https://cummins.jobs/locations/ind/jobs/', {
+        await this.page.goto('https://10up.com/careers/', {
             waitUntil: 'networkidle2'
         });
         await delay(5000);
