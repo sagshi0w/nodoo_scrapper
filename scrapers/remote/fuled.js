@@ -101,7 +101,7 @@ class FuledJobsScraper {
 
                 return {
                     title,
-                    company: 'Fuled',
+                    company: 'Fueled',
                     location: 'Remote',
                     description: getRichText([
                         'div.entry-content.wp-block-post-content',
