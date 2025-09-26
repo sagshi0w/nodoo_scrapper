@@ -122,6 +122,7 @@ import Bullet from "./scrapers/servicebased/Bullet.js"
 import SKF from "./scrapers/servicebased/skf.js"
 import Cummins from "./scrapers/servicebased/cummins.js"
 import Fuled from "./scrapers/remote/fuled.js"
+import Bosch from "./scrapers/servicebased/bosch.js"
 
 // Not working scrappers:
 import runTataMgJobsScraper from "./scrapers/productBased/tata1mg.js"
@@ -196,7 +197,7 @@ ${error.stack}`;
 };
 
 const scrapers = [
-    { fn: Fuled, headless: true },
+    { fn: Bosch, headless: true },
 ];
 
 const runAllScrapers = async () => {
