@@ -33,48 +33,70 @@ class BoschJobsScraper {
         this.allJobLinks = [];
         const existingLinks = new Set();
 
-		while (true) {
-			// Collect job links on current page
-			let jobLinks = await this.page.$$eval('a.link--block.details[href*="smartrecruiters.com"]', anchors =>
-				anchors.map(a => a.href)
-			);
+		let lastCount = 0;
+		let stagnantRounds = 0;
+		const maxStagnantRounds = 3;
+		const maxIterations = 50;
+		let iteration = 0;
+
+		while (iteration < maxIterations) {
+			iteration++;
+			// Collect job links on current viewport
+			let jobLinks = await this.page.$$eval('a.link--block.details', anchors => anchors.map(a => a.href));
 			if (jobLinks.length === 0) {
-				jobLinks = await this.page.$$eval('a.link--block.details', anchors =>
-					anchors.map(a => a.href)
-				);
+				jobLinks = await this.page.$$eval('a.link--block.details', anchors => anchors.map(a => a.href));
 			}
 
-            for (const link of jobLinks) {
-                if (!existingLinks.has(link)) {
-                    existingLinks.add(link);
-                    this.allJobLinks.push(link);
-                }
-            }
+			for (const link of jobLinks) {
+				if (!existingLinks.has(link)) {
+					existingLinks.add(link);
+					this.allJobLinks.push(link);
+				}
+			}
 
-            console.log(`📄 Collected ${this.allJobLinks.length} unique job links so far...`);
+			console.log(`📄 Collected ${this.allJobLinks.length} unique job links so far...`);
 
-            // Check if "Load More" button exists (fresh query every loop)
-            const loadMoreExists = await this.page.$('#load_more_jobs2');
-            if (!loadMoreExists) {
-                console.log("✅ No more pages found. Pagination finished.");
-                break;
-            }
+			if (this.allJobLinks.length > lastCount) {
+				stagnantRounds = 0;
+				lastCount = this.allJobLinks.length;
+			} else {
+				stagnantRounds++;
+			}
 
-            // console.log("➡️ Clicking Load More...");
-            // await this.page.click('#load_more_jobs');
+			// Try clicking a Load More button if present
+			const clicked = await this.page.evaluate(() => {
+				const selectors = [
+					'#load_more_jobs',
+					'#load_more_jobs2',
+					'button.js-load-more',
+					'button[data-sr-track="loadMoreJobs"]',
+					'button[aria-label="Load more jobs"]',
+					'button:has(span:contains("Load more"))'
+				];
+				for (const sel of selectors) {
+					const btn = document.querySelector(sel);
+					if (btn && !btn.hasAttribute('disabled') && btn.offsetParent !== null) {
+						btn.click();
+						return true;
+					}
+				}
+				return false;
+			});
 
-            // ⏳ Wait for new jobs to load
-            // await this.page.waitForFunction(
-            //     (prevCount) => {
-            //         return document.querySelectorAll("h5 > a").length > prevCount;
-            //     },
-            //     {},
-            //     jobLinks.length
-            // );
+			if (!clicked) {
+				// Scroll to bottom to trigger lazy loading
+				await this.page.evaluate(() => {
+					window.scrollTo(0, document.body.scrollHeight);
+				});
+			}
 
-            // // Optional: small delay to stabilize
-            // await delay(5000);
-        }
+			await delay(1500);
+
+			if (stagnantRounds >= maxStagnantRounds) {
+				console.log('✅ No new links after multiple attempts. Stopping pagination.');
+				break;
+			}
+		}
 
         return this.allJobLinks;
     }
