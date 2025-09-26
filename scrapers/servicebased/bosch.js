@@ -80,13 +80,21 @@ class BoschJobsScraper {
 					'#load_more_jobs2',
 					'button.js-load-more',
 					'button[data-sr-track="loadMoreJobs"]',
-					'button[aria-label="Load more jobs"]',
-					'button:has(span:contains("Load more"))'
+					'button[aria-label="Load more jobs"]'
 				];
 				for (const sel of selectors) {
 					const btn = document.querySelector(sel);
 					if (btn && !btn.hasAttribute('disabled') && btn.offsetParent !== null) {
 						btn.click();
+						return true;
+					}
+				}
+				// Fallback: find visible button/link with text "Load more"
+				const candidates = Array.from(document.querySelectorAll('button, a'));
+				for (const el of candidates) {
+					const text = (el.textContent || '').trim().toLowerCase();
+					if (text.includes('load more') && el.offsetParent !== null) {
+						el.click();
 						return true;
 					}
 				}
