@@ -37,6 +37,7 @@ import Bullet from "./scrapers/servicebased/Bullet.js"
 import SKF from "./scrapers/servicebased/skf.js"
 import Cummins from "./scrapers/servicebased/cummins.js"
 import Fuled from "./scrapers/remote/fuled.js"
+import Bosch from "./scrapers/servicebased/bosch.js"
 
 const config = {
     concurrency: 5,
@@ -128,6 +129,7 @@ const scrapers = [
     { fn: SKF, headless: true },
     { fn: Cummins, headless: true },
     { fn: Fuled, headless: true },
+    { fn: Bosch, headless: true },
 ];
 
 const runAllScrapers = async () => {
