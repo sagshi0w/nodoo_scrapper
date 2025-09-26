@@ -63,6 +63,16 @@ class BoschJobsScraper {
 				stagnantRounds++;
 			}
 
+			// Try expanding grouped sections (SmartRecruiters location groups)
+			const groupMoreClicked = await this.page.evaluate(() => {
+				const more = document.querySelector('a.link.details-desc.js-more');
+				if (more && more.offsetParent !== null) {
+					more.click();
+					return true;
+				}
+				return false;
+			});
+
 			// Try clicking a Load More button if present
 			const clicked = await this.page.evaluate(() => {
 				const selectors = [
@@ -83,14 +93,14 @@ class BoschJobsScraper {
 				return false;
 			});
 
-			if (!clicked) {
+			if (!clicked && !groupMoreClicked) {
 				// Scroll to bottom to trigger lazy loading
 				await this.page.evaluate(() => {
 					window.scrollTo(0, document.body.scrollHeight);
 				});
 			}
 
-			await delay(1500);
+			await delay(2000);
 
 			if (stagnantRounds >= maxStagnantRounds) {
 				console.log('✅ No new links after multiple attempts. Stopping pagination.');
