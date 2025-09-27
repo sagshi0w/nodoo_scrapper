@@ -1,0 +1,74 @@
+name: Job Matching System
+
+on:
+  schedule:
+    - cron: "30 0 * * *"  # 6:00 AM IST (00:30 UTC)
+  workflow_dispatch: # Manual trigger option
+
+jobs:
+  run-job-matching:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📦 Checkout Repo
+        uses: actions/checkout@v4
+
+      - name: ⚙️ Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+
+      - name: 📦 Install Project Dependencies
+        run: npm install
+
+      - name: 🏃 Run Job Matching Process
+        run: npm run job-matching
+        env:
+          MONGO_URI: ${{ secrets.MONGO_URI }}
+          MONGO_DB_NAME: ${{ secrets.MONGO_DB_NAME }}
+          MONGO_DB_COLLECTION_NAME: ${{ secrets.MONGO_DB_COLLECTION_NAME }}
+          EMAIL_USER: ${{ secrets.MAIL_USERNAME }}
+          EMAIL_PASS: ${{ secrets.MAIL_PASSWORD }}
+          EMAIL_RECIPIENTS: ${{ secrets.MAIL_RECIPIENTS }}
+
+      - name: ✅ Send Success Email
+        if: success()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          subject: "✅ Job Matching Completed Successfully - $(date)"
+          to: ${{ secrets.MAIL_RECIPIENTS || 'nodooin86@gmail.com' }}
+          from: "GitHub Action <${{ secrets.MAIL_USERNAME }}>"
+          body: |
+            ✅ Job Matching System completed successfully at 6:00 AM IST.
+            
+            📊 The system processed all jobs and user profiles to generate personalized job recommendations.
+            
+            📅 Timestamp: $(date)
+            🔄 Workflow: Job Matching System
+            📝 Check the logs for detailed processing statistics.
+
+      - name: ❌ Send Failure Email
+        if: failure()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          subject: "❌ Job Matching Failed - $(date)"
+          to: ${{ secrets.MAIL_RECIPIENTS || 'nodooin86@gmail.com' }}
+          from: "GitHub Action <${{ secrets.MAIL_USERNAME }}>"
+          body: |
+            ❌ Job Matching System failed to complete successfully.
+            
+            🔍 Please check the workflow logs for error details.
+            
+            📅 Timestamp: $(date)
+            🔄 Workflow: Job Matching System
+            🚨 Action Required: Review and fix the issue.
