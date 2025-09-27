@@ -222,7 +222,7 @@ const extractOnePasswordData = (job) => {
     if (cleanedDescription) {
         // Remove "About 1Password" section
         cleanedDescription = cleanedDescription
-            .replace(/About 1Password\s*At 1Password, we're building the foundation for a safe, productive digital future\. Our mission is to unleash employee productivity without compromising security by ensuring every identity is authentic, every application sign-in is secure, and every device is trusted\. We innovated the market-leading enterprise password manager and pioneered Extended Access Management, a new cybersecurity category built for the way people and AI agents work today\. As one of the most loved brands in cybersecurity, we take a human-centric approach in everything from product strategy to user experience\. Over 165,000 businesses and millions of people trust us to provide seamless, secure access to their most critical information\.\s*If you're excited about the opportunity to contribute to the digital safety of millions, to work alongside a team of curious, driven individuals, and to solve hard problems in a fast-paced, dynamic environment, then we want to hear from you\. Come join us and help shape a safer, simpler digital future\.\s*/gi, '')
+            .replace(/About 1Password[\s\S]*?Come join us and help shape a safer, simpler digital future\.\s*/gi, '')
             // Remove any remaining "About 1Password:" headers
             .replace(/About 1Password:\s*/gi, '')
             // Existing formatting steps
