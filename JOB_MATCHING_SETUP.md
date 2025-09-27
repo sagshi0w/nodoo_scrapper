@@ -88,6 +88,15 @@ npm run job-matching-scheduler
 npm run job-matching-test
 ```
 
+### Run Change Stream Listener (Real-time)
+```bash
+# Start the change stream listener for real-time job matching
+npm run change-stream
+
+# Test the change stream functionality
+npm run test-change-stream
+```
+
 ### Using PM2 for Production
 ```bash
 # Start the job matching scheduler with PM2
@@ -125,6 +134,14 @@ The system includes GitHub Actions workflows for automated execution:
   - `connection`: Test database connectivity
   - `matching`: Test complete job matching process
 - **Features**: Email notifications with test results
+
+#### Change Stream Workflow
+- **File**: `.github/workflows/changeStream.yml`
+- **Schedule**: Manual trigger only
+- **Actions**:
+  - `start`: Start change stream listener (30-second test)
+  - `test`: Test change stream functionality
+- **Features**: Real-time job matching for new/updated users
 
 #### Required GitHub Secrets
 Configure these secrets in your GitHub repository settings:
@@ -186,17 +203,54 @@ This system uses the existing `utils/profileMatching.js` functions for consisten
 4. **Detailed Results**: Provides comprehensive matching details for analysis
 5. **Database Integration**: Seamlessly integrates with existing MongoDB setup
 6. **Automated Scheduling**: Daily cron job runs at 6:00 AM IST
-7. **GitHub Actions Integration**: Automated workflows with scheduling and testing
-8. **Email Notifications**: Sends success/failure notifications with detailed reports
-9. **Graceful Error Handling**: Robust error handling and recovery
-10. **PM2 Support**: Production-ready with PM2 process management
-11. **Test Mode**: Ability to run immediately for testing
-12. **Multiple Deployment Options**: Local, PM2, or GitHub Actions execution
+7. **Real-time Processing**: MongoDB Change Streams for immediate job matching
+8. **GitHub Actions Integration**: Automated workflows with scheduling and testing
+9. **Email Notifications**: Sends success/failure notifications with detailed reports
+10. **Graceful Error Handling**: Robust error handling and recovery
+11. **PM2 Support**: Production-ready with PM2 process management
+12. **Test Mode**: Ability to run immediately for testing
+13. **Multiple Deployment Options**: Local, PM2, or GitHub Actions execution
+14. **Reactive Architecture**: Responds to user profile changes in real-time
+
+## MongoDB Change Streams (Real-time Processing)
+
+The system includes a reactive approach using MongoDB Change Streams to handle new users and profile updates in real-time:
+
+### How It Works
+1. **Change Stream Listener**: Monitors the `users` collection for changes
+2. **Event Detection**: Detects new user creation and profile updates
+3. **Immediate Processing**: Triggers job matching immediately when changes occur
+4. **Smart Filtering**: Only processes users with skills data
+5. **Duplicate Prevention**: Prevents processing the same user multiple times
+
+### Benefits
+- **Instant Results**: New users get job recommendations immediately
+- **Real-time Updates**: Profile changes trigger immediate re-matching
+- **Efficient Processing**: Only processes changed users, not all users
+- **Scalable**: Handles high-frequency updates without performance issues
+
+### Usage
+```bash
+# Start the change stream listener
+npm run change-stream
+
+# Test the functionality
+npm run test-change-stream
+```
+
+### Production Deployment
+```bash
+# Using PM2 for production
+pm2 start changeStreamScheduler.js --name change-stream-listener
+pm2 save && pm2 startup
+```
 
 ## Error Handling
 
 The system includes comprehensive error handling for:
 - Database connection issues
+- Change stream failures
+- User processing errors
 - Missing or malformed data
 - Processing errors
 - Graceful cleanup and connection closure

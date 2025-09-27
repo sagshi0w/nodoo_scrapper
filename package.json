@@ -11,6 +11,8 @@
     "job-matching": "node runJobMatching.js",
     "job-matching-scheduler": "node jobMatchingScheduler.js",
     "job-matching-test": "node jobMatchingScheduler.js --run-now",
+    "change-stream": "node changeStreamScheduler.js",
+    "test-change-stream": "node testChangeStream.js",
     "test-connection": "node testConnection.js"
   },
   "keywords": [],

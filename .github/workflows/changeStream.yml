@@ -1,0 +1,90 @@
+name: Change Stream Listener
+
+on:
+  workflow_dispatch: # Manual trigger only
+    inputs:
+      action:
+        description: 'Action to perform'
+        required: true
+        default: 'start'
+        type: choice
+        options:
+        - start
+        - test
+
+jobs:
+  change-stream:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📦 Checkout Repo
+        uses: actions/checkout@v4
+
+      - name: ⚙️ Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+
+      - name: 📦 Install Project Dependencies
+        run: npm install
+
+      - name: 🧪 Test Change Stream Functionality
+        if: ${{ github.event.inputs.action == 'test' }}
+        run: npm run test-change-stream
+        env:
+          MONGO_URI: ${{ secrets.MONGO_URI }}
+          MONGO_DB_NAME: ${{ secrets.MONGO_DB_NAME }}
+          MONGO_DB_COLLECTION_NAME: ${{ secrets.MONGO_DB_COLLECTION_NAME }}
+
+      - name: 🚀 Start Change Stream Listener
+        if: ${{ github.event.inputs.action == 'start' }}
+        run: |
+          echo "Starting change stream listener..."
+          timeout 30 npm run change-stream || true
+        env:
+          MONGO_URI: ${{ secrets.MONGO_URI }}
+          MONGO_DB_NAME: ${{ secrets.MONGO_DB_NAME }}
+          MONGO_DB_COLLECTION_NAME: ${{ secrets.MONGO_DB_COLLECTION_NAME }}
+          EMAIL_USER: ${{ secrets.MAIL_USERNAME }}
+          EMAIL_PASS: ${{ secrets.MAIL_PASSWORD }}
+          EMAIL_RECIPIENTS: ${{ secrets.MAIL_RECIPIENTS }}
+
+      - name: ✅ Send Success Email
+        if: success()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          subject: "✅ Change Stream ${{ github.event.inputs.action }} Completed"
+          to: ${{ secrets.MAIL_RECIPIENTS || 'nodooin86@gmail.com' }}
+          from: "GitHub Action <${{ secrets.MAIL_USERNAME }}>"
+          body: |
+            ✅ Change Stream ${{ github.event.inputs.action }} completed successfully.
+            
+            📅 Timestamp: $(date)
+            🔄 Action: ${{ github.event.inputs.action }}
+            📝 Check the logs for detailed information.
+
+      - name: ❌ Send Failure Email
+        if: failure()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          subject: "❌ Change Stream ${{ github.event.inputs.action }} Failed"
+          to: ${{ secrets.MAIL_RECIPIENTS || 'nodooin86@gmail.com' }}
+          from: "GitHub Action <${{ secrets.MAIL_USERNAME }}>"
+          body: |
+            ❌ Change Stream ${{ github.event.inputs.action }} failed.
+            
+            🔍 Please check the workflow logs for error details.
+            
+            📅 Timestamp: $(date)
+            🔄 Action: ${{ github.event.inputs.action }}
+            🚨 Action Required: Review and fix the issue.
