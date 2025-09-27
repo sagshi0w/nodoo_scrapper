@@ -35,7 +35,7 @@ class DelaplexJobsScraper {
 
         while (true) {
             // Collect job links from "View" buttons
-            const jobLinks = await this.page.$$eval(`.card-actions-right a.btn[href*="/careers"]`, anchors =>
+            const jobLinks = await this.page.$$eval(`a.btn[href*="/careers?company=Delaplex"]`, anchors =>
                 anchors.map(a => {
                     // Convert relative URLs to absolute URLs
                     const href = a.href;
@@ -70,7 +70,7 @@ class DelaplexJobsScraper {
                 // Wait for new jobs to load
                 await this.page.waitForFunction(
                     (prevCount) => {
-                        return document.querySelectorAll('.card-actions-right a.btn[href*="/careers"]').length > prevCount;
+                        return document.querySelectorAll('a.btn[href*="/careers?company=Delaplex"]').length > prevCount;
                     },
                     {},
                     jobLinks.length
