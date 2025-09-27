@@ -34,8 +34,26 @@ class DelaplexJobsScraper {
         const existingLinks = new Set();
 
         while (true) {
+            // Debug: Check what elements are available
+            const debugInfo = await this.page.evaluate(() => {
+                const jobCards = document.querySelectorAll('.job-card-container');
+                const allBtns = document.querySelectorAll('a.btn');
+                const careerBtns = document.querySelectorAll('a.btn[href*="/careers"]');
+                const jobCardBtns = document.querySelectorAll('.job-card-container a.btn');
+                
+                return {
+                    jobCards: jobCards.length,
+                    allBtns: allBtns.length,
+                    careerBtns: careerBtns.length,
+                    jobCardBtns: jobCardBtns.length,
+                    sampleHrefs: Array.from(careerBtns).slice(0, 3).map(a => a.href)
+                };
+            });
+            
+            console.log('🔍 Debug info:', debugInfo);
+            
             // Collect job links from job card containers
-            const jobLinks = await this.page.$$eval(`.job-card-container[data-testid="jobs-card"] a.btn[href*="/careers?company=Delaplex"]`, anchors =>
+            const jobLinks = await this.page.$$eval(`.job-card-container a.btn[href*="/careers"]`, anchors =>
                 anchors.map(a => {
                     // Convert relative URLs to absolute URLs
                     const href = a.href;
@@ -70,7 +88,7 @@ class DelaplexJobsScraper {
                 // Wait for new jobs to load
                 await this.page.waitForFunction(
                     (prevCount) => {
-                        return document.querySelectorAll('.job-card-container[data-testid="jobs-card"] a.btn[href*="/careers?company=Delaplex"]').length > prevCount;
+                        return document.querySelectorAll('.job-card-container a.btn[href*="/careers"]').length > prevCount;
                     },
                     {},
                     jobLinks.length
