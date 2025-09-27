@@ -3,7 +3,7 @@ import fs from 'fs';
 
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
-class DelaplexJobsScraper {
+class OnePasswordJobsScraper {
     constructor(headless = true) {
         this.headless = headless;
         this.browser = null;
@@ -22,8 +22,8 @@ class DelaplexJobsScraper {
     }
 
     async navigateToJobsPage() {
-        console.log('🌐 Navigating to Delaplex Careers...');
-        await this.page.goto('https://delaplex.com/careers/ats-portal/', {
+        console.log('🌐 Navigating to OnePassword Careers...');
+        await this.page.goto('https://jobs.ashbyhq.com/1password', {
             waitUntil: 'networkidle2'
         });
         await delay(5000);
@@ -34,31 +34,13 @@ class DelaplexJobsScraper {
         const existingLinks = new Set();
 
         while (true) {
-            // Debug: Check what elements are available
-            const debugInfo = await this.page.evaluate(() => {
-                const jobCards = document.querySelectorAll('.job-card-container');
-                const allBtns = document.querySelectorAll('a.btn');
-                const careerBtns = document.querySelectorAll('a.btn[href*="/careers"]');
-                const jobCardBtns = document.querySelectorAll('.job-card-container a.btn');
-                
-                return {
-                    jobCards: jobCards.length,
-                    allBtns: allBtns.length,
-                    careerBtns: careerBtns.length,
-                    jobCardBtns: jobCardBtns.length,
-                    sampleHrefs: Array.from(careerBtns).slice(0, 3).map(a => a.href)
-                };
-            });
-            
-            console.log('🔍 Debug info:', debugInfo);
-            
             // Collect job links from job card containers
-            const jobLinks = await this.page.$$eval(`.job-card-container a.btn[href*="/careers"]`, anchors =>
+            const jobLinks = await this.page.$$eval(`a._container_j2da7_1[href*="/1password/"]`, anchors =>
                 anchors.map(a => {
                     // Convert relative URLs to absolute URLs
                     const href = a.href;
                     if (href.startsWith('/')) {
-                        return `https://delaplex.com${href}`;
+                        return `https://jobs.ashbyhq.com${href}`;
                     }
                     return href;
                 })
@@ -80,26 +62,20 @@ class DelaplexJobsScraper {
                 break;
             }
 
-            // Click "Load More" button if it exists
-            try {
-                console.log("➡️ Clicking Load More...");
-                await this.page.click('#load_more_jobs2');
-                
-                // Wait for new jobs to load
-                await this.page.waitForFunction(
-                    (prevCount) => {
-                        return document.querySelectorAll('.job-card-container a.btn[href*="/careers"]').length > prevCount;
-                    },
-                    {},
-                    jobLinks.length
-                );
+            // console.log("➡️ Clicking Load More...");
+            // await this.page.click('#load_more_jobs');
 
-                // Small delay to stabilize
-                await delay(3000);
-            } catch (error) {
-                console.log("⚠️ Load More button not found or failed to click:", error.message);
-                break;
-            }
+            // ⏳ Wait for new jobs to load
+            // await this.page.waitForFunction(
+            //     (prevCount) => {
+            //         return document.querySelectorAll("h5 > a").length > prevCount;
+            //     },
+            //     {},
+            //     jobLinks.length
+            // );
+
+            // // Optional: small delay to stabilize
+            // await delay(5000);
         }
 
         return this.allJobLinks;
@@ -113,13 +89,14 @@ class DelaplexJobsScraper {
         try {
             await jobPage.goto(url, { waitUntil: 'networkidle2' });
             await delay(5000);
-            
+            //await jobPage.waitForSelector('div.job__description.body', { timeout: 10000 });
             const job = await jobPage.evaluate(() => {
                 const getText = sel => document.querySelector(sel)?.innerText.trim() || '';
 
                 // Extract job title - try multiple selectors
-                let title = getText('.c-title.font-primary.h4.text-capitalize.d-inline-block') || 
-                           getText('.c-title') || 
+                let title = getText('h1._title_ud4nd_34._large_ud4nd_67.ashby-job-posting-heading') || 
+                           getText('h1._title_ud4nd_34') || 
+                           getText('h1.ashby-job-posting-heading') || 
                            getText('h1') || 
                            getText('h2') || 
                            getText('.job-title') || 
@@ -129,47 +106,23 @@ class DelaplexJobsScraper {
                 // Extract company name
                 let company = getText('.company-name') || 
                              getText('[class*="company"]') || 
-                             'Delaplex';
+                             '1Password';
 
-                // Extract location from job details section
-                let location = '';
-                const locationSpan = document.querySelector('.more-job-details .fa-map-marker-alt')?.parentElement;
-                if (locationSpan) {
-                    const locationText = locationSpan.querySelector('p')?.innerText.trim();
-                    if (locationText) {
-                        location = locationText;
-                    }
-                }
-                
-                // Fallback location selectors
-                if (!location) {
-                    location = getText('.location') || 
+                // Extract location - try multiple selectors
+                let location = getText('.location') || 
                               getText('[class*="location"]') || 
                               getText('.job-location') ||
                               'Remote';
-                }
 
-                // Extract experience from job details section
-                let experience = '';
-                const experienceSpan = document.querySelector('.more-job-details .fa-briefcase')?.parentElement;
-                if (experienceSpan) {
-                    const experienceText = experienceSpan.querySelector('p')?.innerText.trim();
-                    if (experienceText) {
-                        experience = experienceText;
-                    }
-                }
-                
-                // Fallback experience selectors
-                if (!experience) {
-                    experience = getText('.experience') || 
+                // Extract experience - try multiple selectors
+                let experience = getText('.experience') || 
                                 getText('[class*="experience"]') || 
                                 getText('.work-experience') ||
                                 '';
-                }
 
-                // Extract job description from the specific Delaplex section
+                // Extract job description from the specific 1Password section
                 let description = '';
-                const jobDescriptionElement = document.querySelector('.content-left.jd-description[data-testid="careers-job-description"]');
+                const jobDescriptionElement = document.querySelector('div._description_oj0x8_198._container_101oc_29[data-highlight="none"] ._descriptionText_oj0x8_198');
                 if (jobDescriptionElement) {
                     description = jobDescriptionElement.innerText.trim();
                 }
@@ -195,9 +148,9 @@ class DelaplexJobsScraper {
 
                 return {
                     title: title || 'Job Title Not Found',
-                    company: company || 'Delaplex',
+                    company: company || '1Password',
                     description: description || 'Description not available',
-                    location: location || 'Pune',
+                    location: location || 'Remote',
                     experience: experience || '',
                     url: window.location.href
                 };
@@ -225,7 +178,7 @@ class DelaplexJobsScraper {
                 if (jobData.title.toLowerCase() === "open roles") {
                     console.log(`⛔ Skipping ${jobData.title}`);
                 } else {
-                    const enrichedJob = extractDelaplexData(jobData);
+                    const enrichedJob = extractOnePasswordData(jobData);
                     console.log("After enriching job=", enrichedJob);
                     this.allJobs.push(enrichedJob);
                     console.log(`✅ ${jobData.title}`);
@@ -260,22 +213,18 @@ class DelaplexJobsScraper {
     }
 }
 
-const extractDelaplexData = (job) => {
+const extractOnePasswordData = (job) => {
     if (!job) return job;
 
     let cleanedDescription = job.description || '';
     let experience = job.experience || '';
 
     if (cleanedDescription) {
-        // Remove "About Company" section
+        // Remove "About 1Password" section
         cleanedDescription = cleanedDescription
-            .replace(/About Company:\s*At Delaplex, we believe true organizational distinction comes from exceptional products and services\. Founded in 2008 by a team of like-minded business enthusiasts, we have grown into a trusted name in technology consulting and supply chain solutions\. Our reputation is built on trust, innovation, and the dedication of our people who go the extra mile for our clients\. Guided by our core values, we don't just deliver solutions, we create meaningful impact\.\s*/gi, '')
-            // Remove any remaining "About Company:" headers
-            .replace(/About Company:\s*/gi, '')
-            // Remove Location:, Experience:, and Role: lines
-            .replace(/^Location:\s*.*$/gim, '')
-            .replace(/^Experience:\s*.*$/gim, '')
-            .replace(/^Role:\s*.*$/gim, '')
+            .replace(/About 1Password\s*At 1Password, we're building the foundation for a safe, productive digital future\. Our mission is to unleash employee productivity without compromising security by ensuring every identity is authentic, every application sign-in is secure, and every device is trusted\. We innovated the market-leading enterprise password manager and pioneered Extended Access Management, a new cybersecurity category built for the way people and AI agents work today\. As one of the most loved brands in cybersecurity, we take a human-centric approach in everything from product strategy to user experience\. Over 165,000 businesses and millions of people trust us to provide seamless, secure access to their most critical information\.\s*If you're excited about the opportunity to contribute to the digital safety of millions, to work alongside a team of curious, driven individuals, and to solve hard problems in a fast-paced, dynamic environment, then we want to hear from you\. Come join us and help shape a safer, simpler digital future\.\s*/gi, '')
+            // Remove any remaining "About 1Password:" headers
+            .replace(/About 1Password:\s*/gi, '')
             // Existing formatting steps
             .replace(/(\n\s*)(\d+\.\s+)(.*?)(\n)/gi, '\n\n$1$2$3$4')
             .replace(/(\n\s*)([•\-]\s+)(.*?)(\n)/gi, '\n\n$1$2$3$4')
@@ -369,19 +318,19 @@ const extractDelaplexData = (job) => {
 
 
 // ✅ Exportable runner function
-const Delaplex = async ({ headless = true } = {}) => {
-    const scraper = new DelaplexJobsScraper(headless);
+const OnePassword = async ({ headless = true } = {}) => {
+    const scraper = new OnePasswordJobsScraper(headless);
     await scraper.run();
     return scraper.allJobs;
 };
 
 
-export default Delaplex;
+export default OnePassword;
 
-// ✅ CLI support: node delaplex.js --headless=false
+// ✅ CLI support: node onePassword.js --headless=false
 if (import.meta.url === `file://${process.argv[1]}`) {
     const headlessArg = process.argv.includes('--headless=false') ? false : true;
     (async () => {
-        await Delaplex({ headless: headlessArg });
+        await OnePassword({ headless: headlessArg });
     })();
 }
