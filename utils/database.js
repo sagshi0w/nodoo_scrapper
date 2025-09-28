@@ -14,6 +14,15 @@ export async function connectToDatabase() {
     return;
   }
   
+  // Validate MongoDB URI
+  if (!uri) {
+    throw new Error('MONGO_URI environment variable is not set');
+  }
+  
+  if (!uri.startsWith('mongodb://') && !uri.startsWith('mongodb+srv://')) {
+    throw new Error(`Invalid MongoDB URI format. Expected to start with "mongodb://" or "mongodb+srv://", but got: ${uri ? uri.substring(0, 20) + '...' : 'undefined'}`);
+  }
+  
   try {
     if (mongoose.connection.readyState !== 1) {
       await mongoose.connect(uri, {

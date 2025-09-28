@@ -1,38 +1,7 @@
-import { getJobsCollection, getProfilesCollection, connectToDatabase } from './database.js';
+import { fetchAllJobs, fetchAllUsers, saveJobMatchingResults } from './backendApi.js';
 import { computeMatchPercent, computeSkillsMatchingData, extractUserSkills, extractUserExperienceYears } from './profileMatching.js';
-import JobMatching from '../models/JobMatching.js';
 
-/**
- * Fetch all jobs from the database
- * @returns {Promise<Array>} Array of job objects
- */
-export async function fetchAllJobs() {
-  try {
-    const jobsCollection = await getJobsCollection();
-    const jobs = await jobsCollection.find({}).toArray();
-    console.log(`Fetched ${jobs.length} jobs from database`);
-    return jobs;
-  } catch (error) {
-    console.error('Error fetching jobs:', error);
-    throw error;
-  }
-}
-
-/**
- * Fetch all profiles from the database
- * @returns {Promise<Array>} Array of profile objects
- */
-export async function fetchAllProfiles() {
-  try {
-    const profilesCollection = await getProfilesCollection();
-    const profiles = await profilesCollection.find({}).toArray();
-    console.log(`Fetched ${profiles.length} profiles from database`);
-    return profiles;
-  } catch (error) {
-    console.error('Error fetching profiles:', error);
-    throw error;
-  }
-}
+// Note: fetchAllJobs and fetchAllProfiles are now imported from backendApi.js
 
 /**
  * Extract user skills and experience from profile using existing profileMatching functions
@@ -118,44 +87,7 @@ export function calculateMatchingScore(job, userData) {
   };
 }
 
-/**
- * Save job matching results to database using the new schema
- * @param {Object} userRecommendations - Object mapping userId to array of jobIds
- * @returns {Promise<void>}
- */
-export async function saveJobMatchingResults(userRecommendations) {
-  try {
-    await connectToDatabase();
-    
-    const savePromises = Object.entries(userRecommendations).map(async ([userId, jobIds]) => {
-      if (jobIds.length === 0) return; // Skip if no recommendations
-      
-      try {
-        // Use upsert to update existing record or create new one
-        await JobMatching.findOneAndUpdate(
-          { userId: userId },
-          { 
-            recommendations: jobIds,
-            updatedAt: new Date()
-          },
-          { 
-            upsert: true, 
-            new: true 
-          }
-        );
-        console.log(`Saved ${jobIds.length} job recommendations for user ${userId}`);
-      } catch (error) {
-        console.error(`Error saving recommendations for user ${userId}:`, error);
-      }
-    });
-    
-    await Promise.all(savePromises);
-    console.log(`Saved job matching results for ${Object.keys(userRecommendations).length} users`);
-  } catch (error) {
-    console.error('Error saving job matching results:', error);
-    throw error;
-  }
-}
+// Note: saveJobMatchingResults is now imported from backendApi.js
 
 /**
  * Main function to orchestrate job matching process
@@ -168,7 +100,7 @@ export async function performJobMatching() {
     // Fetch all jobs and profiles
     const [jobs, profiles] = await Promise.all([
       fetchAllJobs(),
-      fetchAllProfiles()
+      fetchAllUsers()
     ]);
     
     if (jobs.length === 0) {
@@ -228,8 +160,17 @@ export async function performJobMatching() {
       }
     }
     
-    // Save results to database
-    await saveJobMatchingResults(userRecommendations);
+    // Save results to backend API
+    const savePromises = Object.entries(userRecommendations).map(async ([userId, jobIds]) => {
+      if (jobIds.length === 0) return; // Skip if no recommendations
+      try {
+        await saveJobMatchingResults(userId, jobIds);
+      } catch (error) {
+        console.error(`Error saving recommendations for user ${userId}:`, error);
+      }
+    });
+    
+    await Promise.all(savePromises);
     
     const summary = {
       totalJobs: jobs.length,

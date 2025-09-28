@@ -24,9 +24,7 @@ jobs:
       - name: 🏃 Run Job Matching Process
         run: npm run job-matching
         env:
-          MONGO_URI: ${{ secrets.MONGO_URI }}
-          MONGO_DB_NAME: ${{ secrets.MONGO_DB_NAME }}
-          MONGO_DB_COLLECTION_NAME: ${{ secrets.MONGO_DB_COLLECTION_NAME }}
+          BACKEND_URL: ${{ secrets.BACKEND_URL }}
           EMAIL_USER: ${{ secrets.MAIL_USERNAME }}
           EMAIL_PASS: ${{ secrets.MAIL_PASSWORD }}
           EMAIL_RECIPIENTS: ${{ secrets.MAIL_RECIPIENTS }}
