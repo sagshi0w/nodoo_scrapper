@@ -28,17 +28,21 @@ jobs:
       - name: 📦 Install Project Dependencies
         run: npm install
 
-      - name: 🔍 Test Backend API Connection
+      - name: 🔍 Test MongoDB Connection
         if: ${{ github.event.inputs.test_type == 'connection' }}
         run: npm run test-connection
         env:
-          BACKEND_URL: ${{ secrets.BACKEND_URL }}
+          MONGO_URI: ${{ secrets.MONGO_URI }}
+          MONGO_DB_NAME: ${{ secrets.MONGO_DB_NAME }}
+          MONGO_DB_COLLECTION_NAME: ${{ secrets.MONGO_DB_COLLECTION_NAME }}
 
       - name: 🧪 Test Job Matching Process
         if: ${{ github.event.inputs.test_type == 'matching' }}
         run: npm run job-matching-test
         env:
-          BACKEND_URL: ${{ secrets.BACKEND_URL }}
+          MONGO_URI: ${{ secrets.MONGO_URI }}
+          MONGO_DB_NAME: ${{ secrets.MONGO_DB_NAME }}
+          MONGO_DB_COLLECTION_NAME: ${{ secrets.MONGO_DB_COLLECTION_NAME }}
           EMAIL_USER: ${{ secrets.MAIL_USERNAME }}
           EMAIL_PASS: ${{ secrets.MAIL_PASSWORD }}
           EMAIL_RECIPIENTS: ${{ secrets.MAIL_RECIPIENTS }}

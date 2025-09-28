@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 
-import { testBackendConnection, fetchAllJobs, fetchAllUsers } from './utils/backendApi.js';
+import { connectToDatabase, getJobsCollection, getProfilesCollection, closeDatabase } from './utils/database.js';
 import { extractUserSkills, extractUserExperienceYears } from './utils/profileMatching.js';
+import JobMatching from './models/JobMatching.js';
 import dotenv from 'dotenv';
 
 // Load environment variables
@@ -9,41 +10,42 @@ dotenv.config();
 
 async function testConnection() {
   try {
-    console.log('🔍 Testing Backend API Connection and Data Access...');
-    console.log('===================================================');
+    console.log('🔍 Testing MongoDB Connection and Data Access...');
+    console.log('===============================================');
     
-    // Test backend connectivity
-    console.log('\n🌐 Testing Backend API Connectivity...');
-    const isConnected = await testBackendConnection();
-    if (!isConnected) {
-      throw new Error('Backend API is not accessible');
-    }
-    console.log('✅ Backend API is accessible');
+    // Test jobs collection
+    console.log('\n📋 Testing Jobs Collection...');
+    const jobsCollection = await getJobsCollection();
+    const jobsCount = await jobsCollection.countDocuments();
+    console.log(`✅ Jobs collection accessible - Found ${jobsCount} documents`);
     
-    // Test jobs API
-    console.log('\n📋 Testing Jobs API...');
-    const jobs = await fetchAllJobs();
-    console.log(`✅ Jobs API accessible - Found ${jobs.length} jobs`);
+    // Test profiles collection
+    console.log('\n👥 Testing Profiles Collection...');
+    const profilesCollection = await getProfilesCollection();
+    const profilesCount = await profilesCollection.countDocuments();
+    console.log(`✅ Profiles collection accessible - Found ${profilesCount} documents`);
     
-    // Test users API
-    console.log('\n👥 Testing Users API...');
-    const users = await fetchAllUsers();
-    console.log(`✅ Users API accessible - Found ${users.length} users`);
+    // Test JobMatching model
+    console.log('\n🔗 Testing JobMatching Model...');
+    const jobMatchingCount = await JobMatching.countDocuments();
+    console.log(`✅ JobMatching model accessible - Found ${jobMatchingCount} documents`);
     
     // Test profile matching functions
     console.log('\n🧠 Testing Profile Matching Functions...');
     
-    // Get a sample user with skills
-    const sampleUser = users.find(user => 
-      (user.profileData && user.profileData.skills && user.profileData.skills.length > 0) ||
-      (user.resumeData && user.resumeData.skills && user.resumeData.skills.length > 0)
-    );
+    // Get a sample profile with skills
+    const sampleProfile = await profilesCollection.findOne({
+      $or: [
+        { 'profileData.skills': { $exists: true, $ne: [] } },
+        { 'resumeData.skills': { $exists: true, $ne: [] } }
+      ]
+    });
     
-    if (sampleUser) {
-      console.log(`✅ Found sample user: ${sampleUser.name || sampleUser.email || 'Unknown'}`);
+    if (sampleProfile) {
+      console.log(`✅ Found sample profile: ${sampleProfile.name || sampleProfile.email || 'Unknown'}`);
       
-      const skills = extractUserSkills(sampleUser);
-      const experience = extractUserExperienceYears(sampleUser);
+      const skills = extractUserSkills(sampleProfile);
+      const experience = extractUserExperienceYears(sampleProfile);
       
       console.log(`✅ Skills extracted: ${skills.length} skills found`);
       console.log(`✅ Experience extracted: ${experience} years`);
@@ -52,13 +54,13 @@ async function testConnection() {
         console.log(`   Sample skills: ${skills.slice(0, 3).join(', ')}${skills.length > 3 ? '...' : ''}`);
       }
     } else {
-      console.log('⚠️ No user with skills found for testing');
+      console.log('⚠️ No profile with skills found for testing');
     }
     
     // Test a sample job
     console.log('\n💼 Testing Sample Job...');
-    if (jobs.length > 0) {
-      const sampleJob = jobs[0];
+    const sampleJob = await jobsCollection.findOne({});
+    if (sampleJob) {
       console.log(`✅ Found sample job: ${sampleJob.title || 'Unknown Title'}`);
       console.log(`   Company: ${sampleJob.company || 'Unknown'}`);
       console.log(`   Experience: ${sampleJob.experience || 'Not specified'}`);
@@ -66,11 +68,13 @@ async function testConnection() {
       console.log('⚠️ No jobs found for testing');
     }
     
-    console.log('\n✅ All tests passed! Backend API connection and data access working correctly.');
+    console.log('\n✅ All tests passed! MongoDB connection and data access working correctly.');
     
   } catch (error) {
     console.error('❌ Test failed:', error);
     throw error;
+  } finally {
+    await closeDatabase();
   }
 }
 

@@ -3,7 +3,7 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const uri = process.env.MONGO_URI;
+const uri = process.env.MONGO_URI || 'mongodb+srv://sagarshinde1600:B8pvFNLjWqHXZZL7@cluster0.iin7uj0.mongodb.net/';
 const dbName = 'test'; // Force to use 'test' database where the data is located
 const collectionName = process.env.MONGO_DB_COLLECTION_NAME || 'jobs'; // Default to 'jobs' if not specified
 

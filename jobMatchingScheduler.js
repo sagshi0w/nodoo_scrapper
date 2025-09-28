@@ -4,6 +4,7 @@ import cron from 'node-cron';
 import moment from 'moment-timezone';
 import { createRequire } from 'module';
 import { performJobMatching } from './utils/jobMatching.js';
+import { closeDatabase } from './utils/database.js';
 import dotenv from 'dotenv';
 
 // Load environment variables
@@ -178,7 +179,8 @@ const scheduleJobMatching = () => {
     } catch (error) {
       console.error('❌ Scheduled job matching failed:', error);
     } finally {
-      // No database connection to close when using backend API
+      // Close database connection after each run
+      await closeDatabase();
     }
     
     console.log('='.repeat(60));
@@ -192,22 +194,26 @@ const scheduleJobMatching = () => {
 // Handle graceful shutdown
 process.on('SIGINT', async () => {
   console.log('\n🛑 Received SIGINT. Shutting down gracefully...');
+  await closeDatabase();
   process.exit(0);
 });
 
 process.on('SIGTERM', async () => {
   console.log('\n🛑 Received SIGTERM. Shutting down gracefully...');
+  await closeDatabase();
   process.exit(0);
 });
 
 // Handle uncaught exceptions
 process.on('uncaughtException', async (error) => {
   console.error('❌ Uncaught Exception:', error);
+  await closeDatabase();
   process.exit(1);
 });
 
 process.on('unhandledRejection', async (reason, promise) => {
   console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
+  await closeDatabase();
   process.exit(1);
 });
 
