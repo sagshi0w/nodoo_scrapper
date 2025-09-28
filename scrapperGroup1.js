@@ -38,6 +38,7 @@ import SKF from "./scrapers/servicebased/skf.js"
 import Cummins from "./scrapers/servicebased/cummins.js"
 import Fuled from "./scrapers/remote/fuled.js"
 import Bosch from "./scrapers/servicebased/bosch.js"
+import onePassword from "./scrapers/remote/onePassword.js"
 
 const config = {
     concurrency: 5,
@@ -130,6 +131,7 @@ const scrapers = [
     { fn: Cummins, headless: true },
     { fn: Fuled, headless: true },
     { fn: Bosch, headless: true },
+    { fn: onePassword, headless: true },
 ];
 
 const runAllScrapers = async () => {
