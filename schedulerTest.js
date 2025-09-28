@@ -123,7 +123,7 @@ import SKF from "./scrapers/servicebased/skf.js"
 import Cummins from "./scrapers/servicebased/cummins.js"
 import Fuled from "./scrapers/remote/fuled.js"
 import Bosch from "./scrapers/servicebased/bosch.js"
-import OnePassword from "./scrapers/servicebased/onePassword.js"
+import OnePassword from "./scrapers/remote/onePassword.js"
 
 // Not working scrappers:
 import runTataMgJobsScraper from "./scrapers/productBased/tata1mg.js"
@@ -198,7 +198,7 @@ ${error.stack}`;
 };
 
 const scrapers = [
-    { fn: OnePassword, headless: true },
+    // { fn: OnePassword, headless: true },
 ];
 
 const runAllScrapers = async () => {
