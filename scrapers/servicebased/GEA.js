@@ -111,9 +111,10 @@ class GEAJobsScraper {
                     company: 'GEA',
                     location: getText('.job__location.body'),
                     description: getRichText([
+                        '[data-testid="anchor-wrapper"] h2.text-blue-650 + .RichText_rich_text__IEuIi',
+                        '[data-testid="anchor-wrapper"] .RichText_rich_text__IEuIi:first-of-type',
                         '.RichText_rich_text__IEuIi',
                         '.rich-text-link-gray',
-                        '[data-testid="anchor-wrapper"] .RichText_rich_text__IEuIi',
                         '.desc.text-body-l-r',
                         '.desc .text-body-l-r',
                         '.job__description.body',
