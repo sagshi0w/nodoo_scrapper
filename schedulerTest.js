@@ -125,6 +125,7 @@ import Fuled from "./scrapers/remote/fuled.js"
 import Bosch from "./scrapers/servicebased/bosch.js"
 import OnePassword from "./scrapers/remote/onePassword.js"
 import Affirm from "./scrapers/remote/Affirm.js"
+import Schaeffler from "./scrapers/servicebased/Schaeffler.js"
 
 // Not working scrappers:
 import runTataMgJobsScraper from "./scrapers/productBased/tata1mg.js"
@@ -200,7 +201,7 @@ ${error.stack}`;
 
 const scrapers = [
     // { fn: OnePassword, headless: true },
-    { fn: Affirm, headless: true },
+    { fn: Schaeffler, headless: true },
 ];
 
 const runAllScrapers = async () => {
