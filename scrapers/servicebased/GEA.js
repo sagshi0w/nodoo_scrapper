@@ -58,14 +58,14 @@ class GEAJobsScraper {
             // Check if "Load more jobs" button exists and click it (commented out for testing)
             // Try clicking "Show all" button if present to reveal full list
             try {
-                const showAllInner = await this.page.$('button .RevealMoreLink_reveal-more-link__ZVzmt');
-                if (showAllInner) {
-                    await this.page.$eval('button .RevealMoreLink_reveal-more-link__ZVzmt', el => el.closest('button') && el.closest('button').click());
+                const showAllBtn = await this.page.$('[data-testid="show-all"] button');
+                if (showAllBtn) {
+                    await this.page.click('[data-testid="show-all"] button');
                     await this.page.waitForTimeout(1000);
                 }
             } catch {}
 
-            const prevCount = await this.page.$$eval('a.tu-card.tu-card--promo-block.tu-card--link[href*="/careers/"]', els => els.length).catch(() => 0);
+            const prevCount = await this.page.$$eval('a[data-testid="careers-listing-row"]', els => els.length).catch(() => 0);
             const loadMoreBtn = await this.page.$('button[aria-label="Load more jobs"]');
             if (!loadMoreBtn) {
                 console.log("✅ No more pages found. Pagination finished.");
@@ -79,7 +79,7 @@ class GEAJobsScraper {
             const maxRetries = 40; // ~20s at 500ms intervals
             while (retries < maxRetries) {
                 const [currentCount, btnStillThere] = await Promise.all([
-                    this.page.$$eval('a.tu-card.tu-card--promo-block.tu-card--link[href*="/careers/"]', els => els.length).catch(() => 0),
+                    this.page.$$eval('a[data-testid="careers-listing-row"]', els => els.length).catch(() => 0),
                     this.page.$('button[aria-label="Load more jobs"]').then(b => !!b).catch(() => false),
                 ]);
                 if (currentCount > prevCount || !btnStillThere) break;
