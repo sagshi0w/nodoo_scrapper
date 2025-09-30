@@ -56,6 +56,15 @@ class GEAJobsScraper {
             console.log(`📄 Collected ${this.allJobLinks.length} unique job links so far...`);
 
             // Check if "Load more jobs" button exists and click it (commented out for testing)
+            // Try clicking "Show all" button if present to reveal full list
+            try {
+                const showAllInner = await this.page.$('button .RevealMoreLink_reveal-more-link__ZVzmt');
+                if (showAllInner) {
+                    await this.page.$eval('button .RevealMoreLink_reveal-more-link__ZVzmt', el => el.closest('button') && el.closest('button').click());
+                    await this.page.waitForTimeout(1000);
+                }
+            } catch {}
+
             const prevCount = await this.page.$$eval('a.tu-card.tu-card--promo-block.tu-card--link[href*="/careers/"]', els => els.length).catch(() => 0);
             const loadMoreBtn = await this.page.$('button[aria-label="Load more jobs"]');
             if (!loadMoreBtn) {
@@ -218,8 +227,10 @@ const removeGEABoilerplate = (text) => {
     let t = text;
     // Remove any leading "Location:" lines
     t = t.replace(/(^|\n)\s*Location:\s*.*(?=\n|$)/gi, '$1');
-    // Remove Affirm's company boilerplate intro sentence
-    t = t.replace(/(^|\n)\s*Affirm is reinventing credit[\s\S]*?without any hidden fees or compounding interest\.(?=\s|\n|$)/i, '$1');
+    // Remove GEA company boilerplate intro paragraph
+    t = t.replace(/(^|\n)\s*GEA Group, founded in Germany in 1881[\s\S]*?(?=\n{2,}|$)/i, '$1');
+    // Remove standalone start date lines
+    t = t.replace(/(^|\n)\s*This position starts January 2026\s*(?=\n|$)/i, '$1');
     // Collapse excess blank lines
     t = t.replace(/[ \t]+$/gm, '').replace(/\n\s*\n+/g, '\n\n').trim();
     return t;
