@@ -227,8 +227,12 @@ const removeGEABoilerplate = (text) => {
     let t = text;
     // Remove any leading "Location:" lines
     t = t.replace(/(^|\n)\s*Location:\s*.*(?=\n|$)/gi, '$1');
-    // Remove GEA company boilerplate intro paragraph
+    // Remove GEA company boilerplate intro paragraph (exact known variant)
     t = t.replace(/(^|\n)\s*GEA Group, founded in Germany in 1881[\s\S]*?(?=\n{2,}|$)/i, '$1');
+    // Remove GEA company boilerplate (fuzzy variant up to next blank line or end)
+    t = t.replace(/(^|\n)\s*GEA\s+Group[\s\S]{0,800}?(?=\n{2,}|$)/i, '$1');
+    // Also remove leading "About GEA" style headers if present
+    t = t.replace(/(^|\n)\s*About\s+GEA\s*:?\s*(?=\n|\s)/gi, '$1');
     // Remove standalone start date lines
     t = t.replace(/(^|\n)\s*This position starts January 2026\s*(?=\n|$)/i, '$1');
     // Collapse excess blank lines
