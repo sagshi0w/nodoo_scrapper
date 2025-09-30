@@ -3,7 +3,7 @@ import fs from 'fs';
 
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
-class SchaefflerJobsScraper {
+class GEAJobsScraper {
     constructor(headless = true) {
         this.headless = headless;
         this.browser = null;
@@ -22,8 +22,8 @@ class SchaefflerJobsScraper {
     }
 
     async navigateToJobsPage() {
-        console.log('🌐 Navigating to Schaeffler Careers...');
-        await this.page.goto('https://jobs.schaeffler.com/?locale=en_US&_gl=1*1ig7mcq*_gcl_au*MTcwNDgxOTk4NC4xNzU5MjQ5MzYx&currentPage=1&pageSize=30&addresses%2FcountryCity=India%3ABangalore&addresses%2FcountryCity=India%3AHosur&addresses%2FcountryCity=India%3APune&addresses%2FcountryCity=India%3AVadodara', {
+        console.log('🌐 Navigating to GEA Careers...');
+        await this.page.goto('https://www.gea.com/en/careers/apply-now/', {
             waitUntil: 'networkidle2'
         });
         await delay(5000);
@@ -35,8 +35,15 @@ class SchaefflerJobsScraper {
 
         while (true) {
             // Collect job links on current page
-            const jobLinks = await this.page.$$eval('a.search[href*="jobs.schaeffler.com/job-invite/"]', anchors =>
-                anchors.map(a => a.href)
+            const jobLinks = await this.page.$$eval('a[data-testid="careers-listing-row"][href]', anchors =>
+                anchors.map(a => {
+                    const href = a.getAttribute('href');
+                    try {
+                        return new URL(href, location.origin).href;
+                    } catch {
+                        return href;
+                    }
+                })
             );
 
             for (const link of jobLinks) {
@@ -96,14 +103,17 @@ class SchaefflerJobsScraper {
                 };
 
                 // Extract and clean job title
-                let rawTitle = getText('h1.text-h2.hide-for-print, .job__title h1.section-header, h1.wp-block-post-title.has-text-align-center.is-typography-preset-h1, h1.wp-block-post-title, div.job-title-container h1.job-title, h1.job-title');
+                let rawTitle = getText('h1.page-heading-one, h1.text-h2.hide-for-print, .job__title h1.section-header, h1.wp-block-post-title.has-text-align-center.is-typography-preset-h1, h1.wp-block-post-title, div.job-title-container h1.job-title, h1.job-title');
                 let title = rawTitle.trim();
 
                 return {
                     title,
-                    company: 'Schaeffler',
+                    company: 'GEA',
                     location: getText('.job__location.body'),
                     description: getRichText([
+                        '.RichText_rich_text__IEuIi',
+                        '.rich-text-link-gray',
+                        '[data-testid="anchor-wrapper"] .RichText_rich_text__IEuIi',
                         '.desc.text-body-l-r',
                         '.desc .text-body-l-r',
                         '.job__description.body',
@@ -141,7 +151,7 @@ class SchaefflerJobsScraper {
                 if (jobData.title.toLowerCase() === "open roles") {
                     console.log(`⛔ Skipping ${jobData.title}`);
                 } else {
-                    const enrichedJob = extractSchaefflerData(jobData);
+                    const enrichedJob = extractGEAData(jobData);
                     console.log("After enriching job=", enrichedJob);
                     this.allJobs.push(enrichedJob);
                     console.log(`✅ ${jobData.title}`);
@@ -153,7 +163,7 @@ class SchaefflerJobsScraper {
 
     async saveResults() {
         // fs.writeFileSync('./scrappedJobs/phonepeJobs.json', JSON.stringify(this.allJobs, null, 2));
-        console.log(`💾 Saved ${this.allJobs.length} jobs to Affirm.json`);
+        console.log(`💾 Saved ${this.allJobs.length} jobs to GEA.json`);
     }
 
     async close() {
@@ -202,7 +212,7 @@ const extractExperience = (description) => {
 };
 
 // Minimal removal of SKF boilerplate sections only
-const removeSchaefflerBoilerplate = (text) => {
+const removeGEABoilerplate = (text) => {
     if (!text) return text;
     let t = text;
     // Remove any leading "Location:" lines
@@ -214,7 +224,7 @@ const removeSchaefflerBoilerplate = (text) => {
     return t;
 };
 
-const extractSchaefflerData = (job) => {
+const extractGEAData = (job) => {
     if (!job) return job;
 
     let cleanedDescription = (job.description || '').trim();
@@ -225,7 +235,7 @@ const extractSchaefflerData = (job) => {
     experience = extractExperience(cleanedDescription);
 
     // Remove only explicit boilerplate sections requested
-    cleanedDescription = removeSchaefflerBoilerplate(cleanedDescription);
+    cleanedDescription = removeGEABoilerplate(cleanedDescription);
 
     // Extract city from location string
     if (job.location) {
@@ -259,19 +269,19 @@ const extractSchaefflerData = (job) => {
 
 
 // ✅ Exportable runner function
-const Schaeffler = async ({ headless = true } = {}) => {
-    const scraper = new SchaefflerJobsScraper(headless);
+const GEA = async ({ headless = true } = {}) => {
+    const scraper = new GEAJobsScraper(headless);
     await scraper.run();
     return scraper.allJobs;
 };
 
 
-export default Schaeffler;
+export default GEA;
 
 // ✅ CLI support: node phonepe.js --headless=false
 if (import.meta.url === `file://${process.argv[1]}`) {
     const headlessArg = process.argv.includes('--headless=false') ? false : true;
     (async () => {
-        await Schaeffler({ headless: headlessArg });
+        await GEA({ headless: headlessArg });
     })();
 }
