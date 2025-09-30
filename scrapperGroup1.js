@@ -39,6 +39,7 @@ import Cummins from "./scrapers/servicebased/cummins.js"
 import Fuled from "./scrapers/remote/fuled.js"
 import Bosch from "./scrapers/servicebased/bosch.js"
 import onePassword from "./scrapers/remote/onePassword.js"
+import Affirm from "./scrapers/remote/Affirm.js"
 
 const config = {
     concurrency: 5,
@@ -132,6 +133,7 @@ const scrapers = [
     { fn: Fuled, headless: true },
     { fn: Bosch, headless: true },
     { fn: onePassword, headless: true },
+    { fn: Affirm, headless: true },
 ];
 
 const runAllScrapers = async () => {
