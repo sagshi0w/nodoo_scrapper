@@ -48,27 +48,24 @@ class SiemensJobsScraper {
 
             console.log(`📄 Collected ${this.allJobLinks.length} unique job links so far...`);
 
-            // Check if "Load more jobs" button exists and click it (commented out for testing)
-            const prevCount = await this.page.$$eval('a.tu-card.tu-card--promo-block.tu-card--link[href*="/careers/"]', els => els.length).catch(() => 0);
-            const loadMoreBtn = await this.page.$('button[aria-label="Load more jobs"]');
-            if (!loadMoreBtn) {
+            // Check if "Next >>" pagination button exists
+            const prevCount = await this.page.$$eval('a.button.button--primary[aria-label="Learn more"]', els => els.length).catch(() => 0);
+            const nextBtn = await this.page.$('.list-controls__pagination__item.paginationNextLink a');
+            if (!nextBtn) {
                 console.log("✅ No more pages found. Pagination finished.");
                 break;
             }
 
-            await loadMoreBtn.click();
+            await nextBtn.click();
 
-            // ⏳ Manually poll for new jobs or button disappearance to avoid timeouts
-            let retries = 0;
-            const maxRetries = 40; // ~20s at 500ms intervals
-            while (retries < maxRetries) {
-                const [currentCount, btnStillThere] = await Promise.all([
-                    this.page.$$eval('a.tu-card.tu-card--promo-block.tu-card--link[href*="/careers/"]', els => els.length).catch(() => 0),
-                    this.page.$('button[aria-label="Load more jobs"]').then(b => !!b).catch(() => false),
-                ]);
-                if (currentCount > prevCount || !btnStillThere) break;
-                await delay(500);
-                retries++;
+            // Wait for page to load
+            await delay(3000);
+            
+            // Verify new jobs loaded
+            const currentCount = await this.page.$$eval('a.button.button--primary[aria-label="Learn more"]', els => els.length).catch(() => 0);
+            if (currentCount === prevCount) {
+                console.log("⚠️ No new jobs loaded, stopping pagination");
+                break;
             }
         }
 
