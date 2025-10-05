@@ -23,7 +23,7 @@ class SiemensJobsScraper {
 
     async navigateToJobsPage() {
         console.log('🌐 Navigating to Siemens Careers...');
-        await this.page.goto('https://jobs.siemens.com/en_US/externaljobs/SearchJobs/?42386=%5B812053%5D&42386_format=17546&listFilterMode=1&folderRecordsPerPage=6&', {
+        await this.page.goto('https://jobs.siemens.com/en_US/externaljobs/SearchJobs/?42386=%5B812053%5D&42386_format=17546&listFilterMode=1&folderRecordsPerPage=6&folderOffset=0&folderId=', {
             waitUntil: 'networkidle2'
         });
         await delay(5000);
