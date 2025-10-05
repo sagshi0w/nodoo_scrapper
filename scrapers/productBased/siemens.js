@@ -61,17 +61,26 @@ class SiemensJobsScraper {
             console.log("🔄 Clicking Next button...");
             await nextBtn.click();
 
-            // Wait for navigation to complete
-            await this.page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 10000 }).catch(() => {
-                console.log("⚠️ Navigation timeout, continuing...");
-            });
+            // Wait for new content to load by checking for changes in job links
+            let attempts = 0;
+            let currentCount = prevCount;
+            const maxAttempts = 20; // 10 seconds max wait
             
-            // Wait additional time for content to load
-            await delay(2000);
+            while (attempts < maxAttempts) {
+                await delay(500);
+                currentCount = await this.page.$$eval('a.button.button--primary[aria-label="Learn more"]', els => els.length).catch(() => 0);
+                
+                // Check if we have new content or if the page has changed
+                const currentUrl = await this.page.url();
+                console.log(`🔄 Attempt ${attempts + 1}: Found ${currentCount} links, URL: ${currentUrl}`);
+                
+                if (currentCount !== prevCount || currentUrl.includes('folderOffset=')) {
+                    break;
+                }
+                attempts++;
+            }
             
-            // Verify new jobs loaded
-            const currentCount = await this.page.$$eval('a.button.button--primary[aria-label="Learn more"]', els => els.length).catch(() => 0);
-            console.log(`📊 New page has ${currentCount} job links`);
+            console.log(`📊 Final count: ${currentCount} job links`);
             
             if (currentCount === prevCount) {
                 console.log("⚠️ No new jobs loaded, stopping pagination");
