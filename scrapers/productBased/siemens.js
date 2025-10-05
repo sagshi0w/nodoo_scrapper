@@ -50,7 +50,7 @@ class SiemensJobsScraper {
 
             // Check if "Next >>" pagination button exists
             const prevCount = await this.page.$$eval('a.button.button--primary[aria-label="Learn more"]', els => els.length).catch(() => 0);
-            const nextBtn = await this.page.$('.list-controls__pagination__item.paginationNextLink a');
+            const nextBtn = await this.page.$('.list-controls__pagination__item.paginationNextLink a[aria-label*="Go to Next Page"]');
             if (!nextBtn) {
                 console.log("✅ No more pages found. Pagination finished.");
                 break;
