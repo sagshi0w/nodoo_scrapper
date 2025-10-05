@@ -1,181 +1,275 @@
 import puppeteer from 'puppeteer';
-import { writeFileSync } from 'fs';
+import fs from 'fs';
 
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
 class SiemensJobsScraper {
-  constructor(headless = true) {
-    this.headless = headless;
-    this.browser = null;
-    this.page = null;
-    this.allJobs = [];
-  }
+    constructor(headless = true) {
+        this.headless = headless;
+        this.browser = null;
+        this.page = null;
+        this.allJobLinks = [];
+        this.allJobs = [];
+    }
 
-  async initialize() {
-    this.browser = await puppeteer.launch({
-      headless: this.headless,
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        ...(this.headless ? [] : ['--start-maximized'])
-      ],
-      defaultViewport: this.headless ? { width: 1920, height: 1080 } : null
-    });
+    async initialize() {
+        this.browser = await puppeteer.launch({
+            headless: this.headless,
+            args: ['--no-sandbox', ...(this.headless ? [] : ['--start-maximized'])],
+            defaultViewport: this.headless ? { width: 1920, height: 1080 } : null
+        });
+        this.page = await this.browser.newPage();
+    }
 
-    this.page = await this.browser.newPage();
-    await this.page.setUserAgent(
-      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-    );
-  }
+    async navigateToJobsPage() {
+        console.log('🌐 Navigating to Siemens Careers...');
+        await this.page.goto('https://jobs.siemens.com/en_US/externaljobs/SearchJobs/?42386=%5B812053%5D&42386_format=17546&listFilterMode=1&folderRecordsPerPage=6&', {
+            waitUntil: 'networkidle2'
+        });
+        await delay(5000);
+    }
 
-  async navigateToJobsPage() {
-    console.log('🌐 Navigating to Siemens Careers page...');
-    await this.page.goto(
-      'https://jobs.siemens.com/careers?utm_source=j_c_global',
-      { waitUntil: 'networkidle2', timeout: 60000 }
-    );
-    await delay(3000);
+    async collectAllJobCardLinks() {
+        this.allJobLinks = [];
+        const existingLinks = new Set();
 
-    console.log('🔍 Clicking search button...');
-    const searchBtnSelector = '#main-container button';
-    await this.page.waitForSelector(searchBtnSelector, { visible: true, timeout: 10000 });
-    await this.page.click(searchBtnSelector);
-    await delay(5000);
-  }
+        while (true) {
+            // Collect job links on current page
+            const jobLinks = await this.page.$$eval('a.button.button--primary[aria-label="Learn more"]', anchors =>
+                anchors.map(a => a.href)
+            );
 
-  cleanJobDescription(description = '') {
-    return description
-      .replace(/^job summary\s*[:\-]?/i, '')
-      .replace(/\n+job summary\s*[:\-]?/gi, '\n')
-      .replace(/^job description\s*[:\-]?/i, '')
-      .replace(/\n+job description\s*[:\-]?/gi, '\n')
-      .replace(/(Responsibilities:|Requirements:|Skills:|Qualifications:)/gi, '\n$1\n')
-      .replace(/[ \t]+$/gm, '')
-      .replace(/\n{2,}/g, '\n')
-      .trim();
-  }
+            for (const link of jobLinks) {
+                if (!existingLinks.has(link)) {
+                    existingLinks.add(link);
+                    this.allJobLinks.push(link);
+                }
+            }
 
-  async scrapeAllJobs() {
-    const jobCardsSelector = '#pcs-body-container div.search-results-main-container div.position-cards-container div:nth-child(2) > div';
-    const jobDetailsSelector = 'div.position-details div.position-job-description-column div.custom-jd-container';
-    const maxPages = 20;
-    let pageNum = 1;
+            console.log(`📄 Collected ${this.allJobLinks.length} unique job links so far...`);
 
-    for (; pageNum <= maxPages; pageNum++) {
-      console.log(`📄 Scraping Page ${pageNum}...`);
+            // Check if "Load more jobs" button exists and click it (commented out for testing)
+            const prevCount = await this.page.$$eval('a.tu-card.tu-card--promo-block.tu-card--link[href*="/careers/"]', els => els.length).catch(() => 0);
+            const loadMoreBtn = await this.page.$('button[aria-label="Load more jobs"]');
+            if (!loadMoreBtn) {
+                console.log("✅ No more pages found. Pagination finished.");
+                break;
+            }
 
-      await this.page.waitForSelector(jobCardsSelector, { timeout: 10000 });
-      const cards = await this.page.$$(jobCardsSelector);
+            await loadMoreBtn.click();
 
-      if (cards.length === 0) {
-        console.log('✅ No more job cards. Stopping...');
-        break;
-      }
+            // ⏳ Manually poll for new jobs or button disappearance to avoid timeouts
+            let retries = 0;
+            const maxRetries = 40; // ~20s at 500ms intervals
+            while (retries < maxRetries) {
+                const [currentCount, btnStillThere] = await Promise.all([
+                    this.page.$$eval('a.tu-card.tu-card--promo-block.tu-card--link[href*="/careers/"]', els => els.length).catch(() => 0),
+                    this.page.$('button[aria-label="Load more jobs"]').then(b => !!b).catch(() => false),
+                ]);
+                if (currentCount > prevCount || !btnStillThere) break;
+                await delay(500);
+                retries++;
+            }
+        }
 
-      for (let i = 0; i < cards.length; i++) {
-        console.log(`📝 Processing job ${i + 1}/${cards.length}`);
+        return this.allJobLinks;
+    }
+
+
+
+
+    async extractJobDetailsFromLink(url) {
+        const jobPage = await this.browser.newPage();
         try {
-          const card = cards[i];
-          await card.click();
-          await delay(2000);
+            await jobPage.goto(url, { waitUntil: 'networkidle2' });
+            await delay(5000);
+            //await jobPage.waitForSelector('div.job__description.body', { timeout: 10000 });
 
-          const job = await this.page.evaluate((detailsSelector) => {
-            const fields = {};
-            const elements = document.querySelectorAll(detailsSelector);
+            const job = await jobPage.evaluate(() => {
+                const getText = sel => document.querySelector(sel)?.innerText.trim() || '';
+                const getRichText = (selList) => {
+                    for (const sel of selList) {
+                        const el = document.querySelector(sel);
+                        if (el) return el.innerText.trim();
+                    }
+                    return '';
+                };
 
-            elements.forEach(el => {
-              const label = el.querySelector('h4')?.innerText.trim();
-              const value = el.querySelector('div')?.innerText.trim();
-              if (label && value) {
-                const key = label.toLowerCase().replace(/[^a-z0-9]+(.)/g, (_, chr) => chr.toUpperCase());
-                fields[key] = value;
-              }
-            });
+                // Extract and clean job title
+                let rawTitle = getText('h3.section__header__text__title, h3.article__header__text__title a.link, .job__title h1.section-header, h1.wp-block-post-title.has-text-align-center.is-typography-preset-h1, h1.wp-block-post-title, div.job-title-container h1.job-title, h1.job-title');
+                let title = rawTitle.trim();
 
-            return {
-              title: document.querySelector('h1.position-title')?.innerText.trim() || '',
-              location: document.querySelector('p.position-location')?.innerText.trim() || '',
-              description: document.querySelector('div.position-job-description')?.innerText.trim() || '',
-              url: window.location.href,
-              company: 'Siemens',
-            };
-          }, jobDetailsSelector);
+                // Extract location from job details
+                const locationField = document.querySelector('.article__content__view__field.tf_locations .article__content__view__field__value .list__item');
+                const location = locationField ? locationField.innerText.trim() : 'Remote';
 
-          console.log("job title=", job.title)
+                return {
+                    title,
+                    company: 'Siemens',
+                    location: location,
+                    description: getRichText([
+                        '.article__content__view__field.tf_replaceFieldVideoTokens .article__content__view__field__value',
+                        '.job__description.body',
+                        '.job__description',
+                        'div.entry-content.wp-block-post-content',
+                        '#jobDescription .jd',
+                        '#jobDescription',
+                        'span.jobdescription',
+                        '.jobdescription',
+                        'div.WordSection1'
+                    ]),
+                    url: window.location.href
+                };
+            }); 
 
-          if (job?.title) {
-            job.description = this.cleanJobDescription(job.description);
-            job.scrapedAt = new Date().toISOString();
-            this.allJobs.push(job);
-            console.log(`✅ ${job.title}`);
-          }
+            console.log("Before enriching job=", job);
 
-          const closeBtn = await this.page.$('[data-ph-at-id="close-button"]');
-          if (closeBtn) {
-            await closeBtn.click();
-            await delay(500);
-          }
-
+            await jobPage.close();
+            return job;
         } catch (err) {
-          console.warn(`⚠️ Error processing job ${i + 1}:`, err.message);
+            await jobPage.close();
+            console.warn(`❌ Failed to scrape ${url}: ${err.message}`);
+            return null;
         }
-      }
-
-      const nextBtnSelector = 'div.iframe-button-wrapper > button';
-      const nextBtn = await this.page.$(nextBtnSelector);
-
-      if (nextBtn) {
-        const isDisabled = await this.page.evaluate(btn => btn.disabled, nextBtn);
-        if (!isDisabled) {
-          console.log('➡️ Moving to next page...');
-          await nextBtn.click();
-          await delay(5000);
-        } else {
-          console.log('🛑 No more pages.');
-          break;
-        }
-      } else {
-        break;
-      }
     }
 
-    console.log(`✅ Total jobs scraped: ${this.allJobs.length}`);
-  }
 
-  async saveResults() {
-    //writeFileSync('./scrappedJobs/siemensJobs.json', JSON.stringify(this.allJobs, null, 2));
-    console.log(`💾 Saved ${this.allJobs.length} jobs to scrappedJobs/siemensJobs.json`);
-  }
-
-  async close() {
-    if (this.browser) await this.browser.close();
-  }
-
-  async run() {
-    try {
-      await this.initialize();
-      await this.navigateToJobsPage();
-      await this.scrapeAllJobs();
-      await this.saveResults();
-    } catch (error) {
-      console.error('❌ Scraper failed:', error);
-    } finally {
-      await this.close();
+    async processAllJobs() {
+        for (let i = 0; i < this.allJobLinks.length; i++) {
+            const url = this.allJobLinks[i];
+            console.log(`📝 [${i + 1}/${this.allJobLinks.length}] Processing: ${url}`);
+            const jobData = await this.extractJobDetailsFromLink(url);
+            if (jobData && jobData.title) {
+                // Ignore jobs with title "Open Roles"
+                if (jobData.title.toLowerCase() === "open roles") {
+                    console.log(`⛔ Skipping ${jobData.title}`);
+                } else {
+                    const enrichedJob = extractSiemensData(jobData);
+                    console.log("After enriching job=", enrichedJob);
+                    this.allJobs.push(enrichedJob);
+                    console.log(`✅ ${jobData.title}`);
+                }
+            }
+            await delay(1000);
+        }
     }
-  }
+
+    async saveResults() {
+        // fs.writeFileSync('./scrappedJobs/phonepeJobs.json', JSON.stringify(this.allJobs, null, 2));
+        console.log(`💾 Saved ${this.allJobs.length} jobs to Siemens.json`);
+    }
+
+    async close() {
+        await this.browser.close();
+    }
+
+
+    async run() {
+        try {
+            await this.initialize();
+            await this.navigateToJobsPage();
+            await this.collectAllJobCardLinks();
+            await this.processAllJobs();
+            await this.saveResults();
+        } catch (error) {
+            console.error('❌ Scraper failed:', error);
+        } finally {
+            await this.close();
+        }
+    }
 }
 
-const runSiemensScraper = async ({ headless = true } = {}) => {
-  const scraper = new SiemensJobsScraper(headless);
-  await scraper.run();
-  return scraper.allJobs;
+const extractExperience = (description) => {
+    const expPatterns = [
+        /\bminimum\s*(\d{1,2})\s*(?:years|yrs|yr)\b/i,
+        /\bmin(?:imum)?\s*(\d{1,2})\s*(?:years|yrs|yr)\b/i,
+        /\b(\d{1,2})\s*(?:to|–|-|–)\s*(\d{1,2})\s*(?:years|yrs|yr)\b/i,
+        /\b(?:at least|over)\s*(\d{1,2})\s*(?:years|yrs|yr)\b/i,
+        /\b(\d{1,2})\s*(?:years|yrs|yr)\s+experience\b/i,
+        /\bexperience\s*(?:of)?\s*(\d{1,2})\s*(?:years|yrs|yr)\b/i,
+        /\bexperience\s*(?:required)?\s*[:\-]?\s*(\d{1,2})\s*(?:[-to]+)?\s*(\d{1,2})?\s*(?:years|yrs|yr)?/i,
+        /\b(\d{1,2})\s*\+\s*(?:years|yrs|yr)\b/i,
+        /\b(\d{1,2})-(\d{1,2})\s*(?:years|yrs|yr)\s+experience\b/i,
+    ];
+
+    for (const pattern of expPatterns) {
+        const match = description.match(pattern);
+        if (match) {
+            const minExp = parseInt(match[1], 10);
+            const maxExp = match[2] ? parseInt(match[2], 10) : minExp + 2;
+            return `${minExp} - ${maxExp} yrs`;
+        }
+    }
+
+    return '';
 };
 
-export default runSiemensScraper;
+// Minimal removal of SKF boilerplate sections only
+const removeFuledBoilerplate = (text) => {
+    if (!text) return text;
+    let t = text;
 
+    return t;
+};
+
+const extractSiemensData = (job) => {
+    if (!job) return job;
+
+    let cleanedDescription = (job.description || '').trim();
+    let experience = null;
+    let location = null;
+
+    // Extract experience
+    experience = extractExperience(cleanedDescription);
+
+    // Remove only explicit boilerplate sections requested
+    cleanedDescription = removeFuledBoilerplate(cleanedDescription);
+
+    // Extract city from location string
+    if (job.location) {
+        const cityMatch = job.location.match(/^([^,\n]+)/);
+        if (cityMatch) {
+            location = cityMatch[1].trim();
+        }
+    }
+
+    // Fallback: extract from description if location is still empty
+    if (!location && job.description) {
+        const descLocationMatch = job.description.match(/Job Location:\s*(.+)/i);
+        if (descLocationMatch) {
+            location = descLocationMatch[1].split('\n')[0].trim();
+        }
+    }
+
+    // Optional: fallback default
+    if (!location) {
+        location = 'Pune';
+    }
+
+    return {
+        ...job,
+        title: job.title?.trim(),
+        experience,
+        location,
+        description: cleanedDescription,
+    };
+};
+
+
+// ✅ Exportable runner function
+const Siemens = async ({ headless = true } = {}) => {
+    const scraper = new SiemensJobsScraper(headless);
+    await scraper.run();
+    return scraper.allJobs;
+};
+
+
+export default Siemens;
+
+// ✅ CLI support: node phonepe.js --headless=false
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const headlessArg = process.argv.includes('--headless=false') ? false : true;
-  (async () => {
-    await runSiemensScraper({ headless: headlessArg });
-  })();
+    const headlessArg = process.argv.includes('--headless=false') ? false : true;
+    (async () => {
+        await Siemens({ headless: headlessArg });
+    })();
 }
