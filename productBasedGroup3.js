@@ -20,6 +20,7 @@ import Paypal from "./scrapers/productBased/paypal.js";
 import Phonepe from "./scrapers/productBased/phonepe.js";
 
 import  VirtualGalaxy from "./scrapers/servicebased/virtualGalaxy.js"
+import YashTechnologies from "./scrapers/servicebased/yashTechnologies.js"
 
 const config = {
   concurrency: 5,
@@ -93,6 +94,7 @@ const scrapers = [
   { fn: Phonepe, headless: true },
   { fn: Paypal, headless: true },
   { fn: VirtualGalaxy, headless: true },
+  { fn: YashTechnologies, headless: true },
 ];
 
 const runAllScrapers = async () => {
