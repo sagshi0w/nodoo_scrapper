@@ -23,7 +23,7 @@ import Upstox from "./scrapers/productBased/upstox.js"
 import Locus from "./scrapers/productBased/Locus.js"
 
 import SoftTech from "./scrapers/servicebased/softTech.js"
-import  Cybertech from "./scrapers/servicebased/cybertech.js"
+import Cybertech from "./scrapers/servicebased/cybertech.js"
 
 const config = {
   concurrency: 5,

@@ -201,7 +201,7 @@ ${error.stack}`;
 
 const scrapers = [
     // { fn: OnePassword, headless: true },
-    { fn: runSiemensScraper, headless: true },
+    { fn: runYashTechnologiesJobsScraper, headless: true },
 ];
 
 const runAllScrapers = async () => {

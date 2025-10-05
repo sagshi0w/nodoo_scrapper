@@ -92,8 +92,6 @@ class SiemensJobsScraper {
     }
 
 
-
-
     async extractJobDetailsFromLink(url) {
         const jobPage = await this.browser.newPage();
         try {

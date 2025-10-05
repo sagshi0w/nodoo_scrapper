@@ -97,7 +97,7 @@ class TextBookJobsScraper {
                 const getText = sel => document.querySelector(sel)?.innerText.trim() || '';
                 return {
                     title: getText('div.js-job-title.rb-text-1'),
-                    company: 'Textbook',
+                    company: 'Testbook',
                     location: getText('p.opening-info.rb-space-on-bottom-2rbpx.rb-space-on-top-2rbpx.rb-text-3'),
                     description: getText('div.jobdesciption'),
                     url: window.location.href
