@@ -205,7 +205,7 @@ const extractWiproData = (job) => {
     if (cleanedDescription) {
         // Remove YASH Technologies company boilerplate
         cleanedDescription = cleanedDescription.replace(
-            /YASH Technologies is a leading technology integrator specializing in helping clients reimagine operating models, enhance competitiveness, optimize costs, foster exceptional stakeholder experiences, and drive business transformation\.\s*At YASH, we're a cluster of the brightest stars working with cutting-edge technologies\.\s*Our purpose is anchored in a single truth – bringing real positive changes in an increasingly virtual world and it drives us beyond generational gaps and disruptions of the future\./gi,
+            /YASH Technologies is a leading technology integrator[\s\S]*?disruptions of the future\./gi,
             ''
         );
 
