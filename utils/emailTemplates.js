@@ -43,4 +43,40 @@ export function buildInsertedJobsEmailHTML(jobs = [], summary = null) {
   `;
 }
 
+/**
+ * Build HTML table for actively hiring companies
+ * @param {Array} activelyHiringCompanies - Array of company objects with name, recentJobsCount, totalJobs
+ * @returns {string} HTML string with table
+ */
+export function buildActivelyHiringEmailHTML(activelyHiringCompanies = []) {
+  const companyRows = activelyHiringCompanies.length > 0
+    ? activelyHiringCompanies.map((company, index) => `
+      <tr>
+        <td style="border:1px solid #ddd;padding:8px;">${index + 1}</td>
+        <td style="border:1px solid #ddd;padding:8px;">${company.name || 'Unknown'}</td>
+        <td style="border:1px solid #ddd;padding:8px;">${company.recentJobsCount || 0}</td>
+        <td style="border:1px solid #ddd;padding:8px;">${company.totalJobs || 0}</td>
+      </tr>`).join('')
+    : '<tr><td colspan="4" style="border:1px solid #ddd;padding:8px;text-align:center;">No companies actively hiring</td></tr>';
+
+  return `
+    <div style="font-family:Arial, sans-serif;">
+      <h3 style="margin:0 0 8px 0;">Actively Hiring Companies</h3>
+      <table style="border-collapse:collapse;width:100%;">
+        <thead>
+          <tr>
+            <th style="border:1px solid #ddd;padding:8px;text-align:left;background-color:#f2f2f2;">SR No</th>
+            <th style="border:1px solid #ddd;padding:8px;text-align:left;background-color:#f2f2f2;">Company Name</th>
+            <th style="border:1px solid #ddd;padding:8px;text-align:left;background-color:#f2f2f2;">Recent Jobs (48hrs)</th>
+            <th style="border:1px solid #ddd;padding:8px;text-align:left;background-color:#f2f2f2;">Total Jobs</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${companyRows}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
 

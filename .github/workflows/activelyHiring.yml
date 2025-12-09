@@ -1,0 +1,188 @@
+name: Actively Hiring Detection System
+
+on:
+  schedule:
+    - cron: "30 1 * * *"  # 7:00 AM IST (01:30 UTC)
+  workflow_dispatch: # Manual trigger option
+
+jobs:
+  run-actively-hiring-detection:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📦 Checkout Repo
+        uses: actions/checkout@v4
+
+      - name: ⚙️ Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+
+      - name: 📦 Install Project Dependencies
+        run: npm install
+
+      - name: 🏃 Run Actively Hiring Detection Process
+        id: actively_hiring
+        run: npm run actively-hiring 2>&1 | tee actively_hiring_output.txt
+        env:
+          MONGO_URI: ${{ secrets.MONGO_URI }}
+          MONGO_DB_NAME: ${{ secrets.MONGO_DB_NAME }}
+          MONGO_DB_COLLECTION_NAME: ${{ secrets.MONGO_DB_COLLECTION_NAME }}
+          EMAIL_USER: ${{ secrets.MAIL_USERNAME }}
+          EMAIL_PASS: ${{ secrets.MAIL_PASSWORD }}
+          EMAIL_RECIPIENTS: ${{ secrets.MAIL_RECIPIENT }}
+
+      - name: 📊 Create Summary Table
+        if: success()
+        run: |
+          echo "## 📊 Actively Hiring Detection Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+          
+          # Extract values from output
+          TOTAL_COMPANIES=$(grep -oP 'Total Companies Processed: \K\d+' actively_hiring_output.txt || echo "N/A")
+          COMPANIES_UPDATED=$(grep -oP 'Companies Updated: \K\d+' actively_hiring_output.txt || echo "N/A")
+          ACTIVELY_HIRING=$(grep -oP 'Actively Hiring: \K\d+' actively_hiring_output.txt || echo "N/A")
+          NOT_ACTIVELY_HIRING=$(grep -oP 'Not Actively Hiring: \K\d+' actively_hiring_output.txt || echo "N/A")
+          ERRORS=$(grep -oP 'Errors: \K\d+' actively_hiring_output.txt || echo "0")
+          PROCESSING_TIME=$(grep -oP 'Processing Time: \K\d+' actively_hiring_output.txt || echo "N/A")
+          
+          echo "| Total Companies Processed | $TOTAL_COMPANIES |" >> $GITHUB_STEP_SUMMARY
+          echo "| Companies Updated | $COMPANIES_UPDATED |" >> $GITHUB_STEP_SUMMARY
+          echo "| Actively Hiring | $ACTIVELY_HIRING |" >> $GITHUB_STEP_SUMMARY
+          echo "| Not Actively Hiring | $NOT_ACTIVELY_HIRING |" >> $GITHUB_STEP_SUMMARY
+          echo "| Errors | $ERRORS |" >> $GITHUB_STEP_SUMMARY
+          echo "| Processing Time (seconds) | $PROCESSING_TIME |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Extract actively hiring company names (lines with ✅ marker)
+          grep -oP '✅ \K[^:]+' actively_hiring_output.txt > actively_hiring_companies.txt || touch actively_hiring_companies.txt
+          
+          # Display actively hiring companies table
+          echo "### 🏢 Actively Hiring Companies" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| SR No | Company Name |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------------|" >> $GITHUB_STEP_SUMMARY
+          
+          if [ -s actively_hiring_companies.txt ]; then
+            SR_NO=1
+            while IFS= read -r company_name; do
+              echo "| $SR_NO | $company_name |" >> $GITHUB_STEP_SUMMARY
+              SR_NO=$((SR_NO + 1))
+            done < actively_hiring_companies.txt
+          else
+            echo "| - | No companies actively hiring |" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Actively hiring detection completed successfully!" >> $GITHUB_STEP_SUMMARY
+          
+          # Save values to file for email step
+          echo "TOTAL_COMPANIES=$TOTAL_COMPANIES" >> summary.env
+          echo "COMPANIES_UPDATED=$COMPANIES_UPDATED" >> summary.env
+          echo "ACTIVELY_HIRING=$ACTIVELY_HIRING" >> summary.env
+          echo "NOT_ACTIVELY_HIRING=$NOT_ACTIVELY_HIRING" >> summary.env
+          echo "ERRORS=$ERRORS" >> summary.env
+          echo "PROCESSING_TIME=$PROCESSING_TIME" >> summary.env
+
+      - name: 📧 Load Summary Values
+        if: success()
+        run: |
+          if [ -f summary.env ]; then
+            set -a
+            source summary.env
+            set +a
+            echo "TOTAL_COMPANIES=$TOTAL_COMPANIES" >> $GITHUB_ENV
+            echo "COMPANIES_UPDATED=$COMPANIES_UPDATED" >> $GITHUB_ENV
+            echo "ACTIVELY_HIRING=$ACTIVELY_HIRING" >> $GITHUB_ENV
+            echo "NOT_ACTIVELY_HIRING=$NOT_ACTIVELY_HIRING" >> $GITHUB_ENV
+            echo "ERRORS=$ERRORS" >> $GITHUB_ENV
+            echo "PROCESSING_TIME=$PROCESSING_TIME" >> $GITHUB_ENV
+          fi
+          
+          # Build HTML table for actively hiring companies
+          if [ -f actively_hiring_companies.txt ] && [ -s actively_hiring_companies.txt ]; then
+            SR_NO=1
+            TABLE_ROWS=""
+            while IFS= read -r company_name; do
+              TABLE_ROWS="${TABLE_ROWS}<tr><td style=\"border:1px solid #ddd;padding:8px;\">${SR_NO}</td><td style=\"border:1px solid #ddd;padding:8px;\">${company_name}</td></tr>"
+              SR_NO=$((SR_NO + 1))
+            done < actively_hiring_companies.txt
+            echo "ACTIVELY_HIRING_COMPANIES_TABLE=${TABLE_ROWS}" >> $GITHUB_ENV
+          else
+            echo "ACTIVELY_HIRING_COMPANIES_TABLE=<tr><td colspan=\"2\" style=\"border:1px solid #ddd;padding:8px;text-align:center;\">No companies actively hiring</td></tr>" >> $GITHUB_ENV
+          fi
+
+      - name: ✅ Send Success Email
+        if: success()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          subject: "✅ Actively Hiring Detection Success: $(date)"
+          to: ${{ secrets.MAIL_RECIPIENT || 'nodooin86@gmail.com' }}
+          from: "GitHub Action <${{ secrets.MAIL_USERNAME }}>"
+          body: |
+            ✅ The actively hiring detection ran successfully at 7:00 AM IST.
+            📅 Timestamp: ${{ github.event.head_commit.timestamp }}
+            
+            <h3>📊 Summary</h3>
+            <table style="border-collapse:collapse;width:100%;margin-bottom:20px;">
+              <tr>
+                <td style="border:1px solid #ddd;padding:8px;"><strong>Total Companies Processed</strong></td>
+                <td style="border:1px solid #ddd;padding:8px;">${{ env.TOTAL_COMPANIES || 'N/A' }}</td>
+              </tr>
+              <tr>
+                <td style="border:1px solid #ddd;padding:8px;"><strong>Companies Updated</strong></td>
+                <td style="border:1px solid #ddd;padding:8px;">${{ env.COMPANIES_UPDATED || 'N/A' }}</td>
+              </tr>
+              <tr>
+                <td style="border:1px solid #ddd;padding:8px;"><strong>Actively Hiring</strong></td>
+                <td style="border:1px solid #ddd;padding:8px;">${{ env.ACTIVELY_HIRING || 'N/A' }}</td>
+              </tr>
+              <tr>
+                <td style="border:1px solid #ddd;padding:8px;"><strong>Not Actively Hiring</strong></td>
+                <td style="border:1px solid #ddd;padding:8px;">${{ env.NOT_ACTIVELY_HIRING || 'N/A' }}</td>
+              </tr>
+              <tr>
+                <td style="border:1px solid #ddd;padding:8px;"><strong>Errors</strong></td>
+                <td style="border:1px solid #ddd;padding:8px;">${{ env.ERRORS || '0' }}</td>
+              </tr>
+              <tr>
+                <td style="border:1px solid #ddd;padding:8px;"><strong>Processing Time (seconds)</strong></td>
+                <td style="border:1px solid #ddd;padding:8px;">${{ env.PROCESSING_TIME || 'N/A' }}</td>
+              </tr>
+            </table>
+            
+            <h3>🏢 Actively Hiring Companies</h3>
+            <table style="border-collapse:collapse;width:100%;">
+              <thead>
+                <tr>
+                  <th style="border:1px solid #ddd;padding:8px;text-align:left;background-color:#f2f2f2;">SR No</th>
+                  <th style="border:1px solid #ddd;padding:8px;text-align:left;background-color:#f2f2f2;">Company Name</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${{ env.ACTIVELY_HIRING_COMPANIES_TABLE || '<tr><td colspan="2" style="border:1px solid #ddd;padding:8px;text-align:center;">No companies actively hiring</td></tr>' }}
+              </tbody>
+            </table>
+
+      - name: ❌ Send Failure Email
+        if: failure()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          subject: "❌ Actively Hiring Detection Failed: $(date)"
+          to: ${{ secrets.MAIL_RECIPIENT || 'nodooin86@gmail.com' }}
+          from: "GitHub Action <${{ secrets.MAIL_USERNAME }}>"
+          body: |
+            ❌ The actively hiring detection failed to complete successfully.
+            📅 Timestamp: ${{ github.event.head_commit.timestamp }}
+

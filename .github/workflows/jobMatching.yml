@@ -22,14 +22,72 @@ jobs:
         run: npm install
 
       - name: 🏃 Run Job Matching Process
-        run: npm run job-matching
+        id: job_matching
+        run: npm run job-matching 2>&1 | tee job_matching_output.txt
         env:
           MONGO_URI: ${{ secrets.MONGO_URI }}
           MONGO_DB_NAME: ${{ secrets.MONGO_DB_NAME }}
           MONGO_DB_COLLECTION_NAME: ${{ secrets.MONGO_DB_COLLECTION_NAME }}
           EMAIL_USER: ${{ secrets.MAIL_USERNAME }}
           EMAIL_PASS: ${{ secrets.MAIL_PASSWORD }}
-          EMAIL_RECIPIENTS: ${{ secrets.MAIL_RECIPIENTS }}
+          EMAIL_RECIPIENTS: ${{ secrets.MAIL_RECIPIENT }}
+
+      - name: 📊 Create Summary Table
+        if: success()
+        id: summary
+        run: |
+          echo "## 📊 Job Matching Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+          
+          # Extract values from output
+          TOTAL_JOBS=$(grep -oP 'Total Jobs Processed: \K\d+' job_matching_output.txt || echo "N/A")
+          TOTAL_PROFILES=$(grep -oP 'Total Profiles Processed: \K\d+' job_matching_output.txt || echo "N/A")
+          TOTAL_MATCHES=$(grep -oP 'Total Matches Found: \K\d+' job_matching_output.txt || echo "N/A")
+          USERS_WITH_MATCHES=$(grep -oP 'Users with Matches: \K\d+' job_matching_output.txt || echo "N/A")
+          EXCELLENT_MATCHES=$(grep -oP 'Excellent Matches.*: \K\d+' job_matching_output.txt || echo "N/A")
+          GOOD_MATCHES=$(grep -oP 'Good Matches.*: \K\d+' job_matching_output.txt || echo "N/A")
+          AVG_RECOMMENDATIONS=$(grep -oP 'Average Recommendations per User: \K\d+' job_matching_output.txt || echo "N/A")
+          PROCESSING_TIME=$(grep -oP 'Processing Time: \K\d+' job_matching_output.txt || echo "N/A")
+          
+          echo "| Total Jobs Processed | $TOTAL_JOBS |" >> $GITHUB_STEP_SUMMARY
+          echo "| Total Profiles Processed | $TOTAL_PROFILES |" >> $GITHUB_STEP_SUMMARY
+          echo "| Total Matches Found | $TOTAL_MATCHES |" >> $GITHUB_STEP_SUMMARY
+          echo "| Users with Matches | $USERS_WITH_MATCHES |" >> $GITHUB_STEP_SUMMARY
+          echo "| Excellent Matches (≥85%) | $EXCELLENT_MATCHES |" >> $GITHUB_STEP_SUMMARY
+          echo "| Good Matches (≥70%) | $GOOD_MATCHES |" >> $GITHUB_STEP_SUMMARY
+          echo "| Avg Recommendations per User | $AVG_RECOMMENDATIONS |" >> $GITHUB_STEP_SUMMARY
+          echo "| Processing Time (seconds) | $PROCESSING_TIME |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Job matching completed successfully!" >> $GITHUB_STEP_SUMMARY
+          
+          # Save values to file for email step
+          echo "TOTAL_JOBS=$TOTAL_JOBS" >> summary.env
+          echo "TOTAL_PROFILES=$TOTAL_PROFILES" >> summary.env
+          echo "TOTAL_MATCHES=$TOTAL_MATCHES" >> summary.env
+          echo "USERS_WITH_MATCHES=$USERS_WITH_MATCHES" >> summary.env
+          echo "EXCELLENT_MATCHES=$EXCELLENT_MATCHES" >> summary.env
+          echo "GOOD_MATCHES=$GOOD_MATCHES" >> summary.env
+          echo "AVG_RECOMMENDATIONS=$AVG_RECOMMENDATIONS" >> summary.env
+          echo "PROCESSING_TIME=$PROCESSING_TIME" >> summary.env
+
+      - name: 📧 Load Summary Values
+        if: success()
+        run: |
+          if [ -f summary.env ]; then
+            set -a
+            source summary.env
+            set +a
+            echo "TOTAL_JOBS=$TOTAL_JOBS" >> $GITHUB_ENV
+            echo "TOTAL_PROFILES=$TOTAL_PROFILES" >> $GITHUB_ENV
+            echo "TOTAL_MATCHES=$TOTAL_MATCHES" >> $GITHUB_ENV
+            echo "USERS_WITH_MATCHES=$USERS_WITH_MATCHES" >> $GITHUB_ENV
+            echo "EXCELLENT_MATCHES=$EXCELLENT_MATCHES" >> $GITHUB_ENV
+            echo "GOOD_MATCHES=$GOOD_MATCHES" >> $GITHUB_ENV
+            echo "AVG_RECOMMENDATIONS=$AVG_RECOMMENDATIONS" >> $GITHUB_ENV
+            echo "PROCESSING_TIME=$PROCESSING_TIME" >> $GITHUB_ENV
+          fi
 
       - name: ✅ Send Success Email
         if: success()
@@ -40,17 +98,25 @@ jobs:
           secure: true
           username: ${{ secrets.MAIL_USERNAME }}
           password: ${{ secrets.MAIL_PASSWORD }}
-          subject: "✅ Job Matching Completed Successfully - $(date)"
-          to: ${{ secrets.MAIL_RECIPIENTS || 'nodooin86@gmail.com' }}
+          subject: "✅ Job Matching Success: $(date)"
+          to: ${{ secrets.MAIL_RECIPIENT || 'nodooin86@gmail.com' }}
           from: "GitHub Action <${{ secrets.MAIL_USERNAME }}>"
           body: |
-            ✅ Job Matching System completed successfully at 6:00 AM IST.
+            ✅ The job matching ran successfully at 6:00 AM IST.
+            📅 Timestamp: ${{ github.event.head_commit.timestamp }}
             
-            📊 The system processed all jobs and user profiles to generate personalized job recommendations.
+            ## 📊 Summary Table
             
-            📅 Timestamp: $(date)
-            🔄 Workflow: Job Matching System
-            📝 Check the logs for detailed processing statistics.
+            | Metric | Value |
+            |--------|-------|
+            | Total Jobs Processed | ${{ env.TOTAL_JOBS || 'N/A' }} |
+            | Total Profiles Processed | ${{ env.TOTAL_PROFILES || 'N/A' }} |
+            | Total Matches Found | ${{ env.TOTAL_MATCHES || 'N/A' }} |
+            | Users with Matches | ${{ env.USERS_WITH_MATCHES || 'N/A' }} |
+            | Excellent Matches (≥85%) | ${{ env.EXCELLENT_MATCHES || 'N/A' }} |
+            | Good Matches (≥70%) | ${{ env.GOOD_MATCHES || 'N/A' }} |
+            | Avg Recommendations per User | ${{ env.AVG_RECOMMENDATIONS || 'N/A' }} |
+            | Processing Time (seconds) | ${{ env.PROCESSING_TIME || 'N/A' }} |
 
       - name: ❌ Send Failure Email
         if: failure()
@@ -61,14 +127,9 @@ jobs:
           secure: true
           username: ${{ secrets.MAIL_USERNAME }}
           password: ${{ secrets.MAIL_PASSWORD }}
-          subject: "❌ Job Matching Failed - $(date)"
-          to: ${{ secrets.MAIL_RECIPIENTS || 'nodooin86@gmail.com' }}
+          subject: "❌ Job Matching Failed: $(date)"
+          to: ${{ secrets.MAIL_RECIPIENT || 'nodooin86@gmail.com' }}
           from: "GitHub Action <${{ secrets.MAIL_USERNAME }}>"
           body: |
-            ❌ Job Matching System failed to complete successfully.
-            
-            🔍 Please check the workflow logs for error details.
-            
-            📅 Timestamp: $(date)
-            🔄 Workflow: Job Matching System
-            🚨 Action Required: Review and fix the issue.
+            ❌ The job matching failed to complete successfully.
+            📅 Timestamp: ${{ github.event.head_commit.timestamp }}
