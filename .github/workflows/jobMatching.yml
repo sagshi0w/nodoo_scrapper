@@ -201,37 +201,65 @@ jobs:
           subject: "✅ Job Matching Success: $(date)"
           to: ${{ secrets.MAIL_RECIPIENT || 'nodooin86@gmail.com' }}
           from: "GitHub Action <${{ secrets.MAIL_USERNAME }}>"
+          content_type: text/html
           body: |
-            ✅ The job matching ran successfully at 6:00 AM IST.
-            📅 Timestamp: ${{ github.event.head_commit.timestamp }}
-            
-            ## 📊 Summary Table
-            
-            | Metric | Value |
-            |--------|-------|
-            | Total Jobs Processed | ${{ env.TOTAL_JOBS || 'N/A' }} |
-            | Total Profiles Processed | ${{ env.TOTAL_PROFILES || 'N/A' }} |
-            | Total Matches Found | ${{ env.TOTAL_MATCHES || 'N/A' }} |
-            | Users with Matches | ${{ env.USERS_WITH_MATCHES || 'N/A' }} |
-            | Excellent Matches (≥85%) | ${{ env.EXCELLENT_MATCHES || 'N/A' }} |
-            | Good Matches (≥70%) | ${{ env.GOOD_MATCHES || 'N/A' }} |
-            | Avg Recommendations per User | ${{ env.AVG_RECOMMENDATIONS || 'N/A' }} |
-            | Processing Time (seconds) | ${{ env.PROCESSING_TIME || 'N/A' }} |
-            
-            <h3>👥 Users with Job Matches</h3>
-            <table style="border-collapse:collapse;width:100%;">
-              <thead>
+            <html>
+            <body style="font-family: Arial, sans-serif;">
+              <p>✅ The job matching ran successfully at 6:00 AM IST.</p>
+              <p>📅 Timestamp: ${{ github.event.head_commit.timestamp }}</p>
+              
+              <h3>📊 Summary Table</h3>
+              <table style="border-collapse:collapse;width:100%;margin-bottom:20px;">
                 <tr>
-                  <th style="border:1px solid #ddd;padding:8px;text-align:left;background-color:#f2f2f2;">SR No</th>
-                  <th style="border:1px solid #ddd;padding:8px;text-align:left;background-color:#f2f2f2;">User Name</th>
-                  <th style="border:1px solid #ddd;padding:8px;text-align:left;background-color:#f2f2f2;">Skills</th>
-                  <th style="border:1px solid #ddd;padding:8px;text-align:left;background-color:#f2f2f2;">Jobs Found</th>
+                  <td style="border:1px solid #ddd;padding:8px;"><strong>Total Jobs Processed</strong></td>
+                  <td style="border:1px solid #ddd;padding:8px;">${{ env.TOTAL_JOBS || 'N/A' }}</td>
                 </tr>
-              </thead>
-              <tbody>
-                ${{ env.USER_TABLE_ROWS || '<tr><td colspan="4" style="border:1px solid #ddd;padding:8px;text-align:center;">No users with matches</td></tr>' }}
-              </tbody>
-            </table>
+                <tr>
+                  <td style="border:1px solid #ddd;padding:8px;"><strong>Total Profiles Processed</strong></td>
+                  <td style="border:1px solid #ddd;padding:8px;">${{ env.TOTAL_PROFILES || 'N/A' }}</td>
+                </tr>
+                <tr>
+                  <td style="border:1px solid #ddd;padding:8px;"><strong>Total Matches Found</strong></td>
+                  <td style="border:1px solid #ddd;padding:8px;">${{ env.TOTAL_MATCHES || 'N/A' }}</td>
+                </tr>
+                <tr>
+                  <td style="border:1px solid #ddd;padding:8px;"><strong>Users with Matches</strong></td>
+                  <td style="border:1px solid #ddd;padding:8px;">${{ env.USERS_WITH_MATCHES || 'N/A' }}</td>
+                </tr>
+                <tr>
+                  <td style="border:1px solid #ddd;padding:8px;"><strong>Excellent Matches (≥85%)</strong></td>
+                  <td style="border:1px solid #ddd;padding:8px;">${{ env.EXCELLENT_MATCHES || 'N/A' }}</td>
+                </tr>
+                <tr>
+                  <td style="border:1px solid #ddd;padding:8px;"><strong>Good Matches (≥70%)</strong></td>
+                  <td style="border:1px solid #ddd;padding:8px;">${{ env.GOOD_MATCHES || 'N/A' }}</td>
+                </tr>
+                <tr>
+                  <td style="border:1px solid #ddd;padding:8px;"><strong>Avg Recommendations per User</strong></td>
+                  <td style="border:1px solid #ddd;padding:8px;">${{ env.AVG_RECOMMENDATIONS || 'N/A' }}</td>
+                </tr>
+                <tr>
+                  <td style="border:1px solid #ddd;padding:8px;"><strong>Processing Time (seconds)</strong></td>
+                  <td style="border:1px solid #ddd;padding:8px;">${{ env.PROCESSING_TIME || 'N/A' }}</td>
+                </tr>
+              </table>
+              
+              <h3>👥 Users with Job Matches</h3>
+              <table style="border-collapse:collapse;width:100%;">
+                <thead>
+                  <tr>
+                    <th style="border:1px solid #ddd;padding:8px;text-align:left;background-color:#f2f2f2;">SR No</th>
+                    <th style="border:1px solid #ddd;padding:8px;text-align:left;background-color:#f2f2f2;">User Name</th>
+                    <th style="border:1px solid #ddd;padding:8px;text-align:left;background-color:#f2f2f2;">Skills</th>
+                    <th style="border:1px solid #ddd;padding:8px;text-align:left;background-color:#f2f2f2;">Jobs Found</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${{ env.USER_TABLE_ROWS || '<tr><td colspan="4" style="border:1px solid #ddd;padding:8px;text-align:center;">No users with matches</td></tr>' }}
+                </tbody>
+              </table>
+            </body>
+            </html>
 
       - name: ❌ Send Failure Email
         if: failure()
@@ -245,6 +273,11 @@ jobs:
           subject: "❌ Job Matching Failed: $(date)"
           to: ${{ secrets.MAIL_RECIPIENT || 'nodooin86@gmail.com' }}
           from: "GitHub Action <${{ secrets.MAIL_USERNAME }}>"
+          content_type: text/html
           body: |
-            ❌ The job matching failed to complete successfully.
-            📅 Timestamp: ${{ github.event.head_commit.timestamp }}
+            <html>
+            <body style="font-family: Arial, sans-serif;">
+              <p>❌ The job matching failed to complete successfully.</p>
+              <p>📅 Timestamp: ${{ github.event.head_commit.timestamp }}</p>
+            </body>
+            </html>

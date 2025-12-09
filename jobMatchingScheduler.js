@@ -5,6 +5,7 @@ import moment from 'moment-timezone';
 import { createRequire } from 'module';
 import { performJobMatching } from './utils/jobMatching.js';
 import { closeDatabase } from './utils/database.js';
+import { buildJobMatchingUsersEmailHTML } from './utils/emailTemplates.js';
 import dotenv from 'dotenv';
 
 // Load environment variables
@@ -37,7 +38,7 @@ const transporter = nodemailer.createTransport({
 
 // Notification functions
 const notify = {
-  success: async (stats) => {
+  success: async (stats, htmlContent) => {
     const summaryText = `✅ Job Matching completed at ${stats.endTime}
 
 📊 Summary:
@@ -52,42 +53,15 @@ const notify = {
 
 💾 Results saved to jobMatching collection in database (matches ≥40%)`;
 
-    const emailHTML = `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-      <h2 style="color: #28a745;">✅ Job Matching Completed Successfully</h2>
-      <p><strong>Completed at:</strong> ${stats.endTime}</p>
-      
-      <h3 style="color: #007bff;">📊 Processing Summary</h3>
-      <ul>
-        <li><strong>Total Jobs Processed:</strong> ${stats.totalJobs.toLocaleString()}</li>
-        <li><strong>Total Profiles Processed:</strong> ${stats.totalProfiles}</li>
-        <li><strong>Total Matches Found:</strong> ${stats.totalMatches.toLocaleString()}</li>
-        <li><strong>Users with Matches:</strong> ${stats.usersWithMatches}</li>
-        <li><strong>Excellent Matches (≥85%):</strong> ${stats.excellentMatches}</li>
-        <li><strong>Good Matches (≥70%):</strong> ${stats.goodMatches}</li>
-        <li><strong>Average Recommendations per User:</strong> ${stats.averageRecommendationsPerUser}</li>
-        <li><strong>Processing Time:</strong> ${stats.duration} seconds</li>
-      </ul>
-      
-      <p style="color: #6c757d; font-size: 0.9em;">
-        💾 All matching results have been saved to the jobMatching collection in the database (matches ≥40%).
-      </p>
-    </div>`;
-
-    const mailOptions = {
-      from: config.notification.email.user,
-      to: config.notification.email.recipients.join(', '),
+    await transporter.sendMail({
+      from: `"Job Matching" <${config.notification.email.user}>`,
+      to: config.notification.email.recipients,
       subject: `✅ Job Matching Completed - ${stats.totalMatches} matches found`,
       text: summaryText,
-      html: emailHTML
-    };
+      html: htmlContent || undefined
+    });
 
-    try {
-      await transporter.sendMail(mailOptions);
-      console.log('📧 Success notification sent');
-    } catch (error) {
-      console.error('❌ Failed to send success notification:', error);
-    }
+    console.log("📧 Success notification email sent.");
   },
 
   error: async (error, stats = {}) => {
@@ -96,32 +70,14 @@ const notify = {
 Error: ${error.message}
 ${error.stack || ''}`;
 
-    const emailHTML = `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-      <h2 style="color: #dc3545;">❌ Job Matching Failed</h2>
-      <p><strong>Failed at:</strong> ${moment().tz("Asia/Kolkata").format("YYYY-MM-DD HH:mm:ss")}</p>
-      
-      <h3 style="color: #dc3545;">Error Details</h3>
-      <pre style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; overflow-x: auto;">
-${error.message}
-${error.stack || ''}
-      </pre>
-    </div>`;
-
-    const mailOptions = {
-      from: config.notification.email.user,
-      to: config.notification.email.recipients.join(', '),
+    await transporter.sendMail({
+      from: `"Job Matching" <${config.notification.email.user}>`,
+      to: config.notification.email.recipients,
       subject: `❌ Job Matching Failed - ${error.message}`,
-      text: errorText,
-      html: emailHTML
-    };
+      text: errorText
+    });
 
-    try {
-      await transporter.sendMail(mailOptions);
-      console.log('📧 Error notification sent');
-    } catch (emailError) {
-      console.error('❌ Failed to send error notification:', emailError);
-    }
+    console.log("📧 Error notification email sent.");
   }
 };
 
@@ -146,8 +102,11 @@ const runJobMatching = async () => {
     
     console.log(`✅ [${endTimeFormatted}] Job matching completed successfully!`);
     
+    // Generate email HTML using template
+    const emailHTML = buildJobMatchingUsersEmailHTML(results.usersWithMatchesDetails || []);
+    
     // Send success notification
-    await notify.success(results);
+    await notify.success(results, emailHTML);
     
     return results;
     

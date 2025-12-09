@@ -5,6 +5,7 @@ import moment from 'moment-timezone';
 import { createRequire } from 'module';
 import { performActivelyHiringUpdate } from './utils/activelyHiring.js';
 import { closeDatabase } from './utils/database.js';
+import { buildActivelyHiringEmailHTML } from './utils/emailTemplates.js';
 import dotenv from 'dotenv';
 
 // Load environment variables
@@ -37,7 +38,7 @@ const transporter = nodemailer.createTransport({
 
 // Notification functions
 const notify = {
-  success: async (stats) => {
+  success: async (stats, htmlContent) => {
     const summaryText = `✅ Actively Hiring Detection completed at ${stats.endTime}
 
 📊 Summary:
@@ -50,40 +51,15 @@ const notify = {
 
 💾 Results saved to Company collection in database`;
 
-    const emailHTML = `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-      <h2 style="color: #28a745;">✅ Actively Hiring Detection Completed Successfully</h2>
-      <p><strong>Completed at:</strong> ${stats.endTime}</p>
-      
-      <h3 style="color: #007bff;">📊 Processing Summary</h3>
-      <ul>
-        <li><strong>Total Companies Processed:</strong> ${stats.totalCompanies.toLocaleString()}</li>
-        <li><strong>Companies Updated:</strong> ${stats.companiesUpdated.toLocaleString()}</li>
-        <li><strong>Actively Hiring:</strong> ${stats.activelyHiringCount.toLocaleString()}</li>
-        <li><strong>Not Actively Hiring:</strong> ${stats.notActivelyHiringCount.toLocaleString()}</li>
-        <li><strong>Errors:</strong> ${stats.errors}</li>
-        <li><strong>Processing Time:</strong> ${stats.duration} seconds</li>
-      </ul>
-      
-      <p style="color: #6c757d; font-size: 0.9em;">
-        💾 All company hiring statuses have been updated in the database.
-      </p>
-    </div>`;
-
-    const mailOptions = {
-      from: config.notification.email.user,
-      to: config.notification.email.recipients.join(', '),
+    await transporter.sendMail({
+      from: `"Actively Hiring Detection" <${config.notification.email.user}>`,
+      to: config.notification.email.recipients,
       subject: `✅ Actively Hiring Detection Completed - ${stats.activelyHiringCount} companies actively hiring`,
       text: summaryText,
-      html: emailHTML
-    };
+      html: htmlContent || undefined
+    });
 
-    try {
-      await transporter.sendMail(mailOptions);
-      console.log('📧 Success notification sent');
-    } catch (error) {
-      console.error('❌ Failed to send success notification:', error);
-    }
+    console.log("📧 Success notification email sent.");
   },
 
   error: async (error, stats = {}) => {
@@ -92,32 +68,14 @@ const notify = {
 Error: ${error.message}
 ${error.stack || ''}`;
 
-    const emailHTML = `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-      <h2 style="color: #dc3545;">❌ Actively Hiring Detection Failed</h2>
-      <p><strong>Failed at:</strong> ${moment().tz("Asia/Kolkata").format("YYYY-MM-DD HH:mm:ss")}</p>
-      
-      <h3 style="color: #dc3545;">Error Details</h3>
-      <pre style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; overflow-x: auto;">
-${error.message}
-${error.stack || ''}
-      </pre>
-    </div>`;
-
-    const mailOptions = {
-      from: config.notification.email.user,
-      to: config.notification.email.recipients.join(', '),
+    await transporter.sendMail({
+      from: `"Actively Hiring Detection" <${config.notification.email.user}>`,
+      to: config.notification.email.recipients,
       subject: `❌ Actively Hiring Detection Failed - ${error.message}`,
-      text: errorText,
-      html: emailHTML
-    };
+      text: errorText
+    });
 
-    try {
-      await transporter.sendMail(mailOptions);
-      console.log('📧 Error notification sent');
-    } catch (emailError) {
-      console.error('❌ Failed to send error notification:', emailError);
-    }
+    console.log("📧 Error notification email sent.");
   }
 };
 
@@ -142,8 +100,11 @@ const runActivelyHiringDetection = async () => {
     
     console.log(`✅ [${endTimeFormatted}] Actively hiring detection completed successfully!`);
     
+    // Generate email HTML using template
+    const emailHTML = buildActivelyHiringEmailHTML(results.activelyHiringCompanies || []);
+    
     // Send success notification
-    await notify.success(results);
+    await notify.success(results, emailHTML);
     
     return results;
     

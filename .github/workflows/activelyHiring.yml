@@ -145,11 +145,14 @@ jobs:
           subject: "✅ Actively Hiring Detection Success: $(date)"
           to: ${{ secrets.MAIL_RECIPIENT || 'nodooin86@gmail.com' }}
           from: "GitHub Action <${{ secrets.MAIL_USERNAME }}>"
+          content_type: text/html
           body: |
-            ✅ The actively hiring detection ran successfully at 7:00 AM IST.
-            📅 Timestamp: ${{ github.event.head_commit.timestamp }}
-            
-            <h3>📊 Summary</h3>
+            <html>
+            <body style="font-family: Arial, sans-serif;">
+              <p>✅ The actively hiring detection ran successfully at 7:00 AM IST.</p>
+              <p>📅 Timestamp: ${{ github.event.head_commit.timestamp }}</p>
+              
+              <h3>📊 Summary</h3>
             <table style="border-collapse:collapse;width:100%;margin-bottom:20px;">
               <tr>
                 <td style="border:1px solid #ddd;padding:8px;"><strong>Total Companies Processed</strong></td>
@@ -189,6 +192,8 @@ jobs:
                 ${{ env.ACTIVELY_HIRING_COMPANIES_TABLE || '<tr><td colspan="2" style="border:1px solid #ddd;padding:8px;text-align:center;">No companies actively hiring</td></tr>' }}
               </tbody>
             </table>
+            </body>
+            </html>
 
       - name: ❌ Send Failure Email
         if: failure()
@@ -202,7 +207,12 @@ jobs:
           subject: "❌ Actively Hiring Detection Failed: $(date)"
           to: ${{ secrets.MAIL_RECIPIENT || 'nodooin86@gmail.com' }}
           from: "GitHub Action <${{ secrets.MAIL_USERNAME }}>"
+          content_type: text/html
           body: |
-            ❌ The actively hiring detection failed to complete successfully.
-            📅 Timestamp: ${{ github.event.head_commit.timestamp }}
+            <html>
+            <body style="font-family: Arial, sans-serif;">
+              <p>❌ The actively hiring detection failed to complete successfully.</p>
+              <p>📅 Timestamp: ${{ github.event.head_commit.timestamp }}</p>
+            </body>
+            </html>
 
