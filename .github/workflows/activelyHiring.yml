@@ -89,15 +89,30 @@ jobs:
         if: success()
         run: |
           if [ -f summary.env ]; then
-            set -a
-            source summary.env
-            set +a
-            echo "TOTAL_COMPANIES=$TOTAL_COMPANIES" >> $GITHUB_ENV
-            echo "COMPANIES_UPDATED=$COMPANIES_UPDATED" >> $GITHUB_ENV
-            echo "ACTIVELY_HIRING=$ACTIVELY_HIRING" >> $GITHUB_ENV
-            echo "NOT_ACTIVELY_HIRING=$NOT_ACTIVELY_HIRING" >> $GITHUB_ENV
-            echo "ERRORS=$ERRORS" >> $GITHUB_ENV
-            echo "PROCESSING_TIME=$PROCESSING_TIME" >> $GITHUB_ENV
+            # Read summary.env line by line and only process valid variable assignments
+            # This avoids issues with HTML content that might be in the file
+            while IFS= read -r line || [ -n "$line" ]; do
+              # Skip empty lines and lines that don't look like variable assignments
+              if [ -z "$line" ] || ! echo "$line" | grep -qE '^[A-Z_]+='; then
+                continue
+              fi
+              
+              # Skip lines with HTML tags (these would cause syntax errors)
+              if echo "$line" | grep -qE '<[^>]+>'; then
+                continue
+              fi
+              
+              # Extract variable name and value
+              VAR_NAME=$(echo "$line" | cut -d'=' -f1)
+              VAR_VALUE=$(echo "$line" | cut -d'=' -f2-)
+              
+              # Only set known variables
+              case "$VAR_NAME" in
+                TOTAL_COMPANIES|COMPANIES_UPDATED|ACTIVELY_HIRING|NOT_ACTIVELY_HIRING|ERRORS|PROCESSING_TIME)
+                  echo "${VAR_NAME}=${VAR_VALUE}" >> $GITHUB_ENV
+                  ;;
+              esac
+            done < summary.env
           fi
           
           # Build HTML table for actively hiring companies
@@ -105,10 +120,15 @@ jobs:
             SR_NO=1
             TABLE_ROWS=""
             while IFS= read -r company_name; do
-              TABLE_ROWS="${TABLE_ROWS}<tr><td style=\"border:1px solid #ddd;padding:8px;\">${SR_NO}</td><td style=\"border:1px solid #ddd;padding:8px;\">${company_name}</td></tr>"
+              # Escape HTML special characters in company name
+              COMPANY_NAME_ESC=$(echo "$company_name" | sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g; s/"/\&quot;/g')
+              TABLE_ROWS="${TABLE_ROWS}<tr><td style=\"border:1px solid #ddd;padding:8px;\">${SR_NO}</td><td style=\"border:1px solid #ddd;padding:8px;\">${COMPANY_NAME_ESC}</td></tr>"
               SR_NO=$((SR_NO + 1))
             done < actively_hiring_companies.txt
-            echo "ACTIVELY_HIRING_COMPANIES_TABLE=${TABLE_ROWS}" >> $GITHUB_ENV
+            # Use heredoc to write HTML content safely to GITHUB_ENV
+            echo "ACTIVELY_HIRING_COMPANIES_TABLE<<EOF" >> $GITHUB_ENV
+            echo "$TABLE_ROWS" >> $GITHUB_ENV
+            echo "EOF" >> $GITHUB_ENV
           else
             echo "ACTIVELY_HIRING_COMPANIES_TABLE=<tr><td colspan=\"2\" style=\"border:1px solid #ddd;padding:8px;text-align:center;\">No companies actively hiring</td></tr>" >> $GITHUB_ENV
           fi
