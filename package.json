@@ -14,6 +14,9 @@
     "actively-hiring": "node runActivelyHiring.js",
     "actively-hiring-scheduler": "node activelyHiringScheduler.js",
     "actively-hiring-test": "node activelyHiringScheduler.js --run-now",
+    "delete-old-jobs": "node runDeleteOldJobs.js",
+    "delete-old-jobs-scheduler": "node deleteOldJobsScheduler.js",
+    "delete-old-jobs-test": "node deleteOldJobsScheduler.js --run-now",
     "change-stream": "node changeStreamScheduler.js",
     "test-change-stream": "node testChangeStream.js",
     "test-connection": "node testConnection.js"

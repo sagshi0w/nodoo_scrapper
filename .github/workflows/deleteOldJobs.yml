@@ -1,0 +1,151 @@
+name: Old Job Deletion System
+
+on:
+  schedule:
+    - cron: "30 2 * * *"  # 8:00 AM IST (02:30 UTC)
+  workflow_dispatch: # Manual trigger option
+
+jobs:
+  run-old-job-deletion:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📦 Checkout Repo
+        uses: actions/checkout@v4
+
+      - name: ⚙️ Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+
+      - name: 📦 Install Project Dependencies
+        run: npm install
+
+      - name: 🏃 Run Old Job Deletion Process
+        id: old_job_deletion
+        run: npm run delete-old-jobs 2>&1 | tee delete_old_jobs_output.txt
+        env:
+          MONGO_URI: ${{ secrets.MONGO_URI }}
+          MONGO_DB_NAME: ${{ secrets.MONGO_DB_NAME }}
+          MONGO_DB_COLLECTION_NAME: ${{ secrets.MONGO_DB_COLLECTION_NAME }}
+          EMAIL_USER: ${{ secrets.MAIL_USERNAME }}
+          EMAIL_PASS: ${{ secrets.MAIL_PASSWORD }}
+          EMAIL_RECIPIENTS: ${{ secrets.MAIL_RECIPIENT }}
+
+      - name: 📊 Create Summary Table
+        if: success()
+        run: |
+          echo "## 📊 Old Job Deletion Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+          
+          # Extract values from output
+          JOBS_DELETED=$(grep -oP 'Jobs Deleted: \K\d+' delete_old_jobs_output.txt || echo "0")
+          CUTOFF_DATE=$(grep -oP 'Cutoff Date: \K[^\n]+' delete_old_jobs_output.txt || echo "N/A")
+          PROCESSING_TIME=$(grep -oP 'Processing Time: \K\d+' delete_old_jobs_output.txt || echo "N/A")
+          
+          echo "| Jobs Deleted | $JOBS_DELETED |" >> $GITHUB_STEP_SUMMARY
+          echo "| Cutoff Date | $CUTOFF_DATE |" >> $GITHUB_STEP_SUMMARY
+          echo "| Processing Time (seconds) | $PROCESSING_TIME |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Old job deletion completed successfully!" >> $GITHUB_STEP_SUMMARY
+          
+          # Save values to file for email step
+          echo "JOBS_DELETED=$JOBS_DELETED" >> summary.env
+          echo "CUTOFF_DATE=$CUTOFF_DATE" >> summary.env
+          echo "PROCESSING_TIME=$PROCESSING_TIME" >> summary.env
+
+      - name: 📧 Load Summary Values
+        if: success()
+        run: |
+          if [ -f summary.env ]; then
+            # Read summary.env line by line and only process valid variable assignments
+            while IFS= read -r line || [ -n "$line" ]; do
+              # Skip empty lines and lines that don't look like variable assignments
+              if [ -z "$line" ] || ! echo "$line" | grep -qE '^[A-Z_]+='; then
+                continue
+              fi
+              
+              # Skip lines with HTML tags (these would cause syntax errors)
+              if echo "$line" | grep -qE '<[^>]+>'; then
+                continue
+              fi
+              
+              # Extract variable name and value
+              VAR_NAME=$(echo "$line" | cut -d'=' -f1)
+              VAR_VALUE=$(echo "$line" | cut -d'=' -f2-)
+              
+              # Only set known variables
+              case "$VAR_NAME" in
+                JOBS_DELETED|CUTOFF_DATE|PROCESSING_TIME)
+                  echo "${VAR_NAME}=${VAR_VALUE}" >> $GITHUB_ENV
+                  ;;
+              esac
+            done < summary.env
+          fi
+
+      - name: ✅ Send Success Email
+        if: success()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          subject: "✅ Old Job Deletion Success: $(date)"
+          to: ${{ secrets.MAIL_RECIPIENT || 'nodooin86@gmail.com' }}
+          from: "GitHub Action <${{ secrets.MAIL_USERNAME }}>"
+          body: |
+            ✅ The old job deletion ran successfully at 8:00 AM IST.
+            📅 Timestamp: ${{ github.event.head_commit.timestamp }}
+            
+            Summary:
+            - Jobs Deleted: ${{ env.JOBS_DELETED || '0' }}
+            - Cutoff Date: ${{ env.CUTOFF_DATE || 'N/A' }}
+            - Processing Time (seconds): ${{ env.PROCESSING_TIME || 'N/A' }}
+          html_body: |
+            <div style="font-family:Arial, sans-serif;">
+              <h3 style="margin:0 0 8px 0;">Old Job Deletion Summary</h3>
+              <table style="border-collapse:collapse;width:100%;">
+                <thead>
+                  <tr>
+                    <th style="border:1px solid #ddd;padding:8px;text-align:left;">Metric</th>
+                    <th style="border:1px solid #ddd;padding:8px;text-align:left;">Value</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td style="border:1px solid #ddd;padding:8px;">Jobs Deleted</td>
+                    <td style="border:1px solid #ddd;padding:8px;">${{ env.JOBS_DELETED || '0' }}</td>
+                  </tr>
+                  <tr>
+                    <td style="border:1px solid #ddd;padding:8px;">Cutoff Date</td>
+                    <td style="border:1px solid #ddd;padding:8px;">${{ env.CUTOFF_DATE || 'N/A' }}</td>
+                  </tr>
+                  <tr>
+                    <td style="border:1px solid #ddd;padding:8px;">Processing Time</td>
+                    <td style="border:1px solid #ddd;padding:8px;">${{ env.PROCESSING_TIME || 'N/A' }} seconds</td>
+                  </tr>
+                </tbody>
+              </table>
+              <p style="margin-top:16px;">Old jobs (older than 3 months) have been removed from the database.</p>
+            </div>
+
+      - name: ❌ Send Failure Email
+        if: failure()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          subject: "❌ Old Job Deletion Failed: $(date)"
+          to: ${{ secrets.MAIL_RECIPIENT || 'nodooin86@gmail.com' }}
+          from: "GitHub Action <${{ secrets.MAIL_USERNAME }}>"
+          body: |
+            ❌ The old job deletion failed to complete successfully.
+            📅 Timestamp: ${{ github.event.head_commit.timestamp }}
+
