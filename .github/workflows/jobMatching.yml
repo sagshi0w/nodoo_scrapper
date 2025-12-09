@@ -140,7 +140,11 @@ jobs:
           if [ -z "$USER_TABLE_ROWS" ]; then
             USER_TABLE_ROWS="<tr><td colspan=\"4\" style=\"border:1px solid #ddd;padding:8px;text-align:center;\">No users with matches</td></tr>"
           fi
-          echo "USER_TABLE_ROWS=${USER_TABLE_ROWS}" >> summary.env
+          
+          # Write USER_TABLE_ROWS directly to GITHUB_ENV (can't use summary.env due to HTML characters)
+          echo "USER_TABLE_ROWS<<EOF" >> $GITHUB_ENV
+          echo "$USER_TABLE_ROWS" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
           
           # Save values to file for email step
           echo "TOTAL_JOBS=$TOTAL_JOBS" >> summary.env
@@ -156,26 +160,34 @@ jobs:
         if: success()
         run: |
           if [ -f summary.env ]; then
-            set -a
-            source summary.env
-            set +a
-            echo "TOTAL_JOBS=$TOTAL_JOBS" >> $GITHUB_ENV
-            echo "TOTAL_PROFILES=$TOTAL_PROFILES" >> $GITHUB_ENV
-            echo "TOTAL_MATCHES=$TOTAL_MATCHES" >> $GITHUB_ENV
-            echo "USERS_WITH_MATCHES=$USERS_WITH_MATCHES" >> $GITHUB_ENV
-            echo "EXCELLENT_MATCHES=$EXCELLENT_MATCHES" >> $GITHUB_ENV
-            echo "GOOD_MATCHES=$GOOD_MATCHES" >> $GITHUB_ENV
-            echo "AVG_RECOMMENDATIONS=$AVG_RECOMMENDATIONS" >> $GITHUB_ENV
-            echo "PROCESSING_TIME=$PROCESSING_TIME" >> $GITHUB_ENV
+            # Read summary.env line by line and only process valid variable assignments
+            # This avoids issues with HTML content that might be in the file
+            while IFS= read -r line || [ -n "$line" ]; do
+              # Skip empty lines and lines that don't look like variable assignments
+              if [ -z "$line" ] || ! echo "$line" | grep -qE '^[A-Z_]+='; then
+                continue
+              fi
+              
+              # Skip lines with HTML tags (these would cause syntax errors)
+              if echo "$line" | grep -qE '<[^>]+>'; then
+                continue
+              fi
+              
+              # Extract variable name and value
+              VAR_NAME=$(echo "$line" | cut -d'=' -f1)
+              VAR_VALUE=$(echo "$line" | cut -d'=' -f2-)
+              
+              # Only set known variables
+              case "$VAR_NAME" in
+                TOTAL_JOBS|TOTAL_PROFILES|TOTAL_MATCHES|USERS_WITH_MATCHES|EXCELLENT_MATCHES|GOOD_MATCHES|AVG_RECOMMENDATIONS|PROCESSING_TIME)
+                  echo "${VAR_NAME}=${VAR_VALUE}" >> $GITHUB_ENV
+                  ;;
+              esac
+            done < summary.env
           fi
           
-          # Load user table rows
-          if [ -f summary.env ]; then
-            USER_TABLE_ROWS=$(grep "^USER_TABLE_ROWS=" summary.env | cut -d'=' -f2- || echo "")
-            if [ -n "$USER_TABLE_ROWS" ]; then
-              echo "USER_TABLE_ROWS=${USER_TABLE_ROWS}" >> $GITHUB_ENV
-            fi
-          fi
+          # USER_TABLE_ROWS is already written to GITHUB_ENV in the previous step using heredoc
+          # No need to load it again from summary.env
 
       - name: ✅ Send Success Email
         if: success()
