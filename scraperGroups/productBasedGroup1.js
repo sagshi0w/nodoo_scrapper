@@ -1,11 +1,12 @@
 import moment from "moment-timezone";
 import pLimit from "p-limit";
+import axios from "axios";
 import { createRequire } from 'module';
 import fs from 'fs';
-import extractData from "./utils/extractData.js";
-import sendToBackend from "./utils/sendToBackend.js";
-import { buildInsertedJobsEmailHTML } from "./utils/emailTemplates.js";
-import shuffleJobsAvoidStackingSameCompany from "./utils/jobShuffler.js";
+import extractData from "../utils/extractData.js";
+import sendToBackend from "../utils/sendToBackend.js";
+import { buildInsertedJobsEmailHTML } from "../utils/emailTemplates.js";
+import shuffleJobsAvoidStackingSameCompany  from "../utils/jobShuffler.js";
 import dotenv from 'dotenv';
 
 // Load environment variables
@@ -15,15 +16,17 @@ const require = createRequire(import.meta.url);
 const nodemailer = require('nodemailer');
 
 // ✅ Scrapers
-import BirlaSoft from "./scrapers/servicebased/birlaSoft.js"
-import TechMahindra from "./scrapers/servicebased/techMahindra.js";
-import Wipro from "./scrapers/servicebased/wipro.js";
-import LTIMindtree from "./scrapers/servicebased/ltiMindTree.js";
-import RamcoSystems from "./scrapers/servicebased/RamcoSystems.js"
-import Capgemini from "./scrapers/servicebased/Capgemini.js"
-import Deloitte from "./scrapers/servicebased/Deloitte.js"
+import Acko from "../scrapers/productBased/acko.js";
+import Adobe from "../scrapers/productBased/adobe.js"
+import Amazon from "../scrapers/productBased/amazon.js";
 
-import Oracle from "./scrapers/productBased/oracle.js"
+import Textbook from "../scrapers/productBased/textbook.js"
+import Practo from "../scrapers/productBased/practo.js"
+import Freecharge from "../scrapers/productBased/freecharge.js"
+
+import Tanla from "../scrapers/servicebased/tanla.js"
+import MotivityLabs from "../scrapers/servicebased/motivityLabs.js"
+import Accelya from "../scrapers/servicebased/accelya.js"
 
 const config = {
   concurrency: 5,
@@ -38,6 +41,8 @@ const config = {
     }
   }
 };
+
+
 
 const transporter = nodemailer.createTransport({
   service: config.notification.email.service,
@@ -93,14 +98,16 @@ ${error.stack}`;
 };
 
 const scrapers = [
-  { fn: BirlaSoft, headless: true },
-  { fn: TechMahindra, headless: true },
-  { fn: Wipro, headless: true },
-  { fn: LTIMindtree, headless: true },
-  { fn: RamcoSystems, headless: true },
-  { fn: Capgemini, headless: true },
-  { fn: Deloitte, headless: true },
-  { fn: Oracle, headless: true },
+  { fn: Acko, headless: true },
+  { fn: Adobe, headless: true },
+  { fn: Amazon, headless: true },
+
+  { fn: Textbook, headless: true },
+  { fn: Practo, headless: true },
+  { fn: Freecharge, headless: true },
+  { fn: Tanla, headless: true },
+  { fn: MotivityLabs, headless: true },
+  { fn: Accelya, headless: true },
 ];
 
 const runAllScrapers = async () => {

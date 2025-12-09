@@ -1,12 +1,11 @@
 import moment from "moment-timezone";
 import pLimit from "p-limit";
-import axios from "axios";
 import { createRequire } from 'module';
 import fs from 'fs';
-import extractData from "./utils/extractData.js";
-import sendToBackend from "./utils/sendToBackend.js";
-import { buildInsertedJobsEmailHTML } from "./utils/emailTemplates.js";
-import shuffleJobsAvoidStackingSameCompany  from "./utils/jobShuffler.js";
+import extractData from "../utils/extractData.js";
+import sendToBackend from "../utils/sendToBackend.js";
+import { buildInsertedJobsEmailHTML } from "../utils/emailTemplates.js";
+import shuffleJobsAvoidStackingSameCompany from "../utils/jobShuffler.js";
 import dotenv from 'dotenv';
 
 // Load environment variables
@@ -16,17 +15,15 @@ const require = createRequire(import.meta.url);
 const nodemailer = require('nodemailer');
 
 // ✅ Scrapers
-import Acko from "./scrapers/productBased/acko.js";
-import Adobe from "./scrapers/productBased/adobe.js"
-import Amazon from "./scrapers/productBased/amazon.js";
+import Atlassian from "../scrapers/productBased/atlassian.js";
+import GoldmanSach from "../scrapers/productBased/goldmanSach.js";
+import Google from "../scrapers/productBased/google.js";
 
-import Textbook from "./scrapers/productBased/textbook.js"
-import Practo from "./scrapers/productBased/practo.js"
-import Freecharge from "./scrapers/productBased/freecharge.js"
+import Upstox from "../scrapers/productBased/upstox.js"
+import Locus from "../scrapers/productBased/Locus.js"
 
-import Tanla from "./scrapers/servicebased/tanla.js"
-import MotivityLabs from "./scrapers/servicebased/motivityLabs.js"
-import Accelya from "./scrapers/servicebased/accelya.js"
+import SoftTech from "../scrapers/servicebased/softTech.js"
+import Cybertech from "../scrapers/servicebased/cybertech.js"
 
 const config = {
   concurrency: 5,
@@ -41,8 +38,6 @@ const config = {
     }
   }
 };
-
-
 
 const transporter = nodemailer.createTransport({
   service: config.notification.email.service,
@@ -98,16 +93,14 @@ ${error.stack}`;
 };
 
 const scrapers = [
-  { fn: Acko, headless: true },
-  { fn: Adobe, headless: true },
-  { fn: Amazon, headless: true },
+  { fn: Atlassian, headless: true },
+  { fn: GoldmanSach, headless: true },
+  { fn: Google, headless: true },
 
-  { fn: Textbook, headless: true },
-  { fn: Practo, headless: true },
-  { fn: Freecharge, headless: true },
-  { fn: Tanla, headless: true },
-  { fn: MotivityLabs, headless: true },
-  { fn: Accelya, headless: true },
+  { fn: Upstox, headless: true },
+  { fn: Locus, headless: true },
+  { fn: SoftTech, headless: true },
+  { fn: Cybertech, headless: true },
 ];
 
 const runAllScrapers = async () => {

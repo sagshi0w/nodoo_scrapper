@@ -3,9 +3,9 @@
 import cron from 'node-cron';
 import moment from 'moment-timezone';
 import { createRequire } from 'module';
-import { performActivelyHiringUpdate } from './utils/activelyHiring.js';
-import { closeDatabase } from './utils/database.js';
-import { buildActivelyHiringEmailHTML } from './utils/emailTemplates.js';
+import { performActivelyHiringUpdate } from '../utils/activelyHiring.js';
+import { closeDatabase } from '../utils/database.js';
+import { buildActivelyHiringEmailHTML } from '../utils/emailTemplates.js';
 import dotenv from 'dotenv';
 
 // Load environment variables

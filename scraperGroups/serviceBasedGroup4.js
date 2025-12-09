@@ -2,10 +2,10 @@ import moment from "moment-timezone";
 import pLimit from "p-limit";
 import { createRequire } from 'module';
 import fs from 'fs';
-import extractData from "./utils/extractData.js";
-import sendToBackend from "./utils/sendToBackend.js";
-import { buildInsertedJobsEmailHTML } from "./utils/emailTemplates.js";
-import shuffleJobsAvoidStackingSameCompany from "./utils/jobShuffler.js";
+import extractData from "../utils/extractData.js";
+import sendToBackend from "../utils/sendToBackend.js";
+import { buildInsertedJobsEmailHTML } from "../utils/emailTemplates.js";
+import shuffleJobsAvoidStackingSameCompany from "../utils/jobShuffler.js";
 import dotenv from 'dotenv';
 
 // Load environment variables
@@ -15,15 +15,17 @@ const require = createRequire(import.meta.url);
 const nodemailer = require('nodemailer');
 
 // ✅ Scrapers
-import Atlassian from "./scrapers/productBased/atlassian.js";
-import GoldmanSach from "./scrapers/productBased/goldmanSach.js";
-import Google from "./scrapers/productBased/google.js";
-
-import Upstox from "./scrapers/productBased/upstox.js"
-import Locus from "./scrapers/productBased/Locus.js"
-
-import SoftTech from "./scrapers/servicebased/softTech.js"
-import Cybertech from "./scrapers/servicebased/cybertech.js"
+import UstGlobal from "../scrapers/servicebased/ustGlobal.js"
+import IBSSoftware from "../scrapers/servicebased/ibsSoftware.js"
+import NousInfosystems from "../scrapers/servicebased/nousInfosystems.js"
+import NTTData from "../scrapers/servicebased/nttData.js"
+import CGI from "../scrapers/servicebased/cgi.js"
+import MindFireSolutions from "../scrapers/servicebased/mindFireSolutions.js"
+import Maveric from "../scrapers/servicebased/maveric.js"
+import Synechron from "../scrapers/servicebased/synechron.js"
+import Brillio from "../scrapers/servicebased/brillio.js"
+import DRCSystems from "../scrapers/servicebased/DRCSystems.js"
+import RSSoftware from "../scrapers/servicebased/rsSoftware.js"
 
 const config = {
   concurrency: 5,
@@ -93,14 +95,17 @@ ${error.stack}`;
 };
 
 const scrapers = [
-  { fn: Atlassian, headless: true },
-  { fn: GoldmanSach, headless: true },
-  { fn: Google, headless: true },
-
-  { fn: Upstox, headless: true },
-  { fn: Locus, headless: true },
-  { fn: SoftTech, headless: true },
-  { fn: Cybertech, headless: true },
+  { fn: UstGlobal, headless: true },
+  { fn: IBSSoftware, headless: true },
+  { fn: NousInfosystems, headless: true },
+  { fn: NTTData, headless: true },
+  { fn: CGI, headless: true },
+  { fn: MindFireSolutions, headless: true },
+  { fn: Maveric, headless: true },
+  { fn: Synechron, headless: true },
+  { fn: Brillio, headless: true },
+  { fn: DRCSystems, headless: true },
+  { fn: RSSoftware, headless: true },
 ];
 
 const runAllScrapers = async () => {

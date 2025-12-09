@@ -39,7 +39,7 @@ jobs:
         run: npm install
 
       - name: 🏃 Run scheduler
-        run: node scrapperGroup1.js
+        run: node scraperGroups/scrapperGroup1.js
         env:
           EMAIL_USER: ${{ secrets.MAIL_USERNAME }}
           EMAIL_PASS: ${{ secrets.MAIL_PASSWORD }}

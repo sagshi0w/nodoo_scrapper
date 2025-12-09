@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
-import ChangeStreamListener from './utils/changeStreamListener.js';
-import { closeDatabase } from './utils/database.js';
+import ChangeStreamListener from '../utils/changeStreamListener.js';
+import { closeDatabase } from '../utils/database.js';
 import dotenv from 'dotenv';
 
 // Load environment variables
@@ -143,3 +143,4 @@ if (import.meta.url === `file://${process.argv[1]}`) {
 }
 
 export default ChangeStreamScheduler;
+

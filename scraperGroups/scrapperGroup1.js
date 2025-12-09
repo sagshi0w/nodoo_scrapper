@@ -2,10 +2,10 @@ import moment from "moment-timezone";
 import pLimit from "p-limit";
 import { createRequire } from 'module';
 import fs from 'fs';
-import extractData from "./utils/extractData.js";
-import sendToBackend from "./utils/sendToBackend.js";
-import { buildInsertedJobsEmailHTML } from "./utils/emailTemplates.js";
-import shuffleJobsAvoidStackingSameCompany from "./utils/jobShuffler.js";
+import extractData from "../utils/extractData.js";
+import sendToBackend from "../utils/sendToBackend.js";
+import { buildInsertedJobsEmailHTML } from "../utils/emailTemplates.js";
+import shuffleJobsAvoidStackingSameCompany from "../utils/jobShuffler.js";
 import dotenv from 'dotenv';
 
 // Load environment variables
@@ -15,32 +15,32 @@ const require = createRequire(import.meta.url);
 const nodemailer = require('nodemailer');
 
 // ✅ Scrapers
-import RSSoftware from "./scrapers/servicebased/rsSoftware.js"
-import SarvamAI from "./scrapers/servicebased/sarvam-ai.js"
-import MetaForms from "./scrapers/servicebased/metaforms.js"
-import Atomicwork from "./scrapers/servicebased/atomicwork.js"
-import TrueFoundary from "./scrapers/servicebased/trueFoundary.js"
-import Repello from "./scrapers/servicebased/repelloAI.js"
-import Neysa from "./scrapers/servicebased/neysa.js"
-import Realfast from "./scrapers/servicebased/realfast.js"
-import Spyne from "./scrapers/servicebased/spyne.js"
-import Procol from "./scrapers/servicebased/procol.js"
-import Uniphore from "./scrapers/servicebased/uniphore.js"
-import GoKwik from "./scrapers/servicebased/GoKwik.js"
-import Coreworks from "./scrapers/servicebased/Coreworks.js"
-import Jhana from "./scrapers/servicebased/jhana.js"
-import Spendflo from "./scrapers/servicebased/Spendflo.js"
-import RevenueHero from "./scrapers/servicebased/RevenueHero.js"
-import Fello from "./scrapers/servicebased/fello.js"
-import Doqfy from "./scrapers/servicebased/Doqfy.js"
-import Bullet from "./scrapers/servicebased/Bullet.js"
-import SKF from "./scrapers/servicebased/skf.js"
-import Cummins from "./scrapers/servicebased/cummins.js"
-import Fuled from "./scrapers/remote/fuled.js"
-import Bosch from "./scrapers/servicebased/bosch.js"
-import onePassword from "./scrapers/remote/onePassword.js"
-import Affirm from "./scrapers/remote/Affirm.js"
-import GEA from "./scrapers/servicebased/GEA.js"
+import RSSoftware from "../scrapers/servicebased/rsSoftware.js"
+import SarvamAI from "../scrapers/servicebased/sarvam-ai.js"
+import MetaForms from "../scrapers/servicebased/metaforms.js"
+import Atomicwork from "../scrapers/servicebased/atomicwork.js"
+import TrueFoundary from "../scrapers/servicebased/trueFoundary.js"
+import Repello from "../scrapers/servicebased/repelloAI.js"
+import Neysa from "../scrapers/servicebased/neysa.js"
+import Realfast from "../scrapers/servicebased/realfast.js"
+import Spyne from "../scrapers/servicebased/spyne.js"
+import Procol from "../scrapers/servicebased/procol.js"
+import Uniphore from "../scrapers/servicebased/uniphore.js"
+import GoKwik from "../scrapers/servicebased/GoKwik.js"
+import Coreworks from "../scrapers/servicebased/Coreworks.js"
+import Jhana from "../scrapers/servicebased/jhana.js"
+import Spendflo from "../scrapers/servicebased/Spendflo.js"
+import RevenueHero from "../scrapers/servicebased/RevenueHero.js"
+import Fello from "../scrapers/servicebased/fello.js"
+import Doqfy from "../scrapers/servicebased/Doqfy.js"
+import Bullet from "../scrapers/servicebased/Bullet.js"
+import SKF from "../scrapers/servicebased/skf.js"
+import Cummins from "../scrapers/servicebased/cummins.js"
+import Fuled from "../scrapers/remote/fuled.js"
+import Bosch from "../scrapers/servicebased/bosch.js"
+import onePassword from "../scrapers/remote/onePassword.js"
+import Affirm from "../scrapers/remote/Affirm.js"
+import GEA from "../scrapers/servicebased/GEA.js"
 
 const config = {
     concurrency: 5,

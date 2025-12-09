@@ -2,10 +2,10 @@ import moment from "moment-timezone";
 import pLimit from "p-limit";
 import { createRequire } from 'module';
 import fs from 'fs';
-import extractData from "./utils/extractData.js";
-import sendToBackend from "./utils/sendToBackend.js";
-import { buildInsertedJobsEmailHTML } from "./utils/emailTemplates.js";
-import shuffleJobsAvoidStackingSameCompany from "./utils/jobShuffler.js";
+import extractData from "../utils/extractData.js";
+import sendToBackend from "../utils/sendToBackend.js";
+import { buildInsertedJobsEmailHTML } from "../utils/emailTemplates.js";
+import shuffleJobsAvoidStackingSameCompany from "../utils/jobShuffler.js";
 import dotenv from 'dotenv';
 
 // Load environment variables
@@ -15,9 +15,18 @@ const require = createRequire(import.meta.url);
 const nodemailer = require('nodemailer');
 
 // ✅ Scrapers
-import Razorpay from "./scrapers/productBased/razorpay.js";
-import Siemens from "./scrapers/productBased/siemens.js";
-import Uber from "./scrapers/productBased/uber.js";
+import MindgateSolutions from "../scrapers/servicebased/mindgateSolutions.js";
+import eClerx from "../scrapers/servicebased/eclerx.js"
+import Sasken from "../scrapers/servicebased/sasken.js"
+import InfiniteComputerSolutions from "../scrapers/servicebased/infiniteComputerSolutions.js"
+import UstGlobal from "../scrapers/servicebased/ustGlobal.js"
+import Quinnox from "../scrapers/servicebased/quinnox.js"
+import Infogain from "../scrapers/servicebased/infogain.js"
+import ThreeiInfotech from "../scrapers/servicebased/threeiInfotech.js"
+import Incedo from "../scrapers/servicebased/incedo.js"
+import NetSolutions from "../scrapers/servicebased/netSolutions.js"
+import WNS from "../scrapers/servicebased/WNS.js"
+import ThoughtFocus from "../scrapers/servicebased/ThoughtFocus.js"
 
 const config = {
   concurrency: 5,
@@ -87,9 +96,18 @@ ${error.stack}`;
 };
 
 const scrapers = [
-  { fn: Siemens, headless: true },
-  { fn: Razorpay, headless: true },
-  { fn: Uber, headless: true },
+  { fn: MindgateSolutions, headless: true },
+  { fn: eClerx, headless: true },
+  { fn: Sasken, headless: true },
+  { fn: InfiniteComputerSolutions, headless: true },
+  { fn: UstGlobal, headless: true },
+  { fn: Quinnox, headless: true },
+  { fn: Infogain, headless: true },
+  { fn: ThreeiInfotech, headless: true },
+  { fn: Incedo, headless: true },
+  { fn: NetSolutions, headless: true },
+  { fn: WNS, headless: true },
+  { fn: ThoughtFocus, headless: true },
 ];
 
 const runAllScrapers = async () => {

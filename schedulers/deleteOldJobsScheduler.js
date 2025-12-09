@@ -3,9 +3,8 @@
 import cron from 'node-cron';
 import moment from 'moment-timezone';
 import { createRequire } from 'module';
-import { performJobMatching } from './utils/jobMatching.js';
-import { closeDatabase } from './utils/database.js';
-import { buildJobMatchingUsersEmailHTML } from './utils/emailTemplates.js';
+import { performOldJobDeletion } from '../utils/deleteOldJobs.js';
+import { closeDatabase } from '../utils/database.js';
 import dotenv from 'dotenv';
 
 // Load environment variables
@@ -38,20 +37,15 @@ const transporter = nodemailer.createTransport({
 
 // Notification functions
 const notify = {
-  success: async (stats, htmlContent) => {
-    const summaryText = `✅ Job Matching completed at ${stats.endTime}
+  success: async (stats) => {
+    const summaryText = `✅ Old Job Deletion completed at ${stats.endTime}
 
 📊 Summary:
-- Total Jobs Processed: ${stats.totalJobs}
-- Total Profiles Processed: ${stats.totalProfiles}
-- Total Matches Found: ${stats.totalMatches}
-- Users with Matches: ${stats.usersWithMatches}
-- Excellent Matches (≥85%): ${stats.excellentMatches}
-- Good Matches (≥70%): ${stats.goodMatches}
-- Average Recommendations per User: ${stats.averageRecommendationsPerUser}
+- Total Jobs Deleted: ${stats.totalJobsDeleted}
+- Cutoff Date: ${stats.cutoffDateFormatted}
 - Processing Time: ${stats.duration} seconds
 
-💾 Results saved to jobMatching collection in database (matches ≥40%)`;
+💾 Old jobs (older than 3 months) have been removed from the database`;
 
     // Verify email configuration
     if (!config.notification.email.user || !config.notification.email.pass) {
@@ -66,11 +60,30 @@ const notify = {
 
     try {
       const mailOptions = {
-        from: `"Job Matching" <${config.notification.email.user}>`,
+        from: `"Old Job Deletion" <${config.notification.email.user}>`,
         to: config.notification.email.recipients,
-        subject: `✅ Job Matching Completed - ${stats.totalMatches} matches found`,
+        subject: `✅ Old Job Deletion Completed - ${stats.totalJobsDeleted} jobs deleted`,
         text: summaryText,
-        html: htmlContent || undefined
+        html: `
+          <div style="font-family:Arial, sans-serif;">
+            <h3 style="margin:0 0 8px 0;">Old Job Deletion Summary</h3>
+            <table style="border-collapse:collapse;width:100%;">
+              <tr>
+                <td style="border:1px solid #ddd;padding:8px;font-weight:bold;">Total Jobs Deleted</td>
+                <td style="border:1px solid #ddd;padding:8px;">${stats.totalJobsDeleted}</td>
+              </tr>
+              <tr>
+                <td style="border:1px solid #ddd;padding:8px;font-weight:bold;">Cutoff Date</td>
+                <td style="border:1px solid #ddd;padding:8px;">${stats.cutoffDateFormatted}</td>
+              </tr>
+              <tr>
+                <td style="border:1px solid #ddd;padding:8px;font-weight:bold;">Processing Time</td>
+                <td style="border:1px solid #ddd;padding:8px;">${stats.duration} seconds</td>
+              </tr>
+            </table>
+            <p style="margin-top:16px;">Old jobs (older than 3 months) have been removed from the database.</p>
+          </div>
+        `
       };
 
       console.log(`📧 Attempting to send email to: ${mailOptions.to.join(', ')}`);
@@ -83,16 +96,16 @@ const notify = {
   },
 
   error: async (error, stats = {}) => {
-    const errorText = `❌ Job Matching failed at ${moment().tz("Asia/Kolkata").format("YYYY-MM-DD HH:mm:ss")}
+    const errorText = `❌ Old Job Deletion failed at ${moment().tz("Asia/Kolkata").format("YYYY-MM-DD HH:mm:ss")}
 
 Error: ${error.message}
 ${error.stack || ''}`;
 
     try {
       await transporter.sendMail({
-        from: `"Job Matching" <${config.notification.email.user}>`,
+        from: `"Old Job Deletion" <${config.notification.email.user}>`,
         to: config.notification.email.recipients,
-        subject: `❌ Job Matching Failed - ${error.message}`,
+        subject: `❌ Old Job Deletion Failed - ${error.message}`,
         text: errorText
       });
       console.log("📧 Error notification email sent.");
@@ -102,15 +115,15 @@ ${error.stack || ''}`;
   }
 };
 
-// Main job matching function
-const runJobMatching = async () => {
+// Main old job deletion function
+const runOldJobDeletion = async () => {
   const startTime = Date.now();
   const startTimeFormatted = moment().tz("Asia/Kolkata").format("YYYY-MM-DD HH:mm:ss");
   
-  console.log(`🚀 [${startTimeFormatted}] Starting scheduled job matching...`);
+  console.log(`🚀 [${startTimeFormatted}] Starting scheduled old job deletion...`);
   
   try {
-    const results = await performJobMatching();
+    const results = await performOldJobDeletion();
     
     const endTime = Date.now();
     const duration = Math.round((endTime - startTime) / 1000);
@@ -121,26 +134,21 @@ const runJobMatching = async () => {
     results.endTime = endTimeFormatted;
     results.duration = duration;
     
-    console.log(`✅ [${endTimeFormatted}] Job matching completed successfully!`);
-    
-    // Generate email HTML using template
-    const emailHTML = buildJobMatchingUsersEmailHTML(results.usersWithMatchesDetails || []);
+    console.log(`✅ [${endTimeFormatted}] Old job deletion completed successfully!`);
     
     // Debug: Log email details
     console.log(`📧 Email config check:`);
     console.log(`   - User: ${config.notification.email.user ? 'Set' : 'NOT SET'}`);
     console.log(`   - Recipients: ${config.notification.email.recipients ? config.notification.email.recipients.length + ' recipients' : 'NOT SET'}`);
-    console.log(`   - HTML Content Length: ${emailHTML ? emailHTML.length : 0} characters`);
-    console.log(`   - Users with matches: ${results.usersWithMatchesDetails ? results.usersWithMatchesDetails.length : 0}`);
     
     // Send success notification
-    await notify.success(results, emailHTML);
+    await notify.success(results);
     
     return results;
     
   } catch (error) {
     const endTimeFormatted = moment().tz("Asia/Kolkata").format("YYYY-MM-DD HH:mm:ss");
-    console.error(`❌ [${endTimeFormatted}] Job matching failed:`, error);
+    console.error(`❌ [${endTimeFormatted}] Old job deletion failed:`, error);
     
     // Send error notification
     await notify.error(error, { startTime: startTimeFormatted, endTime: endTimeFormatted });
@@ -149,29 +157,29 @@ const runJobMatching = async () => {
   }
 };
 
-// Schedule job matching to run daily at 6:00 AM IST
-const scheduleJobMatching = () => {
-  console.log('⏰ Job Matching Scheduler Started');
-  console.log('📅 Scheduled to run daily at 6:00 AM IST (00:30 UTC)');
-  console.log('🔄 Next run:', moment().tz("Asia/Kolkata").add(1, 'day').startOf('day').add(6, 'hours').format("YYYY-MM-DD HH:mm:ss"));
+// Schedule old job deletion to run daily at 8:00 AM IST
+const scheduleOldJobDeletion = () => {
+  console.log('⏰ Old Job Deletion Scheduler Started');
+  console.log('📅 Scheduled to run daily at 8:00 AM IST (02:30 UTC)');
+  console.log('🔄 Next run:', moment().tz("Asia/Kolkata").add(1, 'day').startOf('day').add(8, 'hours').format("YYYY-MM-DD HH:mm:ss"));
   
-  // Run at 6:00 AM IST daily (00:30 UTC)
-  cron.schedule('30 0 * * *', async () => {
+  // Run at 8:00 AM IST daily (02:30 UTC)
+  cron.schedule('30 2 * * *', async () => {
     console.log('\n' + '='.repeat(60));
-    console.log('🕕 Daily Job Matching Started');
+    console.log('🕕 Daily Old Job Deletion Started');
     console.log('='.repeat(60));
     
     try {
-      await runJobMatching();
+      await runOldJobDeletion();
     } catch (error) {
-      console.error('❌ Scheduled job matching failed:', error);
+      console.error('❌ Scheduled old job deletion failed:', error);
     } finally {
       // Close database connection after each run
       await closeDatabase();
     }
     
     console.log('='.repeat(60));
-    console.log('🕕 Daily Job Matching Completed');
+    console.log('🕕 Daily Old Job Deletion Completed');
     console.log('='.repeat(60) + '\n');
   }, {
     timezone: "Asia/Kolkata"
@@ -207,8 +215,8 @@ process.on('unhandledRejection', async (reason, promise) => {
 // Start the scheduler
 if (process.argv.includes('--run-now')) {
   // Run immediately for testing
-  console.log('🧪 Running job matching immediately (test mode)...');
-  runJobMatching()
+  console.log('🧪 Running old job deletion immediately (test mode)...');
+  runOldJobDeletion()
     .then(() => {
       console.log('✅ Test run completed');
       process.exit(0);
@@ -219,7 +227,7 @@ if (process.argv.includes('--run-now')) {
     });
 } else {
   // Start the cron scheduler
-  scheduleJobMatching();
+  scheduleOldJobDeletion();
   
   // Keep the process running
   console.log('🔄 Scheduler is running. Press Ctrl+C to stop.');
@@ -229,3 +237,4 @@ if (process.argv.includes('--run-now')) {
     // Just keep the process running
   }, 1000 * 60 * 60); // Check every hour
 }
+

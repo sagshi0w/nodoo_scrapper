@@ -39,7 +39,7 @@ jobs:
         run: npm install
 
       - name: 🏃 Run scheduler
-        run: node productBasedGroup4.js
+        run: node scraperGroups/productBasedGroup4.js
         env:
           EMAIL_USER: ${{ secrets.MAIL_USERNAME }}
           EMAIL_PASS: ${{ secrets.MAIL_PASSWORD }}

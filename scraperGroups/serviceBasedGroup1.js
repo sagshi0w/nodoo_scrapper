@@ -2,10 +2,10 @@ import moment from "moment-timezone";
 import pLimit from "p-limit";
 import { createRequire } from 'module';
 import fs from 'fs';
-import extractData from "./utils/extractData.js";
-import sendToBackend from "./utils/sendToBackend.js";
-import { buildInsertedJobsEmailHTML } from "./utils/emailTemplates.js";
-import shuffleJobsAvoidStackingSameCompany from "./utils/jobShuffler.js";
+import extractData from "../utils/extractData.js";
+import sendToBackend from "../utils/sendToBackend.js";
+import { buildInsertedJobsEmailHTML } from "../utils/emailTemplates.js";
+import shuffleJobsAvoidStackingSameCompany from "../utils/jobShuffler.js";
 import dotenv from 'dotenv';
 
 // Load environment variables
@@ -15,17 +15,15 @@ const require = createRequire(import.meta.url);
 const nodemailer = require('nodemailer');
 
 // ✅ Scrapers
-import UstGlobal from "./scrapers/servicebased/ustGlobal.js"
-import IBSSoftware from "./scrapers/servicebased/ibsSoftware.js"
-import NousInfosystems from "./scrapers/servicebased/nousInfosystems.js"
-import NTTData from "./scrapers/servicebased/nttData.js"
-import CGI from "./scrapers/servicebased/cgi.js"
-import MindFireSolutions from "./scrapers/servicebased/mindFireSolutions.js"
-import Maveric from "./scrapers/servicebased/maveric.js"
-import Synechron from "./scrapers/servicebased/synechron.js"
-import Brillio from "./scrapers/servicebased/brillio.js"
-import DRCSystems from "./scrapers/servicebased/DRCSystems.js"
-import RSSoftware from "./scrapers/servicebased/rsSoftware.js"
+import BirlaSoft from "../scrapers/servicebased/birlaSoft.js"
+import TechMahindra from "../scrapers/servicebased/techMahindra.js";
+import Wipro from "../scrapers/servicebased/wipro.js";
+import LTIMindtree from "../scrapers/servicebased/ltiMindTree.js";
+import RamcoSystems from "../scrapers/servicebased/RamcoSystems.js"
+import Capgemini from "../scrapers/servicebased/Capgemini.js"
+import Deloitte from "../scrapers/servicebased/Deloitte.js"
+
+import Oracle from "../scrapers/productBased/oracle.js"
 
 const config = {
   concurrency: 5,
@@ -95,17 +93,14 @@ ${error.stack}`;
 };
 
 const scrapers = [
-  { fn: UstGlobal, headless: true },
-  { fn: IBSSoftware, headless: true },
-  { fn: NousInfosystems, headless: true },
-  { fn: NTTData, headless: true },
-  { fn: CGI, headless: true },
-  { fn: MindFireSolutions, headless: true },
-  { fn: Maveric, headless: true },
-  { fn: Synechron, headless: true },
-  { fn: Brillio, headless: true },
-  { fn: DRCSystems, headless: true },
-  { fn: RSSoftware, headless: true },
+  { fn: BirlaSoft, headless: true },
+  { fn: TechMahindra, headless: true },
+  { fn: Wipro, headless: true },
+  { fn: LTIMindtree, headless: true },
+  { fn: RamcoSystems, headless: true },
+  { fn: Capgemini, headless: true },
+  { fn: Deloitte, headless: true },
+  { fn: Oracle, headless: true },
 ];
 
 const runAllScrapers = async () => {

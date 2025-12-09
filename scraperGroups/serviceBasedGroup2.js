@@ -2,10 +2,10 @@ import moment from "moment-timezone";
 import pLimit from "p-limit";
 import { createRequire } from 'module';
 import fs from 'fs';
-import extractData from "./utils/extractData.js";
-import sendToBackend from "./utils/sendToBackend.js";
-import { buildInsertedJobsEmailHTML } from "./utils/emailTemplates.js";
-import shuffleJobsAvoidStackingSameCompany from "./utils/jobShuffler.js";
+import extractData from "../utils/extractData.js";
+import sendToBackend from "../utils/sendToBackend.js";
+import { buildInsertedJobsEmailHTML } from "../utils/emailTemplates.js";
+import shuffleJobsAvoidStackingSameCompany from "../utils/jobShuffler.js";
 import dotenv from 'dotenv';
 
 // Load environment variables
@@ -15,12 +15,14 @@ const require = createRequire(import.meta.url);
 const nodemailer = require('nodemailer');
 
 // ✅ Scrapers
-import Groww from "./scrapers/productBased/groww.js";
-import Paypal from "./scrapers/productBased/paypal.js";
-import Phonepe from "./scrapers/productBased/phonepe.js";
-
-import  VirtualGalaxy from "./scrapers/servicebased/virtualGalaxy.js"
-import YashTechnologies from "./scrapers/servicebased/yashTechnologies.js"
+import Hexaware from "../scrapers/servicebased/hexaware.js";
+import Mphasis from "../scrapers/servicebased/mphasis.js";
+import Zensar from "../scrapers/servicebased/zensar.js";
+import MindgateSolutions from "../scrapers/servicebased/mindgateSolutions.js";
+import Cybage from "../scrapers/servicebased/cybage.js"
+import ExperionTechnologies from "../scrapers/servicebased/experionTechnologies.js"
+import Tezo from "../scrapers/servicebased/tezo.js"
+import SaviantConsulting from "../scrapers/servicebased/SaviantConsulting.js"
 
 const config = {
   concurrency: 5,
@@ -90,11 +92,14 @@ ${error.stack}`;
 };
 
 const scrapers = [
-  { fn: Groww, headless: true },
-  { fn: Phonepe, headless: true },
-  { fn: Paypal, headless: true },
-  { fn: VirtualGalaxy, headless: true },
-  { fn: YashTechnologies, headless: true },
+  { fn: Hexaware, headless: true },
+  { fn: Mphasis, headless: true },
+  { fn: Zensar, headless: true },
+  { fn: MindgateSolutions, headless: true },
+  { fn: Cybage, headless: true },
+  { fn: ExperionTechnologies, headless: true },
+  { fn: Tezo, headless: true },
+  { fn: SaviantConsulting, headless: true },
 ];
 
 const runAllScrapers = async () => {
