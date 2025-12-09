@@ -60,7 +60,87 @@ jobs:
           echo "| Avg Recommendations per User | $AVG_RECOMMENDATIONS |" >> $GITHUB_STEP_SUMMARY
           echo "| Processing Time (seconds) | $PROCESSING_TIME |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Extract users with matches details
+          echo "### 👥 Users with Job Matches" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| SR No | User Name | Skills | Jobs Found |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|-----------|--------|------------|" >> $GITHUB_STEP_SUMMARY
+          
+          # Extract user details from output (format: "User X: name | Skills: skills | Jobs: count")
+          SR_NO=1
+          IN_USER_SECTION=false
+          while IFS= read -r line; do
+            # Check if we're in the user details section
+            if echo "$line" | grep -q "=== Users with Matches Details ==="; then
+              IN_USER_SECTION=true
+              continue
+            fi
+            
+            # Stop if we hit the next section
+            if [ "$IN_USER_SECTION" = true ] && echo "$line" | grep -qE "^==="; then
+              IN_USER_SECTION=false
+            fi
+            
+            # Parse user line
+            if [ "$IN_USER_SECTION" = true ] && echo "$line" | grep -qE "User [0-9]+:"; then
+              USER_NAME=$(echo "$line" | sed -E 's/.*User [0-9]+: ([^|]+) \|.*/\1/' | xargs)
+              USER_SKILLS=$(echo "$line" | sed -E 's/.*Skills: ([^|]+) \|.*/\1/' | xargs)
+              JOB_COUNT=$(echo "$line" | sed -E 's/.*Jobs: ([0-9]+).*/\1/' | xargs)
+              
+              if [ -n "$USER_NAME" ] && [ "$USER_NAME" != "$line" ]; then
+                # Truncate skills if too long
+                if [ ${#USER_SKILLS} -gt 50 ]; then
+                  USER_SKILLS="${USER_SKILLS:0:47}..."
+                fi
+                echo "| $SR_NO | $USER_NAME | $USER_SKILLS | $JOB_COUNT |" >> $GITHUB_STEP_SUMMARY
+                SR_NO=$((SR_NO + 1))
+              fi
+            fi
+          done < job_matching_output.txt
+          
+          if [ $SR_NO -eq 1 ]; then
+            echo "| - | No users with matches | - | - |" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
           echo "✅ Job matching completed successfully!" >> $GITHUB_STEP_SUMMARY
+          
+          # Extract user details for email table
+          SR_NO=1
+          USER_TABLE_ROWS=""
+          IN_USER_SECTION=false
+          while IFS= read -r line; do
+            # Check if we're in the user details section
+            if echo "$line" | grep -q "=== Users with Matches Details ==="; then
+              IN_USER_SECTION=true
+              continue
+            fi
+            
+            # Stop if we hit the next section
+            if [ "$IN_USER_SECTION" = true ] && echo "$line" | grep -qE "^==="; then
+              IN_USER_SECTION=false
+            fi
+            
+            # Parse user line
+            if [ "$IN_USER_SECTION" = true ] && echo "$line" | grep -qE "User [0-9]+:"; then
+              USER_NAME=$(echo "$line" | sed -E 's/.*User [0-9]+: ([^|]+) \|.*/\1/' | xargs)
+              USER_SKILLS=$(echo "$line" | sed -E 's/.*Skills: ([^|]+) \|.*/\1/' | xargs)
+              JOB_COUNT=$(echo "$line" | sed -E 's/.*Jobs: ([0-9]+).*/\1/' | xargs)
+              
+              if [ -n "$USER_NAME" ] && [ "$USER_NAME" != "$line" ]; then
+                # Escape HTML special characters
+                USER_NAME_ESC=$(echo "$USER_NAME" | sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g; s/"/\&quot;/g')
+                USER_SKILLS_ESC=$(echo "$USER_SKILLS" | sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g; s/"/\&quot;/g')
+                USER_TABLE_ROWS="${USER_TABLE_ROWS}<tr><td style=\"border:1px solid #ddd;padding:8px;\">${SR_NO}</td><td style=\"border:1px solid #ddd;padding:8px;\">${USER_NAME_ESC}</td><td style=\"border:1px solid #ddd;padding:8px;\">${USER_SKILLS_ESC}</td><td style=\"border:1px solid #ddd;padding:8px;\">${JOB_COUNT}</td></tr>"
+                SR_NO=$((SR_NO + 1))
+              fi
+            fi
+          done < job_matching_output.txt
+          
+          if [ -z "$USER_TABLE_ROWS" ]; then
+            USER_TABLE_ROWS="<tr><td colspan=\"4\" style=\"border:1px solid #ddd;padding:8px;text-align:center;\">No users with matches</td></tr>"
+          fi
+          echo "USER_TABLE_ROWS=${USER_TABLE_ROWS}" >> summary.env
           
           # Save values to file for email step
           echo "TOTAL_JOBS=$TOTAL_JOBS" >> summary.env
@@ -87,6 +167,14 @@ jobs:
             echo "GOOD_MATCHES=$GOOD_MATCHES" >> $GITHUB_ENV
             echo "AVG_RECOMMENDATIONS=$AVG_RECOMMENDATIONS" >> $GITHUB_ENV
             echo "PROCESSING_TIME=$PROCESSING_TIME" >> $GITHUB_ENV
+          fi
+          
+          # Load user table rows
+          if [ -f summary.env ]; then
+            USER_TABLE_ROWS=$(grep "^USER_TABLE_ROWS=" summary.env | cut -d'=' -f2- || echo "")
+            if [ -n "$USER_TABLE_ROWS" ]; then
+              echo "USER_TABLE_ROWS=${USER_TABLE_ROWS}" >> $GITHUB_ENV
+            fi
           fi
 
       - name: ✅ Send Success Email
@@ -117,6 +205,21 @@ jobs:
             | Good Matches (≥70%) | ${{ env.GOOD_MATCHES || 'N/A' }} |
             | Avg Recommendations per User | ${{ env.AVG_RECOMMENDATIONS || 'N/A' }} |
             | Processing Time (seconds) | ${{ env.PROCESSING_TIME || 'N/A' }} |
+            
+            <h3>👥 Users with Job Matches</h3>
+            <table style="border-collapse:collapse;width:100%;">
+              <thead>
+                <tr>
+                  <th style="border:1px solid #ddd;padding:8px;text-align:left;background-color:#f2f2f2;">SR No</th>
+                  <th style="border:1px solid #ddd;padding:8px;text-align:left;background-color:#f2f2f2;">User Name</th>
+                  <th style="border:1px solid #ddd;padding:8px;text-align:left;background-color:#f2f2f2;">Skills</th>
+                  <th style="border:1px solid #ddd;padding:8px;text-align:left;background-color:#f2f2f2;">Jobs Found</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${{ env.USER_TABLE_ROWS || '<tr><td colspan="4" style="border:1px solid #ddd;padding:8px;text-align:center;">No users with matches</td></tr>' }}
+              </tbody>
+            </table>
 
       - name: ❌ Send Failure Email
         if: failure()

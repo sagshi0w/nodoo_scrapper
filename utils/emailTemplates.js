@@ -79,4 +79,40 @@ export function buildActivelyHiringEmailHTML(activelyHiringCompanies = []) {
   `;
 }
 
+/**
+ * Build HTML table for job matching users with their details
+ * @param {Array} usersWithMatches - Array of user objects with userId, name, skills, jobCount
+ * @returns {string} HTML string with table
+ */
+export function buildJobMatchingUsersEmailHTML(usersWithMatches = []) {
+  const userRows = usersWithMatches.length > 0
+    ? usersWithMatches.map((user, index) => `
+      <tr>
+        <td style="border:1px solid #ddd;padding:8px;">${index + 1}</td>
+        <td style="border:1px solid #ddd;padding:8px;">${user.name || 'Unknown'}</td>
+        <td style="border:1px solid #ddd;padding:8px;">${user.skills || 'N/A'}</td>
+        <td style="border:1px solid #ddd;padding:8px;">${user.jobCount || 0}</td>
+      </tr>`).join('')
+    : '<tr><td colspan="4" style="border:1px solid #ddd;padding:8px;text-align:center;">No users with matches</td></tr>';
+
+  return `
+    <div style="font-family:Arial, sans-serif;">
+      <h3 style="margin:0 0 8px 0;">Users with Job Matches</h3>
+      <table style="border-collapse:collapse;width:100%;">
+        <thead>
+          <tr>
+            <th style="border:1px solid #ddd;padding:8px;text-align:left;background-color:#f2f2f2;">SR No</th>
+            <th style="border:1px solid #ddd;padding:8px;text-align:left;background-color:#f2f2f2;">User Name</th>
+            <th style="border:1px solid #ddd;padding:8px;text-align:left;background-color:#f2f2f2;">Skills</th>
+            <th style="border:1px solid #ddd;padding:8px;text-align:left;background-color:#f2f2f2;">Jobs Found</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${userRows}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
 

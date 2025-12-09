@@ -31,6 +31,14 @@ async function main() {
     console.log(`Average Recommendations per User: ${results.averageRecommendationsPerUser}`);
     console.log(`Processing Time: ${duration} seconds`);
     
+    // Print user details if available
+    if (results.usersWithMatchesDetails && results.usersWithMatchesDetails.length > 0) {
+      console.log('\n=== Users with Matches Details ===');
+      results.usersWithMatchesDetails.forEach((user, index) => {
+        console.log(`User ${index + 1}: ${user.name} | Skills: ${user.skills} | Jobs: ${user.jobCount}`);
+      });
+    }
+    
     if (results.totalMatches > 0) {
       console.log('\n✅ Job matching completed successfully!');
       console.log(`💾 Results saved to jobMatching collection in database (matches ≥40%)`);

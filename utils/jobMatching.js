@@ -185,6 +185,7 @@ export async function performJobMatching() {
     
     // Group recommendations by user
     const userRecommendations = {};
+    const usersWithMatchesDetails = [];
     let totalMatches = 0;
     let excellentMatches = 0;
     let goodMatches = 0;
@@ -221,10 +222,21 @@ export async function performJobMatching() {
         }
       }
       
-      // Count users with matches
+      // Count users with matches and track details
       if (userRecommendations[userId].length > 0) {
         usersWithMatches++;
-        console.log(`User ${userId}: ${userRecommendations[userId].length} job recommendations`);
+        const userName = profile.name || profile.email || profile.username || `User ${userId}`;
+        const userSkills = userData.skills.slice(0, 10).join(', '); // Limit to first 10 skills for display
+        const jobCount = userRecommendations[userId].length;
+        
+        usersWithMatchesDetails.push({
+          userId: userId,
+          name: userName,
+          skills: userSkills,
+          jobCount: jobCount
+        });
+        
+        console.log(`User ${userName} (${userId}): ${jobCount} job recommendations`);
       }
     }
     
@@ -240,11 +252,20 @@ export async function performJobMatching() {
       goodMatches: goodMatches,
       averageRecommendationsPerUser: usersWithMatches > 0 
         ? Math.round(totalMatches / usersWithMatches)
-        : 0
+        : 0,
+      usersWithMatchesDetails: usersWithMatchesDetails
     };
     
     console.log('Job matching completed successfully!');
     console.log('Summary:', summary);
+    
+    // Output user details for workflow parsing
+    if (usersWithMatchesDetails.length > 0) {
+      console.log('\n=== Users with Matches Details ===');
+      usersWithMatchesDetails.forEach((user, index) => {
+        console.log(`User ${index + 1}: ${user.name} | Skills: ${user.skills} | Jobs: ${user.jobCount}`);
+      });
+    }
     
     return summary;
     
