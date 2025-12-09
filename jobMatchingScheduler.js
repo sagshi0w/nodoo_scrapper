@@ -53,15 +53,33 @@ const notify = {
 
 💾 Results saved to jobMatching collection in database (matches ≥40%)`;
 
-    await transporter.sendMail({
-      from: `"Job Matching" <${config.notification.email.user}>`,
-      to: config.notification.email.recipients,
-      subject: `✅ Job Matching Completed - ${stats.totalMatches} matches found`,
-      text: summaryText,
-      html: htmlContent || undefined
-    });
+    // Verify email configuration
+    if (!config.notification.email.user || !config.notification.email.pass) {
+      console.error("❌ Email configuration missing: EMAIL_USER or EMAIL_PASS not set");
+      return;
+    }
 
-    console.log("📧 Success notification email sent.");
+    if (!config.notification.email.recipients || config.notification.email.recipients.length === 0) {
+      console.error("❌ No email recipients configured");
+      return;
+    }
+
+    try {
+      const mailOptions = {
+        from: `"Job Matching" <${config.notification.email.user}>`,
+        to: config.notification.email.recipients,
+        subject: `✅ Job Matching Completed - ${stats.totalMatches} matches found`,
+        text: summaryText,
+        html: htmlContent || undefined
+      };
+
+      console.log(`📧 Attempting to send email to: ${mailOptions.to.join(', ')}`);
+      const info = await transporter.sendMail(mailOptions);
+      console.log("📧 Success notification email sent. Message ID:", info.messageId);
+    } catch (emailError) {
+      console.error("❌ Failed to send success notification email:", emailError.message);
+      console.error("❌ Email error details:", emailError);
+    }
   },
 
   error: async (error, stats = {}) => {
@@ -70,14 +88,17 @@ const notify = {
 Error: ${error.message}
 ${error.stack || ''}`;
 
-    await transporter.sendMail({
-      from: `"Job Matching" <${config.notification.email.user}>`,
-      to: config.notification.email.recipients,
-      subject: `❌ Job Matching Failed - ${error.message}`,
-      text: errorText
-    });
-
-    console.log("📧 Error notification email sent.");
+    try {
+      await transporter.sendMail({
+        from: `"Job Matching" <${config.notification.email.user}>`,
+        to: config.notification.email.recipients,
+        subject: `❌ Job Matching Failed - ${error.message}`,
+        text: errorText
+      });
+      console.log("📧 Error notification email sent.");
+    } catch (emailError) {
+      console.error("❌ Failed to send error notification email:", emailError);
+    }
   }
 };
 
@@ -104,6 +125,13 @@ const runJobMatching = async () => {
     
     // Generate email HTML using template
     const emailHTML = buildJobMatchingUsersEmailHTML(results.usersWithMatchesDetails || []);
+    
+    // Debug: Log email details
+    console.log(`📧 Email config check:`);
+    console.log(`   - User: ${config.notification.email.user ? 'Set' : 'NOT SET'}`);
+    console.log(`   - Recipients: ${config.notification.email.recipients ? config.notification.email.recipients.length + ' recipients' : 'NOT SET'}`);
+    console.log(`   - HTML Content Length: ${emailHTML ? emailHTML.length : 0} characters`);
+    console.log(`   - Users with matches: ${results.usersWithMatchesDetails ? results.usersWithMatchesDetails.length : 0}`);
     
     // Send success notification
     await notify.success(results, emailHTML);
