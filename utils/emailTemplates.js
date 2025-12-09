@@ -57,7 +57,7 @@ export function buildActivelyHiringEmailHTML(activelyHiringCompanies = []) {
         <td style="border:1px solid #ddd;padding:8px;">${company.recentJobsCount || 0}</td>
         <td style="border:1px solid #ddd;padding:8px;">${company.totalJobs || 0}</td>
       </tr>`).join('')
-    : '<tr><td colspan="4" style="border:1px solid #ddd;padding:8px;text-align:center;">No companies actively hiring</td></tr>';
+    : '<tr><td colspan="4" style="border:1px solid #ddd;padding:8px;">No companies actively hiring</td></tr>';
 
   return `
     <div style="font-family:Arial, sans-serif;">
@@ -65,10 +65,10 @@ export function buildActivelyHiringEmailHTML(activelyHiringCompanies = []) {
       <table style="border-collapse:collapse;width:100%;">
         <thead>
           <tr>
-            <th style="border:1px solid #ddd;padding:8px;text-align:left;background-color:#f2f2f2;">SR No</th>
-            <th style="border:1px solid #ddd;padding:8px;text-align:left;background-color:#f2f2f2;">Company Name</th>
-            <th style="border:1px solid #ddd;padding:8px;text-align:left;background-color:#f2f2f2;">Recent Jobs (48hrs)</th>
-            <th style="border:1px solid #ddd;padding:8px;text-align:left;background-color:#f2f2f2;">Total Jobs</th>
+            <th style="border:1px solid #ddd;padding:8px;text-align:left;">SR No</th>
+            <th style="border:1px solid #ddd;padding:8px;text-align:left;">Company Name</th>
+            <th style="border:1px solid #ddd;padding:8px;text-align:left;">Recent Jobs (48hrs)</th>
+            <th style="border:1px solid #ddd;padding:8px;text-align:left;">Total Jobs</th>
           </tr>
         </thead>
         <tbody>
@@ -93,7 +93,7 @@ export function buildJobMatchingUsersEmailHTML(usersWithMatches = []) {
         <td style="border:1px solid #ddd;padding:8px;">${user.skills || 'N/A'}</td>
         <td style="border:1px solid #ddd;padding:8px;">${user.jobCount || 0}</td>
       </tr>`).join('')
-    : '<tr><td colspan="4" style="border:1px solid #ddd;padding:8px;text-align:center;">No users with matches</td></tr>';
+    : '<tr><td colspan="4" style="border:1px solid #ddd;padding:8px;">No users with matches</td></tr>';
 
   return `
     <div style="font-family:Arial, sans-serif;">
@@ -101,10 +101,10 @@ export function buildJobMatchingUsersEmailHTML(usersWithMatches = []) {
       <table style="border-collapse:collapse;width:100%;">
         <thead>
           <tr>
-            <th style="border:1px solid #ddd;padding:8px;text-align:left;background-color:#f2f2f2;">SR No</th>
-            <th style="border:1px solid #ddd;padding:8px;text-align:left;background-color:#f2f2f2;">User Name</th>
-            <th style="border:1px solid #ddd;padding:8px;text-align:left;background-color:#f2f2f2;">Skills</th>
-            <th style="border:1px solid #ddd;padding:8px;text-align:left;background-color:#f2f2f2;">Jobs Found</th>
+            <th style="border:1px solid #ddd;padding:8px;text-align:left;">SR No</th>
+            <th style="border:1px solid #ddd;padding:8px;text-align:left;">User Name</th>
+            <th style="border:1px solid #ddd;padding:8px;text-align:left;">Skills</th>
+            <th style="border:1px solid #ddd;padding:8px;text-align:left;">Jobs Found</th>
           </tr>
         </thead>
         <tbody>
