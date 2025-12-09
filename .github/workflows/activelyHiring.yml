@@ -145,53 +145,63 @@ jobs:
           subject: "✅ Actively Hiring Detection Success: $(date)"
           to: ${{ secrets.MAIL_RECIPIENT || 'nodooin86@gmail.com' }}
           from: "GitHub Action <${{ secrets.MAIL_USERNAME }}>"
-          content_type: text/html
           body: |
+            ✅ The actively hiring detection ran successfully at 7:00 AM IST.
+            📅 Timestamp: ${{ github.event.head_commit.timestamp }}
+            
+            Summary:
+            - Total Companies Processed: ${{ env.TOTAL_COMPANIES || 'N/A' }}
+            - Companies Updated: ${{ env.COMPANIES_UPDATED || 'N/A' }}
+            - Actively Hiring: ${{ env.ACTIVELY_HIRING || 'N/A' }}
+            - Not Actively Hiring: ${{ env.NOT_ACTIVELY_HIRING || 'N/A' }}
+            - Errors: ${{ env.ERRORS || '0' }}
+            - Processing Time (seconds): ${{ env.PROCESSING_TIME || 'N/A' }}
+          html_body: |
             <html>
             <body style="font-family: Arial, sans-serif;">
               <p>✅ The actively hiring detection ran successfully at 7:00 AM IST.</p>
               <p>📅 Timestamp: ${{ github.event.head_commit.timestamp }}</p>
               
               <h3>📊 Summary</h3>
-            <table style="border-collapse:collapse;width:100%;margin-bottom:20px;">
-              <tr>
-                <td style="border:1px solid #ddd;padding:8px;"><strong>Total Companies Processed</strong></td>
-                <td style="border:1px solid #ddd;padding:8px;">${{ env.TOTAL_COMPANIES || 'N/A' }}</td>
-              </tr>
-              <tr>
-                <td style="border:1px solid #ddd;padding:8px;"><strong>Companies Updated</strong></td>
-                <td style="border:1px solid #ddd;padding:8px;">${{ env.COMPANIES_UPDATED || 'N/A' }}</td>
-              </tr>
-              <tr>
-                <td style="border:1px solid #ddd;padding:8px;"><strong>Actively Hiring</strong></td>
-                <td style="border:1px solid #ddd;padding:8px;">${{ env.ACTIVELY_HIRING || 'N/A' }}</td>
-              </tr>
-              <tr>
-                <td style="border:1px solid #ddd;padding:8px;"><strong>Not Actively Hiring</strong></td>
-                <td style="border:1px solid #ddd;padding:8px;">${{ env.NOT_ACTIVELY_HIRING || 'N/A' }}</td>
-              </tr>
-              <tr>
-                <td style="border:1px solid #ddd;padding:8px;"><strong>Errors</strong></td>
-                <td style="border:1px solid #ddd;padding:8px;">${{ env.ERRORS || '0' }}</td>
-              </tr>
-              <tr>
-                <td style="border:1px solid #ddd;padding:8px;"><strong>Processing Time (seconds)</strong></td>
-                <td style="border:1px solid #ddd;padding:8px;">${{ env.PROCESSING_TIME || 'N/A' }}</td>
-              </tr>
-            </table>
-            
-            <h3>🏢 Actively Hiring Companies</h3>
-            <table style="border-collapse:collapse;width:100%;">
-              <thead>
+              <table style="border-collapse:collapse;width:100%;margin-bottom:20px;">
                 <tr>
-                  <th style="border:1px solid #ddd;padding:8px;text-align:left;background-color:#f2f2f2;">SR No</th>
-                  <th style="border:1px solid #ddd;padding:8px;text-align:left;background-color:#f2f2f2;">Company Name</th>
+                  <td style="border:1px solid #ddd;padding:8px;"><strong>Total Companies Processed</strong></td>
+                  <td style="border:1px solid #ddd;padding:8px;">${{ env.TOTAL_COMPANIES || 'N/A' }}</td>
                 </tr>
-              </thead>
-              <tbody>
-                ${{ env.ACTIVELY_HIRING_COMPANIES_TABLE || '<tr><td colspan="2" style="border:1px solid #ddd;padding:8px;text-align:center;">No companies actively hiring</td></tr>' }}
-              </tbody>
-            </table>
+                <tr>
+                  <td style="border:1px solid #ddd;padding:8px;"><strong>Companies Updated</strong></td>
+                  <td style="border:1px solid #ddd;padding:8px;">${{ env.COMPANIES_UPDATED || 'N/A' }}</td>
+                </tr>
+                <tr>
+                  <td style="border:1px solid #ddd;padding:8px;"><strong>Actively Hiring</strong></td>
+                  <td style="border:1px solid #ddd;padding:8px;">${{ env.ACTIVELY_HIRING || 'N/A' }}</td>
+                </tr>
+                <tr>
+                  <td style="border:1px solid #ddd;padding:8px;"><strong>Not Actively Hiring</strong></td>
+                  <td style="border:1px solid #ddd;padding:8px;">${{ env.NOT_ACTIVELY_HIRING || 'N/A' }}</td>
+                </tr>
+                <tr>
+                  <td style="border:1px solid #ddd;padding:8px;"><strong>Errors</strong></td>
+                  <td style="border:1px solid #ddd;padding:8px;">${{ env.ERRORS || '0' }}</td>
+                </tr>
+                <tr>
+                  <td style="border:1px solid #ddd;padding:8px;"><strong>Processing Time (seconds)</strong></td>
+                  <td style="border:1px solid #ddd;padding:8px;">${{ env.PROCESSING_TIME || 'N/A' }}</td>
+                </tr>
+              </table>
+              
+              <h3>🏢 Actively Hiring Companies</h3>
+              <table style="border-collapse:collapse;width:100%;">
+                <thead>
+                  <tr>
+                    <th style="border:1px solid #ddd;padding:8px;text-align:left;">SR No</th>
+                    <th style="border:1px solid #ddd;padding:8px;text-align:left;">Company Name</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${{ env.ACTIVELY_HIRING_COMPANIES_TABLE || '<tr><td colspan="2" style="border:1px solid #ddd;padding:8px;text-align:center;">No companies actively hiring</td></tr>' }}
+                </tbody>
+              </table>
             </body>
             </html>
 
@@ -207,12 +217,7 @@ jobs:
           subject: "❌ Actively Hiring Detection Failed: $(date)"
           to: ${{ secrets.MAIL_RECIPIENT || 'nodooin86@gmail.com' }}
           from: "GitHub Action <${{ secrets.MAIL_USERNAME }}>"
-          content_type: text/html
           body: |
-            <html>
-            <body style="font-family: Arial, sans-serif;">
-              <p>❌ The actively hiring detection failed to complete successfully.</p>
-              <p>📅 Timestamp: ${{ github.event.head_commit.timestamp }}</p>
-            </body>
-            </html>
+            ❌ The actively hiring detection failed to complete successfully.
+            📅 Timestamp: ${{ github.event.head_commit.timestamp }}
 

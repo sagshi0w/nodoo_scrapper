@@ -201,8 +201,20 @@ jobs:
           subject: "✅ Job Matching Success: $(date)"
           to: ${{ secrets.MAIL_RECIPIENT || 'nodooin86@gmail.com' }}
           from: "GitHub Action <${{ secrets.MAIL_USERNAME }}>"
-          content_type: text/html
           body: |
+            ✅ The job matching ran successfully at 6:00 AM IST.
+            📅 Timestamp: ${{ github.event.head_commit.timestamp }}
+            
+            Summary:
+            - Total Jobs Processed: ${{ env.TOTAL_JOBS || 'N/A' }}
+            - Total Profiles Processed: ${{ env.TOTAL_PROFILES || 'N/A' }}
+            - Total Matches Found: ${{ env.TOTAL_MATCHES || 'N/A' }}
+            - Users with Matches: ${{ env.USERS_WITH_MATCHES || 'N/A' }}
+            - Excellent Matches (≥85%): ${{ env.EXCELLENT_MATCHES || 'N/A' }}
+            - Good Matches (≥70%): ${{ env.GOOD_MATCHES || 'N/A' }}
+            - Avg Recommendations per User: ${{ env.AVG_RECOMMENDATIONS || 'N/A' }}
+            - Processing Time (seconds): ${{ env.PROCESSING_TIME || 'N/A' }}
+          html_body: |
             <html>
             <body style="font-family: Arial, sans-serif;">
               <p>✅ The job matching ran successfully at 6:00 AM IST.</p>
@@ -248,10 +260,10 @@ jobs:
               <table style="border-collapse:collapse;width:100%;">
                 <thead>
                   <tr>
-                    <th style="border:1px solid #ddd;padding:8px;text-align:left;background-color:#f2f2f2;">SR No</th>
-                    <th style="border:1px solid #ddd;padding:8px;text-align:left;background-color:#f2f2f2;">User Name</th>
-                    <th style="border:1px solid #ddd;padding:8px;text-align:left;background-color:#f2f2f2;">Skills</th>
-                    <th style="border:1px solid #ddd;padding:8px;text-align:left;background-color:#f2f2f2;">Jobs Found</th>
+                    <th style="border:1px solid #ddd;padding:8px;text-align:left;">SR No</th>
+                    <th style="border:1px solid #ddd;padding:8px;text-align:left;">User Name</th>
+                    <th style="border:1px solid #ddd;padding:8px;text-align:left;">Skills</th>
+                    <th style="border:1px solid #ddd;padding:8px;text-align:left;">Jobs Found</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -273,11 +285,6 @@ jobs:
           subject: "❌ Job Matching Failed: $(date)"
           to: ${{ secrets.MAIL_RECIPIENT || 'nodooin86@gmail.com' }}
           from: "GitHub Action <${{ secrets.MAIL_USERNAME }}>"
-          content_type: text/html
           body: |
-            <html>
-            <body style="font-family: Arial, sans-serif;">
-              <p>❌ The job matching failed to complete successfully.</p>
-              <p>📅 Timestamp: ${{ github.event.head_commit.timestamp }}</p>
-            </body>
-            </html>
+            ❌ The job matching failed to complete successfully.
+            📅 Timestamp: ${{ github.event.head_commit.timestamp }}
