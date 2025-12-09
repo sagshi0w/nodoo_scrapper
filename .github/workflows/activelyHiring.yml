@@ -157,40 +157,8 @@ jobs:
             - Errors: ${{ env.ERRORS || '0' }}
             - Processing Time (seconds): ${{ env.PROCESSING_TIME || 'N/A' }}
           html_body: |
-            <html>
-            <body style="font-family: Arial, sans-serif;">
-              <p>✅ The actively hiring detection ran successfully at 7:00 AM IST.</p>
-              <p>📅 Timestamp: ${{ github.event.head_commit.timestamp }}</p>
-              
-              <h3>📊 Summary</h3>
-              <table style="border-collapse:collapse;width:100%;margin-bottom:20px;">
-                <tr>
-                  <td style="border:1px solid #ddd;padding:8px;"><strong>Total Companies Processed</strong></td>
-                  <td style="border:1px solid #ddd;padding:8px;">${{ env.TOTAL_COMPANIES || 'N/A' }}</td>
-                </tr>
-                <tr>
-                  <td style="border:1px solid #ddd;padding:8px;"><strong>Companies Updated</strong></td>
-                  <td style="border:1px solid #ddd;padding:8px;">${{ env.COMPANIES_UPDATED || 'N/A' }}</td>
-                </tr>
-                <tr>
-                  <td style="border:1px solid #ddd;padding:8px;"><strong>Actively Hiring</strong></td>
-                  <td style="border:1px solid #ddd;padding:8px;">${{ env.ACTIVELY_HIRING || 'N/A' }}</td>
-                </tr>
-                <tr>
-                  <td style="border:1px solid #ddd;padding:8px;"><strong>Not Actively Hiring</strong></td>
-                  <td style="border:1px solid #ddd;padding:8px;">${{ env.NOT_ACTIVELY_HIRING || 'N/A' }}</td>
-                </tr>
-                <tr>
-                  <td style="border:1px solid #ddd;padding:8px;"><strong>Errors</strong></td>
-                  <td style="border:1px solid #ddd;padding:8px;">${{ env.ERRORS || '0' }}</td>
-                </tr>
-                <tr>
-                  <td style="border:1px solid #ddd;padding:8px;"><strong>Processing Time (seconds)</strong></td>
-                  <td style="border:1px solid #ddd;padding:8px;">${{ env.PROCESSING_TIME || 'N/A' }}</td>
-                </tr>
-              </table>
-              
-              <h3>🏢 Actively Hiring Companies</h3>
+            <div style="font-family:Arial, sans-serif;">
+              <h3 style="margin:0 0 8px 0;">Actively Hiring Companies</h3>
               <table style="border-collapse:collapse;width:100%;">
                 <thead>
                   <tr>
@@ -199,11 +167,10 @@ jobs:
                   </tr>
                 </thead>
                 <tbody>
-                  ${{ env.ACTIVELY_HIRING_COMPANIES_TABLE || '<tr><td colspan="2" style="border:1px solid #ddd;padding:8px;text-align:center;">No companies actively hiring</td></tr>' }}
+                  ${{ env.ACTIVELY_HIRING_COMPANIES_TABLE || '<tr><td colspan="2" style="border:1px solid #ddd;padding:8px;">No companies actively hiring</td></tr>' }}
                 </tbody>
               </table>
-            </body>
-            </html>
+            </div>
 
       - name: ❌ Send Failure Email
         if: failure()
