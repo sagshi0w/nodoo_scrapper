@@ -23,10 +23,24 @@ class BrillioJobsScraper {
 
     async navigateToJobsPage() {
         console.log('🌐 Navigating to Capgemini Careers...');
-        await this.page.goto('https://www.capgemini.com/careers/join-capgemini/job-search/?country_code=en-in&country_name=India&size=15', {
-            waitUntil: 'networkidle2'
-        });
-        await delay(5000);
+        try {
+            await this.page.goto('https://www.capgemini.com/careers/join-capgemini/job-search/?country_code=en-in&country_name=India&size=15', {
+                waitUntil: 'domcontentloaded',
+                timeout: 60000
+            });
+            await delay(5000);
+            
+            // Wait for job links to be available
+            try {
+                await this.page.waitForSelector('a.joblink[href^="/jobs/"]', { timeout: 10000 });
+                console.log('✅ Page loaded successfully');
+            } catch (err) {
+                console.log('⚠️ Job links not immediately available, continuing anyway...');
+            }
+        } catch (error) {
+            console.error('❌ Navigation error:', error.message);
+            throw error;
+        }
     }
 
     async collectAllJobCardLinks() {
@@ -97,9 +111,18 @@ class BrillioJobsScraper {
     async extractJobDetailsFromLink(url) {
         const jobPage = await this.browser.newPage();
         try {
-            await jobPage.goto(url, { waitUntil: 'networkidle2' });
+            await jobPage.goto(url, { 
+                waitUntil: 'domcontentloaded',
+                timeout: 60000 
+            });
             await delay(5000);
-            //await jobPage.waitForSelector('div.job__description.body', { timeout: 10000 });
+            
+            // Wait for key elements to be available
+            try {
+                await jobPage.waitForSelector('h1.box-title, span.box-tag', { timeout: 10000 });
+            } catch (err) {
+                console.log('⚠️ Job page elements not immediately available, continuing anyway...');
+            }
 
             const job = await jobPage.evaluate(() => {
                 const getText = sel => document.querySelector(sel)?.innerText.trim() || '';
