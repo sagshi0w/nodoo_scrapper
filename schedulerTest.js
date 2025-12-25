@@ -132,6 +132,10 @@ import runTataMgJobsScraper from "./scrapers/productBased/tata1mg.js"
 import runGlobalLogicJobsScraper from "./scrapers/servicebased/GlobalLogic.js"
 import runCognizantJobsScraper from "./scrapers/servicebased/Cognizant.js"
 
+
+// 25.12.2025
+import Capgemini from "./scrapers/servicebased/Capgemini.js"
+
 const config = {
     concurrency: 5,
     notification: {
@@ -201,7 +205,7 @@ ${error.stack}`;
 
 const scrapers = [
     // { fn: OnePassword, headless: true },
-    { fn: runYashTechnologiesJobsScraper, headless: true },
+    { fn: Capgemini, headless: true },
 ];
 
 const runAllScrapers = async () => {

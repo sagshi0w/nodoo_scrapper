@@ -3,7 +3,7 @@ import fs from 'fs';
 
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
-class CapgeminiJobsScraper {
+class BrillioJobsScraper {
     constructor(headless = true) {
         this.headless = headless;
         this.browser = null;
@@ -23,7 +23,7 @@ class CapgeminiJobsScraper {
 
     async navigateToJobsPage() {
         console.log('🌐 Navigating to Capgemini Careers...');
-        await this.page.goto('https://www.capgemini.com/in-en/careers/join-capgemini/job-search/?page=1&size=11&country_code=in-en', {
+        await this.page.goto('https://www.capgemini.com/careers/join-capgemini/job-search/?country_code=en-in&country_name=India&size=15', {
             waitUntil: 'networkidle2'
         });
         await delay(5000);
@@ -35,13 +35,14 @@ class CapgeminiJobsScraper {
         const existingLinks = new Set();
 
         while (true) {
-            // Wait for job links to load
-            //await this.page.waitForSelector('div.op-job-apply-bt', { timeout: 10000 });
-
             // Collect new links
             const jobLinks = await this.page.$$eval(
-                'a.JobRow-module__job-card___riAUE',
-                anchors => anchors.map(a => a.href)
+                'a.joblink',
+                anchors => anchors.map(a => {
+                    const href = a.getAttribute('href');
+                    // Convert relative URLs to absolute
+                    return href.startsWith('http') ? href : `https://www.capgemini.com${href}`;
+                })
             );
 
             for (const link of jobLinks) {
@@ -95,11 +96,70 @@ class CapgeminiJobsScraper {
 
             const job = await jobPage.evaluate(() => {
                 const getText = sel => document.querySelector(sel)?.innerText.trim() || '';
+                
+                // Extract description - look for the container with job description sections
+                let description = '';
+                
+                // Find the parent container that holds all description sections
+                // Look for divs containing sections with h2 headings like "Your role", "Your profile", etc.
+                const h2Sections = document.querySelectorAll('div h2');
+                if (h2Sections.length > 0) {
+                    // Get the common parent of all these sections
+                    const firstSection = h2Sections[0];
+                    let parentContainer = firstSection.parentElement;
+                    
+                    // Walk up to find the container that holds all sections
+                    while (parentContainer && parentContainer.tagName === 'DIV') {
+                        const allH2InContainer = parentContainer.querySelectorAll('h2');
+                        // If this container has multiple h2 sections, it's likely our description container
+                        if (allH2InContainer.length >= 2) {
+                            description = parentContainer.innerText.trim();
+                            break;
+                        }
+                        parentContainer = parentContainer.parentElement;
+                    }
+                    
+                    // If we didn't find a good parent, just get content from the first section's parent
+                    if (!description && firstSection.parentElement) {
+                        description = firstSection.parentElement.closest('div')?.innerText.trim() || '';
+                    }
+                }
+                
+                // Alternative: Look for div with inline styles matching the description structure
+                if (!description) {
+                    const styledDivs = document.querySelectorAll('div[style*="padding:10.0px"]');
+                    if (styledDivs.length > 0) {
+                        // Find the parent that contains multiple such divs
+                        const firstStyledDiv = styledDivs[0];
+                        let container = firstStyledDiv.parentElement;
+                        while (container && container.tagName === 'DIV') {
+                            const childStyledDivs = container.querySelectorAll('div[style*="padding:10.0px"]');
+                            if (childStyledDivs.length >= 2) {
+                                description = container.innerText.trim();
+                                break;
+                            }
+                            container = container.parentElement;
+                        }
+                    }
+                }
+                
+                // Fallback to original selector
+                if (!description) {
+                    description = getText('div._detail-content');
+                }
+                
+                // Last fallback - try common description selectors
+                if (!description) {
+                    description = getText('.job-description') || 
+                                  getText('[class*="detail"]') || 
+                                  getText('[class*="description"]') || '';
+                }
+                
                 return {
-                    title: getText('div.Header-module__header-top___Ue4Ct h1'),
+                    title: getText('h1.box-title'),
                     company: 'Capgemini',
-                    location: getText('Header-module__job-location___pPcJH'),
-                    description: getText('div.SingleJobDescription-module__description___xmyOs'),
+                    location: getText('span.box-tag'),
+                    description: description || '',
                     url: window.location.href
                 };
             });
@@ -161,33 +221,24 @@ const extractWiproData = (job) => {
 
     let cleanedDescription = job.description || '';
     let experience = null;
-    let miniExperience = null;
-    let maxExperience = null;
     let location = null;
 
-    // --- Regex patterns for experience ---
     const expPatterns = [
-        /\b(\d{1,2})\s*\+\s*(?:years|yrs|yr)\b/i, // e.g. "10+ years"
+        /\b(\d{1,2})\s*\+\s*(?:years|yrs|yr)\b/i,
         /\bminimum\s*(\d{1,2})\s*(?:years|yrs|yr)\b/i,
         /\bmin(?:imum)?\s*(\d{1,2})\s*(?:years|yrs|yr)\b/i,
-        /\b(\d{1,2})\s*(?:to|–|-)\s*(\d{1,2})\s*(?:years|yrs|yr)\b/i, // e.g. "3-5 years"
+        /\b(\d{1,2})\s*(?:to|–|-|–)\s*(\d{1,2})\s*(?:years|yrs|yr)\b/i,
         /\b(?:at least|over)\s*(\d{1,2})\s*(?:years|yrs|yr)\b/i,
         /\b(\d{1,2})\s*(?:years|yrs|yr)\s+experience\b/i,
         /\bexperience\s*(?:of)?\s*(\d{1,2})\s*(?:years|yrs|yr)\b/i,
         /\bexperience\s*(?:required)?\s*[:\-]?\s*(\d{1,2})\s*(?:[-to]+)?\s*(\d{1,2})?\s*(?:years|yrs|yr)?/i,
     ];
 
-    // --- Regex patterns for city/location ---
-    const cityPatterns = [
-        /Location\s*(?:City)?:\s*([A-Za-z .]+)/i,   // captures only city name after "Location City:"
-        /\b(Bangalore|Bengaluru|Hyderabad|Chennai|Pune|Mumbai|Delhi|Gurgaon|Noida|Kolkata|Trivandrum|Cochin|Jaipur|Ahmedabad|Indore|Nagpur)\b/i
-    ];
-
-    // Step 1: If job.experience is numeric
+    // Step 1: Try job.experience field
     if (typeof job.experience === 'number' || /^\d+$/.test(job.experience)) {
-        miniExperience = parseInt(job.experience, 10);
-        maxExperience = miniExperience + 2;
-        experience = `${miniExperience} - ${maxExperience} yrs`;
+        const minExp = parseInt(job.experience, 10);
+        const maxExp = minExp + 2;
+        experience = `${minExp} - ${maxExp} yrs`;
     }
 
     // Step 2: Parse experience from description
@@ -195,44 +246,27 @@ const extractWiproData = (job) => {
         for (const pattern of expPatterns) {
             const match = cleanedDescription.match(pattern);
             if (match) {
-                const min = match[1] ? parseInt(match[1], 10) : null;
-                const max = match[2] ? parseInt(match[2], 10) : null;
+                const min = match[1];
+                const max = match[2];
 
                 if (min && max) {
-                    miniExperience = min;
-                    maxExperience = max;
                     experience = `${min} - ${max} yrs`;
                 } else if (min && !max) {
-                    miniExperience = min;
-                    maxExperience = min + 2;
-                    experience = `${min} - ${maxExperience} yrs`;
+                    const estMax = parseInt(min) + 2;
+                    experience = `${min} - ${estMax} yrs`;
                 }
                 break;
             }
         }
     }
 
-    // Step 3: Extract city from job.location field
-    if (job.location) {
-        const cityMatch = job.location.match(/^([^,\n]+)/);
-        if (cityMatch) {
-            location = cityMatch[1].trim();
-        }
-    }
-
-    // Step 4: If location still not found, parse from description
-    if (!location && cleanedDescription) {
-        for (const pattern of cityPatterns) {
-            const match = cleanedDescription.match(pattern);
-            if (match) {
-                location = match[1].trim();
-                break;
-            }
-        }
-    }
-
-    // Step 5: Clean description
+    // Step 3: Clean description
     if (cleanedDescription) {
+        cleanedDescription = cleanedDescription.replace(
+            /(Current Openings|Job Summary)[\s\S]*?(?:Apply\.?\s*)?(?=\n{2,}|$)/gi,
+            ''
+        );
+
         cleanedDescription = cleanedDescription
             .replace(/(\n\s*)(\d+\.\s+)(.*?)(\n)/gi, '\n\n$1$2$3$4\n\n')
             .replace(/(\n\s*)([•\-]\s+)(.*?)(\n)/gi, '\n\n$1$2$3$4\n\n')
@@ -242,8 +276,32 @@ const extractWiproData = (job) => {
             .replace(/(\S)\n(\S)/g, '$1\n\n$2')
             .trim();
 
-        if (!cleanedDescription) {
+        if (cleanedDescription && !cleanedDescription.endsWith('\n')) {
+            cleanedDescription += '\n';
+        }
+
+        if (!cleanedDescription.trim()) {
             cleanedDescription = 'Description not available\n';
+        }
+    } else {
+        cleanedDescription = 'Description not available\n';
+    }
+
+    if (job.title && cleanedDescription.startsWith(job.title)) {
+        const match = cleanedDescription.match(/Primary Skills\s*[:\-–]?\s*/i);
+        if (match) {
+            const index = match.index;
+            if (index > 0) {
+                cleanedDescription = cleanedDescription.slice(index).trimStart();
+            }
+        }
+    }
+
+    // Step 4: Extract city from location string
+    if (job.location) {
+        const cityMatch = job.location.match(/^([^,\n]+)/);
+        if (cityMatch) {
+            location = cityMatch[1].trim();
         }
     }
 
@@ -251,27 +309,25 @@ const extractWiproData = (job) => {
         ...job,
         title: job.title?.trim(),
         experience,
-        miniExperience,
-        maxExperience,
+        location,
         description: cleanedDescription,
     };
 };
 
 
-
 // ✅ Exportable runner function
-const runCapgeminiJobsScraper = async ({ headless = true } = {}) => {
-    const scraper = new CapgeminiJobsScraper(headless);
+const runBrillioJobsScraper = async ({ headless = true } = {}) => {
+    const scraper = new BrillioJobsScraper(headless);
     await scraper.run();
     return scraper.allJobs;
 };
 
-export default runCapgeminiJobsScraper;
+export default runBrillioJobsScraper;
 
 // ✅ CLI support: node phonepe.js --headless=false
 if (import.meta.url === `file://${process.argv[1]}`) {
     const headlessArg = process.argv.includes('--headless=false') ? false : true;
     (async () => {
-        await runCapgeminiJobsScraper({ headless: headlessArg });
+        await runBrillioJobsScraper({ headless: headlessArg });
     })();
 }
