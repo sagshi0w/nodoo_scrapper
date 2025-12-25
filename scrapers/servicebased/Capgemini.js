@@ -37,13 +37,20 @@ class BrillioJobsScraper {
         while (true) {
             // Collect new links
             const jobLinks = await this.page.$$eval(
-                'a.joblink',
-                anchors => anchors.map(a => {
-                    const href = a.getAttribute('href');
-                    // Convert relative URLs to absolute
-                    return href.startsWith('http') ? href : `https://www.capgemini.com${href}`;
-                })
+                'a.joblink[href^="/jobs/"]',
+                anchors =>
+                    [...new Set(
+                        anchors
+                            .map(a => a.getAttribute('href'))
+                            .filter(Boolean)
+                            .map(href =>
+                                href.startsWith('http')
+                                    ? href
+                                    : `https://www.capgemini.com${href}`
+                            )
+                    )]
             );
+
 
             for (const link of jobLinks) {
                 if (!existingLinks.has(link)) {
@@ -96,10 +103,10 @@ class BrillioJobsScraper {
 
             const job = await jobPage.evaluate(() => {
                 const getText = sel => document.querySelector(sel)?.innerText.trim() || '';
-                
+
                 // Extract description - look for the container with job description sections
                 let description = '';
-                
+
                 // Find the parent container that holds all description sections
                 // Look for divs containing sections with h2 headings like "Your role", "Your profile", etc.
                 const h2Sections = document.querySelectorAll('div h2');
@@ -107,7 +114,7 @@ class BrillioJobsScraper {
                     // Get the common parent of all these sections
                     const firstSection = h2Sections[0];
                     let parentContainer = firstSection.parentElement;
-                    
+
                     // Walk up to find the container that holds all sections
                     while (parentContainer && parentContainer.tagName === 'DIV') {
                         const allH2InContainer = parentContainer.querySelectorAll('h2');
@@ -118,13 +125,13 @@ class BrillioJobsScraper {
                         }
                         parentContainer = parentContainer.parentElement;
                     }
-                    
+
                     // If we didn't find a good parent, just get content from the first section's parent
                     if (!description && firstSection.parentElement) {
                         description = firstSection.parentElement.closest('div')?.innerText.trim() || '';
                     }
                 }
-                
+
                 // Alternative: Look for div with inline styles matching the description structure
                 if (!description) {
                     const styledDivs = document.querySelectorAll('div[style*="padding:10.0px"]');
@@ -142,19 +149,19 @@ class BrillioJobsScraper {
                         }
                     }
                 }
-                
+
                 // Fallback to original selector
                 if (!description) {
                     description = getText('div._detail-content');
                 }
-                
+
                 // Last fallback - try common description selectors
                 if (!description) {
-                    description = getText('.job-description') || 
-                                  getText('[class*="detail"]') || 
-                                  getText('[class*="description"]') || '';
+                    description = getText('.job-description') ||
+                        getText('[class*="detail"]') ||
+                        getText('[class*="description"]') || '';
                 }
-                
+
                 return {
                     title: getText('h1.box-title'),
                     company: 'Capgemini',
