@@ -45,11 +45,12 @@ class BrillioJobsScraper {
 
     async collectAllJobCardLinks() {
         this.allJobLinks = [];
-        let pageIndex = 1;
         const existingLinks = new Set();
+        let loadMoreClicks = 0;
+        const maxClicks = 100; // Safety limit to prevent infinite loops
 
         while (true) {
-            // Collect new links
+            // Collect current links on the page
             const jobLinks = await this.page.$$eval(
                 'a.joblink[href^="/jobs/"]',
                 anchors =>
@@ -65,46 +66,61 @@ class BrillioJobsScraper {
                     )]
             );
 
-
+            // Add new links
+            let newLinksCount = 0;
             for (const link of jobLinks) {
                 if (!existingLinks.has(link)) {
                     existingLinks.add(link);
                     this.allJobLinks.push(link);
+                    newLinksCount++;
                 }
             }
 
-            console.log(`📄 Collected ${this.allJobLinks.length} unique job links so far...`);
+            console.log(`📄 Collected ${this.allJobLinks.length} unique job links (${newLinksCount} new)...`);
 
-            const pageNumbers = await this.page.$$eval('ul.pagination li a', links =>
-                links
-                    .map(a => ({
-                        text: a.textContent.trim(),
-                        href: a.getAttribute('href'),
-                    }))
-                    .filter(a => /^\d+$/.test(a.text)) // Only page numbers
-            );
-
-            // Try to click "See more results" button
-            // Check if "Show More Results" button exists and is visible
-            const nextPage = pageNumbers.find(p => Number(p.text) === pageIndex + 1);
-
-            if (!nextPage) {
-                console.log('✅ No more pages left. Done.');
+            // Check if "Load More" button exists and is visible
+            const loadMoreButton = await this.page.$('a.filters-more[aria-label*="Load More"]');
+            
+            if (!loadMoreButton) {
+                console.log('✅ No "Load More" button found. All jobs loaded.');
                 break;
             }
 
-            // Click the next page
-            console.log(`➡️ Clicking page ${pageIndex + 1}`);
-            await Promise.all([
-                //this.page.click(`ul.pagination li a[title="Page ${pageIndex + 1}"]`),
-                //this.page.waitForNavigation({ waitUntil: 'networkidle2' }),
-            ]);
+            // Check if button is visible and enabled
+            const isVisible = await loadMoreButton.evaluate(el => {
+                const style = window.getComputedStyle(el);
+                return style.display !== 'none' && 
+                       style.visibility !== 'hidden' && 
+                       el.offsetParent !== null;
+            });
 
-            pageIndex++;
+            if (!isVisible) {
+                console.log('✅ "Load More" button is not visible. All jobs loaded.');
+                break;
+            }
 
+            // Safety check
+            if (loadMoreClicks >= maxClicks) {
+                console.log(`⚠️ Reached maximum clicks (${maxClicks}). Stopping.`);
+                break;
+            }
+
+            // Click the "Load More" button
+            loadMoreClicks++;
+            console.log(`➡️ Clicking "Load More" button (click ${loadMoreClicks})...`);
+            
+            try {
+                await loadMoreButton.click();
+                // Wait for new content to load
+                await delay(3000);
+            } catch (err) {
+                console.log('⚠️ Error clicking "Load More" button:', err.message);
+                break;
+            }
         }
 
-        return this.allJobLinks;;
+        console.log(`✅ Finished collecting ${this.allJobLinks.length} unique job links.`);
+        return this.allJobLinks;
     }
 
 
@@ -223,7 +239,7 @@ class BrillioJobsScraper {
 
     async saveResults() {
         // fs.writeFileSync('./scrappedJobs/phonepeJobs.json', JSON.stringify(this.allJobs, null, 2));
-        console.log(`💾 Saved ${this.allJobs.length} jobs to YashTechnologies.json`);
+        console.log(`💾 Saved ${this.allJobs.length} jobs.`);
     }
 
     async close() {
