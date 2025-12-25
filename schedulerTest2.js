@@ -39,6 +39,8 @@ import runHexawareScrapper from "./scrapers/servicebased/hexaware.js";
 import runSonataSoftwareScrapper from "./scrapers/servicebased/sonataSoftware.js";
 import runBirlaSoftScrapper from "./scrapers/servicebased/birlaSoft.js"
 
+import Capgemini from "./scrapers/servicebased/Capgemini.js"
+
 const config = {
   concurrency: 5,
   notification: {
@@ -106,22 +108,8 @@ ${error.stack}`;
   }
 };
 
-// const scrapers = [
-//   
-//   
-//   
-//   
-//   
-//   
-//   
-//   
-//   { fn: runMeeshoScraper, headless: true },
-//   { fn: runMicrosoftScraper, headless: true },
-//   { fn: runZohoScraper, headless: true },
-// ];
-
 const scrapers = [
-  // { fn: runBirlaSoftScrapper, headless: true },
+   { fn: Capgemini, headless: true },
 ];
 
 const runAllScrapers = async () => {
