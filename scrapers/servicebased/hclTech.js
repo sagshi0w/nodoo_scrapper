@@ -219,8 +219,28 @@ class HclTechJobsScraper {
                 // Extract description - prioritize the field--name-body selector
                 let description = '';
 
+                // Helper function to check if description looks valid (not navigation/search)
+                const isValidDescription = (text) => {
+                    if (!text || text.length < 20) return false;
+                    // Filter out common navigation/search text
+                    const invalidPatterns = [
+                        /^search\s*$/i,
+                        /search\s+close/i,
+                        /^menu\s*$/i,
+                        /^navigation\s*$/i,
+                        /^skip\s+to\s+content/i
+                    ];
+                    for (const pattern of invalidPatterns) {
+                        if (pattern.test(text.trim())) return false;
+                    }
+                    // Should contain job-related keywords
+                    const jobKeywords = ['responsibilities', 'qualifications', 'requirements', 'experience', 'skills', 'role', 'position'];
+                    const hasJobContent = jobKeywords.some(keyword => text.toLowerCase().includes(keyword));
+                    return hasJobContent;
+                };
+
                 // Primary: Look for the job description in the field--name-body div
-                // Try multiple selector variations and methods
+                // Try multiple selector variations and methods, but validate content
                 const descSelectors = [
                     'div.field--name-body.field__item',
                     'div.field--name-body',
@@ -231,30 +251,60 @@ class HclTechJobsScraper {
                 ];
                 
                 for (const selector of descSelectors) {
-                    const element = document.querySelector(selector);
-                    if (element) {
-                        // Try innerText first, then textContent, then innerHTML (strip tags)
-                        description = element.innerText?.trim() || 
-                                     element.textContent?.trim() || 
-                                     (element.innerHTML ? element.innerHTML.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim() : '');
-                        if (description && description.length > 10) break; // Ensure we got meaningful content
+                    const elements = document.querySelectorAll(selector);
+                    for (const element of elements) {
+                        // Skip if element is in header, nav, or search areas
+                        const isInNavigation = element.closest('header, nav, .search, [role="search"], [class*="search"], [class*="navigation"]');
+                        if (isInNavigation) continue;
+                        
+                        // Try innerText first, then textContent
+                        const text = element.innerText?.trim() || element.textContent?.trim() || '';
+                        if (isValidDescription(text)) {
+                            description = text;
+                            break;
+                        }
                     }
+                    if (description) break;
                 }
                 
-                // Alternative: Find by class name directly
-                if (!description || description.length < 10) {
+                // Alternative: Find by class name directly, but validate
+                if (!description || !isValidDescription(description)) {
                     const allDivs = document.querySelectorAll('div');
                     for (const div of allDivs) {
                         if (div.classList.contains('field--name-body') && div.classList.contains('field__item')) {
-                            description = div.innerText?.trim() || div.textContent?.trim() || '';
-                            if (description && description.length > 10) break;
+                            // Skip navigation elements
+                            const isInNavigation = div.closest('header, nav, .search, [role="search"], [class*="search"]');
+                            if (isInNavigation) continue;
+                            
+                            const text = div.innerText?.trim() || div.textContent?.trim() || '';
+                            if (isValidDescription(text)) {
+                                description = text;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                // Alternative approach: Look for elements containing "Responsibilities" or "Qualifications"
+                if (!description || !isValidDescription(description)) {
+                    // Find elements containing job description keywords
+                    const allElements = document.querySelectorAll('div, section, article');
+                    for (const el of allElements) {
+                        const text = el.innerText || el.textContent || '';
+                        if (text.includes('Responsibilities') || text.includes('Qualifications') || text.includes('Requirements')) {
+                            // Make sure it's not in navigation
+                            const isInNavigation = el.closest('header, nav, .search, [role="search"], [class*="search"]');
+                            if (!isInNavigation && isValidDescription(text)) {
+                                description = text.trim();
+                                break;
+                            }
                         }
                     }
                 }
 
                 // Fallback: Find the parent container that holds all description sections
                 // Look for divs containing sections with h2 headings like "Your role", "Your profile", etc.
-                if (!description) {
+                if (!description || !isValidDescription(description)) {
                     const h2Sections = document.querySelectorAll('div h2');
                     if (h2Sections.length > 0) {
                         // Get the common parent of all these sections
