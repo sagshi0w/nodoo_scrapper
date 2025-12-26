@@ -53,18 +53,32 @@ class BrillioJobsScraper {
             });
             await delay(3000);
             
-            // Wait for job links to be available with multiple selector attempts
+            // Debug: Check page content
+            const pageDebug = await this.page.evaluate(() => {
+                return {
+                    title: document.title,
+                    url: window.location.href,
+                    bodyText: document.body.innerText.substring(0, 500),
+                    hasResults: document.querySelector('#results') !== null,
+                    hasJobCards: document.querySelectorAll('.job-card, .job-item, [class*="job"]').length,
+                    allLinks: Array.from(document.querySelectorAll('a')).length,
+                    bodyHTML: document.body.innerHTML.substring(0, 1000)
+                };
+            });
+            console.log('🔍 Page Debug:', JSON.stringify(pageDebug, null, 2));
+            
+            // Wait for job card titles (h2.card-title) which contain the job links
             try {
-                await this.page.waitForSelector('a.js-view-job, a.stretched-link.js-view-job', { timeout: 15000 });
-                console.log('✅ Page loaded successfully');
+                await this.page.waitForSelector('h2.card-title a.js-view-job, h2.card-title a.stretched-link.js-view-job', { timeout: 20000 });
+                console.log('✅ Job cards loaded');
             } catch (err) {
-                console.log('⚠️ Job links not immediately available, trying alternative selectors...');
-                // Try waiting for any job-related elements
+                console.log('⚠️ Job cards not immediately available, trying alternative selectors...');
+                // Try waiting for card-title or any job link
                 try {
-                    await this.page.waitForSelector('a[href*="/jobs/"]', { timeout: 10000 });
-                    console.log('✅ Found job links with alternative selector');
+                    await this.page.waitForSelector('h2.card-title, a.js-view-job, a[href*="/india-en/jobs/"]', { timeout: 15000 });
+                    console.log('✅ Found job elements with alternative selector');
                 } catch (err2) {
-                    console.log('⚠️ Job links not found, continuing anyway...');
+                    console.log('⚠️ Job elements not found, continuing anyway...');
                 }
             }
         } catch (error) {
@@ -79,35 +93,52 @@ class BrillioJobsScraper {
         let loadMoreClicks = 0;
         const maxClicks = 100; // Safety limit to prevent infinite loops
 
-        // Debug: Check what's on the page
+        // Debug: Check what's on the page - more comprehensive
         const pageInfo = await this.page.evaluate(() => {
             const allLinks = Array.from(document.querySelectorAll('a'));
             const jobRelatedLinks = allLinks.filter(a => {
                 const href = a.getAttribute('href') || '';
                 return href.includes('/jobs/') || href.includes('job');
             });
+            
+            // Check for common job listing containers
+            const containers = [
+                { sel: '#results', count: document.querySelectorAll('#results').length },
+                { sel: '.job-card', count: document.querySelectorAll('.job-card').length },
+                { sel: '.job-listing', count: document.querySelectorAll('.job-listing').length },
+                { sel: '[class*="job"]', count: document.querySelectorAll('[class*="job"]').length },
+                { sel: 'article', count: document.querySelectorAll('article').length },
+                { sel: '.js-view-job', count: document.querySelectorAll('.js-view-job').length },
+                { sel: 'a[href*="/jobs/"]', count: document.querySelectorAll('a[href*="/jobs/"]').length }
+            ];
+            
             return {
                 totalLinks: allLinks.length,
                 jobRelatedLinks: jobRelatedLinks.map(a => ({
                     href: a.getAttribute('href'),
                     classes: a.className,
                     text: a.textContent.trim().substring(0, 50)
-                }))
+                })),
+                containers: containers,
+                bodyHTMLSample: document.body.innerHTML.substring(0, 2000)
             };
         });
         console.log(`🔍 Debug: Found ${pageInfo.totalLinks} total links, ${pageInfo.jobRelatedLinks.length} job-related links`);
+        console.log('🔍 Container check:', pageInfo.containers);
         if (pageInfo.jobRelatedLinks.length > 0) {
             console.log('🔍 Sample job links:', pageInfo.jobRelatedLinks.slice(0, 3));
+        } else {
+            console.log('🔍 No job links found. HTML sample:', pageInfo.bodyHTMLSample.substring(0, 500));
         }
 
         while (true) {
             // Collect current links on the page - try multiple selectors
             let jobLinks = [];
             
-            // Try the most specific selector first
+            // Try the most specific selector first - h2.card-title a.js-view-job
             try {
                 jobLinks = await this.page.$$eval(
-                    'a.js-view-job',
+                    'h2.card-title a.js-view-job, h2.card-title a.stretched-link.js-view-job',
                     anchors =>
                         [...new Set(
                             anchors
@@ -122,10 +153,36 @@ class BrillioJobsScraper {
                         )]
                 );
                 if (jobLinks.length > 0) {
-                    console.log(`✅ Found ${jobLinks.length} links with a.js-view-job`);
+                    console.log(`✅ Found ${jobLinks.length} links with h2.card-title a.js-view-job`);
                 }
             } catch (err) {
                 // Continue to next selector
+            }
+
+            // If no links found, try just a.js-view-job
+            if (jobLinks.length === 0) {
+                try {
+                    jobLinks = await this.page.$$eval(
+                        'a.js-view-job',
+                        anchors =>
+                            [...new Set(
+                                anchors
+                                    .map(a => a.getAttribute('href'))
+                                    .filter(Boolean)
+                                    .filter(href => href.includes('/jobs/'))
+                                    .map(href =>
+                                        href.startsWith('http')
+                                            ? href
+                                            : `https://careers.cognizant.com${href}`
+                                    )
+                            )]
+                    );
+                    if (jobLinks.length > 0) {
+                        console.log(`✅ Found ${jobLinks.length} links with a.js-view-job`);
+                    }
+                } catch (err) {
+                    // Continue to next selector
+                }
             }
 
             // If no links found, try with stretched-link class
