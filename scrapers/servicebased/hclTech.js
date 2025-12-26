@@ -73,33 +73,56 @@ class HclTechJobsScraper {
         const maxClicks = 100; // Safety limit to prevent infinite loops
 
         while (true) {
-            // Collect current links on the page
-            const jobLinks = await this.page.$$eval(
-                'td.views-field-title a[href]',
-                anchors =>
-                    [...new Set(
-                        anchors
-                            .map(a => a.getAttribute('href'))
-                            .filter(Boolean)
-                            .map(href =>
-                                href.startsWith('http')
-                                    ? href
-                                    : `https://hcltech.com${href}`
-                            )
-                    )]
+            // Collect job data from table rows (link, location, experience)
+            const jobData = await this.page.$$eval(
+                'tr',
+                rows => {
+                    const jobs = [];
+                    const seenLinks = new Set();
+                    
+                    rows.forEach(row => {
+                        const linkElement = row.querySelector('td.views-field-title a[href]');
+                        if (!linkElement) return;
+                        
+                        const href = linkElement.getAttribute('href');
+                        if (!href || seenLinks.has(href)) return;
+                        
+                        const fullUrl = href.startsWith('http')
+                            ? href
+                            : `https://hcltech.com${href}`;
+                        
+                        // Extract location
+                        const locationCell = row.querySelector('td.views-field-field-job-location');
+                        const location = locationCell ? locationCell.innerText.trim() : '';
+                        
+                        // Extract experience
+                        const experienceCell = row.querySelector('td.views-field-field-years-of-experience');
+                        const experience = experienceCell ? experienceCell.innerText.trim() : '';
+                        
+                        jobs.push({
+                            url: fullUrl,
+                            location: location,
+                            experience: experience
+                        });
+                        
+                        seenLinks.add(href);
+                    });
+                    
+                    return jobs;
+                }
             );
 
-            // Add new links
-            let newLinksCount = 0;
-            for (const link of jobLinks) {
-                if (!existingLinks.has(link)) {
-                    existingLinks.add(link);
-                    this.allJobLinks.push(link);
-                    newLinksCount++;
+            // Add new jobs
+            let newJobsCount = 0;
+            for (const job of jobData) {
+                if (!existingLinks.has(job.url)) {
+                    existingLinks.add(job.url);
+                    this.allJobLinks.push(job);
+                    newJobsCount++;
                 }
             }
 
-            console.log(`📄 Collected ${this.allJobLinks.length} unique job links (${newLinksCount} new)...`);
+            console.log(`📄 Collected ${this.allJobLinks.length} unique job links (${newJobsCount} new)...`);
 
             // Check if "Load More" button exists and is visible
             const loadMoreButton = await this.page.$('a.filters-more[aria-label*="Load More"]');
@@ -147,7 +170,7 @@ class HclTechJobsScraper {
     }
 
 
-    async extractJobDetailsFromLink(url) {
+    async extractJobDetailsFromLink(url, jobLinkData = null) {
         const jobPage = await this.browser.newPage();
         try {
             // Set user agent for job page as well
@@ -181,7 +204,7 @@ class HclTechJobsScraper {
             
             // Wait for key elements to be available
             try {
-                await jobPage.waitForSelector('h1.box-title, span.box-tag', { timeout: 10000 });
+                await jobPage.waitForSelector('h2 span.field--name-title, span.box-tag', { timeout: 10000 });
             } catch (err) {
                 console.log('⚠️ Job page elements not immediately available, continuing anyway...');
             }
@@ -189,31 +212,38 @@ class HclTechJobsScraper {
             const job = await jobPage.evaluate(() => {
                 const getText = sel => document.querySelector(sel)?.innerText.trim() || '';
 
-                // Extract description - look for the container with job description sections
+                // Extract description - prioritize the field--name-body selector
                 let description = '';
 
-                // Find the parent container that holds all description sections
+                // Primary: Look for the job description in the field--name-body div
+                description = getText('div.field--name-body.field__item') || 
+                             getText('div.field--name-body') ||
+                             getText('div[class*="field--name-body"]');
+
+                // Fallback: Find the parent container that holds all description sections
                 // Look for divs containing sections with h2 headings like "Your role", "Your profile", etc.
-                const h2Sections = document.querySelectorAll('div h2');
-                if (h2Sections.length > 0) {
-                    // Get the common parent of all these sections
-                    const firstSection = h2Sections[0];
-                    let parentContainer = firstSection.parentElement;
+                if (!description) {
+                    const h2Sections = document.querySelectorAll('div h2');
+                    if (h2Sections.length > 0) {
+                        // Get the common parent of all these sections
+                        const firstSection = h2Sections[0];
+                        let parentContainer = firstSection.parentElement;
 
-                    // Walk up to find the container that holds all sections
-                    while (parentContainer && parentContainer.tagName === 'DIV') {
-                        const allH2InContainer = parentContainer.querySelectorAll('h2');
-                        // If this container has multiple h2 sections, it's likely our description container
-                        if (allH2InContainer.length >= 2) {
-                            description = parentContainer.innerText.trim();
-                            break;
+                        // Walk up to find the container that holds all sections
+                        while (parentContainer && parentContainer.tagName === 'DIV') {
+                            const allH2InContainer = parentContainer.querySelectorAll('h2');
+                            // If this container has multiple h2 sections, it's likely our description container
+                            if (allH2InContainer.length >= 2) {
+                                description = parentContainer.innerText.trim();
+                                break;
+                            }
+                            parentContainer = parentContainer.parentElement;
                         }
-                        parentContainer = parentContainer.parentElement;
-                    }
 
-                    // If we didn't find a good parent, just get content from the first section's parent
-                    if (!description && firstSection.parentElement) {
-                        description = firstSection.parentElement.closest('div')?.innerText.trim() || '';
+                        // If we didn't find a good parent, just get content from the first section's parent
+                        if (!description && firstSection.parentElement) {
+                            description = firstSection.parentElement.closest('div')?.innerText.trim() || '';
+                        }
                     }
                 }
 
@@ -248,13 +278,25 @@ class HclTechJobsScraper {
                 }
 
                 return {
-                    title: getText('h1.box-title'),
+                    title: getText('h2 span.field--name-title') || getText('h1.box-title'),
                     company: 'HclTech',
-                    location: getText('span.box-tag'),
+                    location: getText('span.box-tag') || '',
                     description: description || '',
-                    url: window.location.href
+                    url: window.location.href,
+                    // Store raw experience if available from table row
+                    _rawExperience: ''
                 };
             });
+
+            // Merge location and experience from table row if available
+            if (jobLinkData && typeof jobLinkData === 'object') {
+                if (jobLinkData.location && !job.location) {
+                    job.location = jobLinkData.location;
+                }
+                if (jobLinkData.experience) {
+                    job._rawExperience = jobLinkData.experience;
+                }
+            }
 
             console.log("Before enriching job=", job);
 
@@ -270,9 +312,10 @@ class HclTechJobsScraper {
 
     async processAllJobs() {
         for (let i = 0; i < this.allJobLinks.length; i++) {
-            const url = this.allJobLinks[i];
+            const jobLink = this.allJobLinks[i];
+            const url = typeof jobLink === 'string' ? jobLink : jobLink.url;
             console.log(`📝 [${i + 1}/${this.allJobLinks.length}] Processing: ${url}`);
-            const jobData = await this.extractJobDetailsFromLink(url);
+            const jobData = await this.extractJobDetailsFromLink(url, jobLink);
             if (jobData && jobData.title) {
                 const enrichedJob = extractHclTechData(jobData);
                 console.log("After enriching job=", enrichedJob);
@@ -333,6 +376,27 @@ const extractHclTechData = (job) => {
         experience = `${minExp} - ${maxExp} yrs`;
     }
 
+    // Step 1.5: Use experience from table row if available (e.g., "4-12 Years")
+    if (!experience && job._rawExperience) {
+        const rawExp = job._rawExperience.trim();
+        // Try to parse formats like "4-12 Years", "4-12 yrs", "4 - 12 Years", etc.
+        const rangeMatch = rawExp.match(/(\d+)\s*[-–—]\s*(\d+)\s*(?:years?|yrs?)?/i);
+        if (rangeMatch) {
+            experience = `${rangeMatch[1]} - ${rangeMatch[2]} yrs`;
+        } else {
+            // Try single number format
+            const singleMatch = rawExp.match(/(\d+)\s*(?:years?|yrs?)?/i);
+            if (singleMatch) {
+                const minExp = parseInt(singleMatch[1], 10);
+                const maxExp = minExp + 2;
+                experience = `${minExp} - ${maxExp} yrs`;
+            } else {
+                // Use as-is if it doesn't match patterns
+                experience = rawExp;
+            }
+        }
+    }
+
     // Step 2: Parse experience from description
     if (!experience && cleanedDescription) {
         for (const pattern of expPatterns) {
@@ -390,10 +454,17 @@ const extractHclTechData = (job) => {
     }
 
     // Step 4: Extract city from location string
+    // Use location from table row if available, otherwise parse from job.location
     if (job.location) {
-        const cityMatch = job.location.match(/^([^,\n]+)/);
-        if (cityMatch) {
-            location = cityMatch[1].trim();
+        // If location is already a simple city name (from table row), use it directly
+        if (!job.location.includes(',') && !job.location.includes('\n')) {
+            location = job.location.trim();
+        } else {
+            // Parse location string to extract city
+            const cityMatch = job.location.match(/^([^,\n]+)/);
+            if (cityMatch) {
+                location = cityMatch[1].trim();
+            }
         }
     }
 
