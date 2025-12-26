@@ -40,6 +40,7 @@ import runSonataSoftwareScrapper from "./scrapers/servicebased/sonataSoftware.js
 import runBirlaSoftScrapper from "./scrapers/servicebased/birlaSoft.js"
 
 import Capgemini from "./scrapers/servicebased/Capgemini.js"
+import Cognizant from "./scrapers/servicebased/Cognizant.js"
 
 const config = {
   concurrency: 5,
@@ -109,7 +110,7 @@ ${error.stack}`;
 };
 
 const scrapers = [
-   { fn: Capgemini, headless: true },
+   { fn: Cognizant, headless: true },
 ];
 
 const runAllScrapers = async () => {

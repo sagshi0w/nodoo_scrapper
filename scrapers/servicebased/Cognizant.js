@@ -3,7 +3,7 @@ import fs from 'fs';
 
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
-class CognizantJobsScraper {
+class BrillioJobsScraper {
     constructor(headless = true) {
         this.headless = headless;
         this.browser = null;
@@ -23,82 +23,144 @@ class CognizantJobsScraper {
 
     async navigateToJobsPage() {
         console.log('🌐 Navigating to Cognizant Careers...');
-        await this.page.goto('https://careers.cognizant.com/us-en/jobs/?keyword=&location=&lat=&lng=&cname=&ccode=&origin=global', {
-            waitUntil: 'networkidle2'
-        });
-        await delay(5000);
+        try {
+            await this.page.goto('https://careers.cognizant.com/india-en/jobs/?keyword=&location=India&radius=100&lat=&lng=&cname=India&ccode=IN&pagesize=10#results', {
+                waitUntil: 'domcontentloaded',
+                timeout: 60000
+            });
+            await delay(5000);
+            
+            // Wait for job links to be available
+            try {
+                await this.page.waitForSelector('a.js-view-job', { timeout: 10000 });
+                console.log('✅ Page loaded successfully');
+            } catch (err) {
+                console.log('⚠️ Job links not immediately available, continuing anyway...');
+            }
+        } catch (error) {
+            console.error('❌ Navigation error:', error.message);
+            throw error;
+        }
     }
 
     async collectAllJobCardLinks() {
         this.allJobLinks = [];
-        let pageIndex = 1;
         const existingLinks = new Set();
+        let loadMoreClicks = 0;
+        const maxClicks = 100; // Safety limit to prevent infinite loops
 
         while (true) {
-            // Wait for job links to load
-            //await this.page.waitForSelector('div.op-job-apply-bt', { timeout: 10000 });
-
-            // Collect new links
+            // Collect current links on the page
             const jobLinks = await this.page.$$eval(
-                'a.stretched-link.js-view-job',
-                anchors => anchors.map(a => a.href)
+                'a.js-view-job[href^="/india-en/jobs/"]',
+                anchors =>
+                    [...new Set(
+                        anchors
+                            .map(a => a.getAttribute('href'))
+                            .filter(Boolean)
+                            .map(href =>
+                                href.startsWith('http')
+                                    ? href
+                                    : `https://careers.cognizant.com${href}`
+                            )
+                    )]
             );
 
+            // Add new links
+            let newLinksCount = 0;
             for (const link of jobLinks) {
                 if (!existingLinks.has(link)) {
                     existingLinks.add(link);
                     this.allJobLinks.push(link);
+                    newLinksCount++;
                 }
             }
 
-            console.log(`📄 Collected ${this.allJobLinks.length} unique job links so far...`);
+            console.log(`📄 Collected ${this.allJobLinks.length} unique job links (${newLinksCount} new)...`);
 
-            const pageNumbers = await this.page.$$eval('ul.pagination li a', links =>
-                links
-                    .map(a => ({
-                        text: a.textContent.trim(),
-                        href: a.getAttribute('href'),
-                    }))
-                    .filter(a => /^\d+$/.test(a.text)) // Only page numbers
-            );
-
-            // Try to click "See more results" button
-            // Check if "Show More Results" button exists and is visible
-            const nextPage = pageNumbers.find(p => Number(p.text) === pageIndex + 1);
-
-            if (!nextPage) {
-                console.log('✅ No more pages left. Done.');
+            // Check if "Load More" button exists and is visible
+            const loadMoreButton = await this.page.$('a.filters-more[aria-label*="Load More"]');
+            
+            if (!loadMoreButton) {
+                console.log('✅ No "Load More" button found. All jobs loaded.');
                 break;
             }
 
-            // Click the next page
-            console.log(`➡️ Clicking page ${pageIndex + 1}`);
-            await Promise.all([
-                //this.page.click(`ul.pagination li a[title="Page ${pageIndex + 1}"]`),
-                //this.page.waitForNavigation({ waitUntil: 'networkidle2' }),
-            ]);
+            // Check if button is visible and enabled
+            const isVisible = await loadMoreButton.evaluate(el => {
+                const style = window.getComputedStyle(el);
+                return style.display !== 'none' && 
+                       style.visibility !== 'hidden' && 
+                       el.offsetParent !== null;
+            });
 
-            pageIndex++;
+            if (!isVisible) {
+                console.log('✅ "Load More" button is not visible. All jobs loaded.');
+                break;
+            }
 
+            // Safety check
+            if (loadMoreClicks >= maxClicks) {
+                console.log(`⚠️ Reached maximum clicks (${maxClicks}). Stopping.`);
+                break;
+            }
+
+            // Click the "Load More" button
+            loadMoreClicks++;
+            console.log(`➡️ Clicking "Load More" button (click ${loadMoreClicks})...`);
+            
+            try {
+                await loadMoreButton.click();
+                // Wait for new content to load
+                await delay(3000);
+            } catch (err) {
+                console.log('⚠️ Error clicking "Load More" button:', err.message);
+                break;
+            }
         }
 
-        return this.allJobLinks;;
+        console.log(`✅ Finished collecting ${this.allJobLinks.length} unique job links.`);
+        return this.allJobLinks;
     }
 
 
     async extractJobDetailsFromLink(url) {
         const jobPage = await this.browser.newPage();
         try {
-            await jobPage.goto(url, { waitUntil: 'networkidle2' });
+            await jobPage.goto(url, { 
+                waitUntil: 'domcontentloaded',
+                timeout: 60000 
+            });
             await delay(5000);
-            //await jobPage.waitForSelector('div.job__description.body', { timeout: 10000 });
+            
+            // Wait for key elements to be available
+            try {
+                await jobPage.waitForSelector('h1.hero-heading', { timeout: 10000 });
+            } catch (err) {
+                console.log('⚠️ Job page elements not immediately available, continuing anyway...');
+            }
 
             const job = await jobPage.evaluate(() => {
                 const getText = sel => document.querySelector(sel)?.innerText.trim() || '';
+
+                // Extract description from article.cms-content
+                const descriptionElement = document.querySelector('article.cms-content');
+                const description = descriptionElement ? descriptionElement.innerText.trim() : '';
+
+                // Extract location from job details
+                let location = '';
+                const locationDt = Array.from(document.querySelectorAll('dt')).find(
+                    dt => dt.textContent.trim() === 'Location:'
+                );
+                if (locationDt && locationDt.nextElementSibling) {
+                    location = locationDt.nextElementSibling.textContent.trim();
+                }
+
                 return {
                     title: getText('h1.hero-heading'),
                     company: 'Cognizant',
-                    description: getText('.cms-content'),
+                    location: location || '',
+                    description: description || '',
                     url: window.location.href
                 };
             });
@@ -132,7 +194,7 @@ class CognizantJobsScraper {
 
     async saveResults() {
         // fs.writeFileSync('./scrappedJobs/phonepeJobs.json', JSON.stringify(this.allJobs, null, 2));
-        console.log(`💾 Saved ${this.allJobs.length} jobs to YashTechnologies.json`);
+        console.log(`💾 Saved ${this.allJobs.length} jobs.`);
     }
 
     async close() {
@@ -160,33 +222,24 @@ const extractWiproData = (job) => {
 
     let cleanedDescription = job.description || '';
     let experience = null;
-    let miniExperience = null;
-    let maxExperience = null;
     let location = null;
 
-    // --- Regex patterns for experience ---
     const expPatterns = [
-        /\b(\d{1,2})\s*\+\s*(?:years|yrs|yr)\b/i, // e.g. "10+ years"
+        /\b(\d{1,2})\s*\+\s*(?:years|yrs|yr)\b/i,
         /\bminimum\s*(\d{1,2})\s*(?:years|yrs|yr)\b/i,
         /\bmin(?:imum)?\s*(\d{1,2})\s*(?:years|yrs|yr)\b/i,
-        /\b(\d{1,2})\s*(?:to|–|-)\s*(\d{1,2})\s*(?:years|yrs|yr)\b/i, // e.g. "3-5 years"
+        /\b(\d{1,2})\s*(?:to|–|-|–)\s*(\d{1,2})\s*(?:years|yrs|yr)\b/i,
         /\b(?:at least|over)\s*(\d{1,2})\s*(?:years|yrs|yr)\b/i,
         /\b(\d{1,2})\s*(?:years|yrs|yr)\s+experience\b/i,
         /\bexperience\s*(?:of)?\s*(\d{1,2})\s*(?:years|yrs|yr)\b/i,
         /\bexperience\s*(?:required)?\s*[:\-]?\s*(\d{1,2})\s*(?:[-to]+)?\s*(\d{1,2})?\s*(?:years|yrs|yr)?/i,
     ];
 
-    // --- Regex patterns for city/location ---
-    const cityPatterns = [
-        /Location\s*(?:City)?:\s*([A-Za-z .]+)/i,   // captures only city name after "Location City:"
-        /\b(Bangalore|Bengaluru|Hyderabad|Chennai|Pune|Mumbai|Delhi|Gurgaon|Noida|Kolkata|Trivandrum|Cochin|Jaipur|Ahmedabad|Indore|Nagpur)\b/i
-    ];
-
-    // Step 1: If job.experience is numeric
+    // Step 1: Try job.experience field
     if (typeof job.experience === 'number' || /^\d+$/.test(job.experience)) {
-        miniExperience = parseInt(job.experience, 10);
-        maxExperience = miniExperience + 2;
-        experience = `${miniExperience} - ${maxExperience} yrs`;
+        const minExp = parseInt(job.experience, 10);
+        const maxExp = minExp + 2;
+        experience = `${minExp} - ${maxExp} yrs`;
     }
 
     // Step 2: Parse experience from description
@@ -194,44 +247,27 @@ const extractWiproData = (job) => {
         for (const pattern of expPatterns) {
             const match = cleanedDescription.match(pattern);
             if (match) {
-                const min = match[1] ? parseInt(match[1], 10) : null;
-                const max = match[2] ? parseInt(match[2], 10) : null;
+                const min = match[1];
+                const max = match[2];
 
                 if (min && max) {
-                    miniExperience = min;
-                    maxExperience = max;
                     experience = `${min} - ${max} yrs`;
                 } else if (min && !max) {
-                    miniExperience = min;
-                    maxExperience = min + 2;
-                    experience = `${min} - ${maxExperience} yrs`;
+                    const estMax = parseInt(min) + 2;
+                    experience = `${min} - ${estMax} yrs`;
                 }
                 break;
             }
         }
     }
 
-    // Step 3: Extract city from job.location field
-    if (job.location) {
-        const cityMatch = job.location.match(/^([^,\n]+)/);
-        if (cityMatch) {
-            location = cityMatch[1].trim();
-        }
-    }
-
-    // Step 4: If location still not found, parse from description
-    if (!location && cleanedDescription) {
-        for (const pattern of cityPatterns) {
-            const match = cleanedDescription.match(pattern);
-            if (match) {
-                location = match[1].trim();
-                break;
-            }
-        }
-    }
-
-    // Step 5: Clean description
+    // Step 3: Clean description
     if (cleanedDescription) {
+        cleanedDescription = cleanedDescription.replace(
+            /(Current Openings|Job Summary)[\s\S]*?(?:Apply\.?\s*)?(?=\n{2,}|$)/gi,
+            ''
+        );
+
         cleanedDescription = cleanedDescription
             .replace(/(\n\s*)(\d+\.\s+)(.*?)(\n)/gi, '\n\n$1$2$3$4\n\n')
             .replace(/(\n\s*)([•\-]\s+)(.*?)(\n)/gi, '\n\n$1$2$3$4\n\n')
@@ -241,8 +277,32 @@ const extractWiproData = (job) => {
             .replace(/(\S)\n(\S)/g, '$1\n\n$2')
             .trim();
 
-        if (!cleanedDescription) {
+        if (cleanedDescription && !cleanedDescription.endsWith('\n')) {
+            cleanedDescription += '\n';
+        }
+
+        if (!cleanedDescription.trim()) {
             cleanedDescription = 'Description not available\n';
+        }
+    } else {
+        cleanedDescription = 'Description not available\n';
+    }
+
+    if (job.title && cleanedDescription.startsWith(job.title)) {
+        const match = cleanedDescription.match(/Primary Skills\s*[:\-–]?\s*/i);
+        if (match) {
+            const index = match.index;
+            if (index > 0) {
+                cleanedDescription = cleanedDescription.slice(index).trimStart();
+            }
+        }
+    }
+
+    // Step 4: Extract city from location string
+    if (job.location) {
+        const cityMatch = job.location.match(/^([^,\n]+)/);
+        if (cityMatch) {
+            location = cityMatch[1].trim();
         }
     }
 
@@ -250,28 +310,25 @@ const extractWiproData = (job) => {
         ...job,
         title: job.title?.trim(),
         experience,
-        miniExperience,
-        maxExperience,
         location,
         description: cleanedDescription,
     };
 };
 
 
-
 // ✅ Exportable runner function
-const runCognizantJobsScraper = async ({ headless = true } = {}) => {
-    const scraper = new CognizantJobsScraper(headless);
+const runBrillioJobsScraper = async ({ headless = true } = {}) => {
+    const scraper = new BrillioJobsScraper(headless);
     await scraper.run();
     return scraper.allJobs;
 };
 
-export default runCognizantJobsScraper;
+export default runBrillioJobsScraper;
 
 // ✅ CLI support: node phonepe.js --headless=false
 if (import.meta.url === `file://${process.argv[1]}`) {
     const headlessArg = process.argv.includes('--headless=false') ? false : true;
     (async () => {
-        await runCognizantJobsScraper({ headless: headlessArg });
+        await runBrillioJobsScraper({ headless: headlessArg });
     })();
 }
