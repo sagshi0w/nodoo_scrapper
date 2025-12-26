@@ -40,7 +40,7 @@ class CybageJobsScraper {
 
             // Collect new links
             const jobLinks = await this.page.$$eval(
-                'a[href^="/careers/open-positions/current-openings/"]',
+                'td.views-field.views-field-title a',
                 anchors => anchors.map(a => a.href)
             );
 
@@ -95,10 +95,24 @@ class CybageJobsScraper {
 
             const job = await jobPage.evaluate(() => {
                 const getText = sel => document.querySelector(sel)?.innerText.trim() || '';
+                
+                // Find location by finding heading containing "Location" and getting next sibling
+                let location = '';
+                const headings = document.querySelectorAll('.job_info__heading');
+                for (const heading of headings) {
+                    if (heading.textContent.includes('Location')) {
+                        const nextSibling = heading.nextElementSibling;
+                        if (nextSibling && nextSibling.classList.contains('job_info__desc')) {
+                            location = nextSibling.innerText.trim();
+                        }
+                        break;
+                    }
+                }
+                
                 return {
-                    title: getText('span.field.field--name-title.field--type-string.field--label-hidden'),
+                    title: getText('.job_info .field--name-title'),
                     company: 'Cybage',
-                    location: 'India',
+                    location: location || getText('p.green'),
                     description: getText('div.job-description'),
                     url: window.location.href
                 };
@@ -133,7 +147,7 @@ class CybageJobsScraper {
 
     async saveResults() {
         // fs.writeFileSync('./scrappedJobs/phonepeJobs.json', JSON.stringify(this.allJobs, null, 2));
-        console.log(`💾 Saved ${this.allJobs.length} jobs to YashTechnologies.json`);
+        console.log(`💾 Saved ${this.allJobs.length} jobs.`);
     }
 
     async close() {
@@ -202,6 +216,20 @@ const extractWiproData = (job) => {
 
     // Step 3: Clean description
     if (cleanedDescription) {
+        cleanedDescription = cleanedDescription.replace(
+            /(Current Openings|Job Summary)[\s\S]*?(?:Apply\.?\s*)?(?=\n{2,}|$)/gi,
+            ''
+        );
+
+        cleanedDescription = cleanedDescription
+            .replace(/(\n\s*)(\d+\.\s+)(.*?)(\n)/gi, '\n\n$1$2$3$4\n\n')
+            .replace(/(\n\s*)([•\-]\s+)(.*?)(\n)/gi, '\n\n$1$2$3$4\n\n')
+            .replace(/([.!?])\s+/g, '$1  ')
+            .replace(/[ \t]+$/gm, '')
+            .replace(/\n{3,}/g, '\n\n')
+            .replace(/(\S)\n(\S)/g, '$1\n\n$2')
+            .trim();
+
         if (cleanedDescription && !cleanedDescription.endsWith('\n')) {
             cleanedDescription += '\n';
         }

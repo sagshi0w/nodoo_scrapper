@@ -41,6 +41,7 @@ import runBirlaSoftScrapper from "./scrapers/servicebased/birlaSoft.js"
 
 import Capgemini from "./scrapers/servicebased/Capgemini.js"
 import Cognizant from "./scrapers/servicebased/Cognizant.js"
+import Cybage from "./scrapers/servicebased/cybage.js"
 
 const config = {
   concurrency: 5,
@@ -110,7 +111,7 @@ ${error.stack}`;
 };
 
 const scrapers = [
-   { fn: Cognizant, headless: true },
+   { fn: Cybage, headless: true },
 ];
 
 const runAllScrapers = async () => {
