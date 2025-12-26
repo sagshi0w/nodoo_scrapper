@@ -42,7 +42,8 @@ import runBirlaSoftScrapper from "./scrapers/servicebased/birlaSoft.js"
 import Capgemini from "./scrapers/servicebased/Capgemini.js"
 import Cognizant from "./scrapers/servicebased/Cognizant.js"
 import Cybage from "./scrapers/servicebased/cybage.js"
-import Cybertech from "./scrapers/servicebased/cybertech.js" 
+import Cybertech from "./scrapers/servicebased/cybertech.js"
+import GlobalLogic from "./scrapers/servicebased/GlobalLogic.js"
 
 const config = {
   concurrency: 5,
@@ -112,7 +113,7 @@ ${error.stack}`;
 };
 
 const scrapers = [
-   { fn: Cybertech, headless: true },
+   { fn: GlobalLogic, headless: true },
 ];
 
 const runAllScrapers = async () => {
