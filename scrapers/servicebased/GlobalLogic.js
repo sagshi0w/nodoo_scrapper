@@ -35,14 +35,14 @@ class GlobalLogicJobsScraper {
 
         while (true) {
             // Wait for job links to load
-            await this.page.waitForSelector('a.job_box', { timeout: 10000 });
+            await this.page.waitForSelector('.career_filter_result a.job_box[href]', { timeout: 10000 });
 
             // Collect current links before clicking
             const linksBeforeClick = this.allJobLinks.length;
 
             // Collect new links
             const jobLinks = await this.page.$$eval(
-                'a.job_box',
+                '.career_filter_result a.job_box[href]',
                 anchors => anchors.map(a => a.href)
             );
 
