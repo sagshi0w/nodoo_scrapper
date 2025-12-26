@@ -3,7 +3,7 @@ import fs from 'fs';
 
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
-class CyberTechJobsScraper {
+class CybertechJobsScraper {
     constructor(headless = true) {
         this.headless = headless;
         this.browser = null;
@@ -22,8 +22,8 @@ class CyberTechJobsScraper {
     }
 
     async navigateToJobsPage() {
-        console.log('🌐 Navigating to Cybertech Systems & Software Ltd Careers...');
-        await this.page.goto('https://cybertech.com/careers/', {
+        console.log('🌐 Navigating to Cybertech Careers...');
+        await this.page.goto('https://cybertech.in/careers/', {
             waitUntil: 'networkidle2'
         });
         await delay(5000);
@@ -34,9 +34,16 @@ class CyberTechJobsScraper {
         const existingLinks = new Set();
 
         while (true) {
-            // Collect job links on current page
-            const jobLinks = await this.page.$$eval("h5 > a", anchors =>
-                anchors.map(a => a.href)
+            // Wait for job links to load
+            await this.page.waitForSelector('.job_item h5 a', { timeout: 10000 });
+
+            // Collect current links before clicking
+            const linksBeforeClick = this.allJobLinks.length;
+
+            // Collect new links
+            const jobLinks = await this.page.$$eval(
+                '.job_item h5 a',
+                anchors => anchors.map(a => a.href)
             );
 
             for (const link of jobLinks) {
@@ -48,33 +55,51 @@ class CyberTechJobsScraper {
 
             console.log(`📄 Collected ${this.allJobLinks.length} unique job links so far...`);
 
-            // Check if "Load More" button exists (fresh query every loop)
-            const loadMoreExists = await this.page.$('#load_more_jobs2');
-            if (!loadMoreExists) {
-                console.log("✅ No more pages found. Pagination finished.");
+            // Check if "Load more" button exists
+            const loadMoreButton = await this.page.$('.pager--load-more a');
+            
+            if (!loadMoreButton) {
+                console.log('✅ No "Load more" button found. Done.');
                 break;
             }
 
-            // console.log("➡️ Clicking Load More...");
-            // await this.page.click('#load_more_jobs');
+            // Scroll to the button to ensure it's in viewport
+            await loadMoreButton.evaluate(el => el.scrollIntoView({ behavior: 'smooth', block: 'center' }));
+            await delay(500);
 
-            // ⏳ Wait for new jobs to load
-            // await this.page.waitForFunction(
-            //     (prevCount) => {
-            //         return document.querySelectorAll("h5 > a").length > prevCount;
-            //     },
-            //     {},
-            //     jobLinks.length
-            // );
+            // Check if button is actually visible and clickable
+            const isVisible = await loadMoreButton.isIntersectingViewport();
+            const isEnabled = await loadMoreButton.evaluate(el => {
+                return !el.hasAttribute('disabled') && 
+                       !el.closest('.pager--load-more')?.classList.contains('hidden');
+            });
 
-            // // Optional: small delay to stabilize
-            // await delay(5000);
+            if (!isVisible || !isEnabled) {
+                console.log('✅ "Load more" button not available. Done.');
+                break;
+            }
+
+            // Click the "Load more" button
+            console.log('➡️ Clicking "Load more" button...');
+            await loadMoreButton.click();
+            
+            // Wait for new content to load (AJAX request)
+            await this.page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 10000 }).catch(() => {
+                // If no navigation happens (AJAX load), just wait for content
+                console.log('Waiting for AJAX content to load...');
+            });
+            await delay(3000);
+
+            // Check if we got new links
+            const linksAfterClick = this.allJobLinks.length;
+            if (linksAfterClick === linksBeforeClick) {
+                console.log('✅ No new links loaded. Done.');
+                break;
+            }
         }
 
         return this.allJobLinks;
     }
-
-
 
 
     async extractJobDetailsFromLink(url) {
@@ -86,11 +111,43 @@ class CyberTechJobsScraper {
 
             const job = await jobPage.evaluate(() => {
                 const getText = sel => document.querySelector(sel)?.innerText.trim() || '';
+                
+                // Find location by finding heading containing "Location" and getting next sibling
+                let location = '';
+                const headings = document.querySelectorAll('.job_info__heading');
+                for (const heading of headings) {
+                    if (heading.textContent.includes('Location')) {
+                        const nextSibling = heading.nextElementSibling;
+                        if (nextSibling && nextSibling.classList.contains('job_info__desc')) {
+                            location = nextSibling.innerText.trim();
+                        }
+                        break;
+                    }
+                }
+                
+                // Extract experience from right_jobcontent
+                let experience = '';
+                const rightJobContents = document.querySelectorAll('.right_jobcontent');
+                for (const content of rightJobContents) {
+                    const h3 = content.querySelector('h3');
+                    if (h3 && h3.textContent.includes('Experience')) {
+                        const jbContent = content.querySelector('.jbContent_right');
+                        if (jbContent) {
+                            experience = jbContent.innerText.trim();
+                        }
+                        break;
+                    }
+                }
+                
+                // Get description from et_pb_post_content
+                const description = getText('div.et_pb_post_content');
+                
                 return {
                     title: getText('h1.entry-title'),
-                    company: 'Cybertech Systems & Software Ltd',
-                    location: getText('.banner_jobmeta:nth-of-type(2) span'),
-                    description: getText('.et_pb_column_2_3'),
+                    company: 'Cybertech ',
+                    location: location || getText('p.green'),
+                    description: description,
+                    experience: experience,
                     url: window.location.href
                 };
             });
@@ -124,7 +181,7 @@ class CyberTechJobsScraper {
 
     async saveResults() {
         // fs.writeFileSync('./scrappedJobs/phonepeJobs.json', JSON.stringify(this.allJobs, null, 2));
-        console.log(`💾 Saved ${this.allJobs.length} jobs to YashTechnologies.json`);
+        console.log(`💾 Saved ${this.allJobs.length} jobs.`);
     }
 
     async close() {
@@ -155,6 +212,7 @@ const extractWiproData = (job) => {
     let location = null;
 
     const expPatterns = [
+        /\b(\d{1,2})\s*\+\s*(?:years|yrs|yr)\b/i,
         /\bminimum\s*(\d{1,2})\s*(?:years|yrs|yr)\b/i,
         /\bmin(?:imum)?\s*(\d{1,2})\s*(?:years|yrs|yr)\b/i,
         /\b(\d{1,2})\s*(?:to|–|-|–)\s*(\d{1,2})\s*(?:years|yrs|yr)\b/i,
@@ -162,7 +220,6 @@ const extractWiproData = (job) => {
         /\b(\d{1,2})\s*(?:years|yrs|yr)\s+experience\b/i,
         /\bexperience\s*(?:of)?\s*(\d{1,2})\s*(?:years|yrs|yr)\b/i,
         /\bexperience\s*(?:required)?\s*[:\-]?\s*(\d{1,2})\s*(?:[-to]+)?\s*(\d{1,2})?\s*(?:years|yrs|yr)?/i,
-        /\b(\d{1,2})\s*\+\s*(?:years|yrs|yr)\b/i,
     ];
 
     // Step 1: Try job.experience field
@@ -193,25 +250,17 @@ const extractWiproData = (job) => {
 
     // Step 3: Clean description
     if (cleanedDescription) {
+        cleanedDescription = cleanedDescription.replace(
+            /(Current Openings|Job Summary)[\s\S]*?(?:Apply\.?\s*)?(?=\n{2,}|$)/gi,
+            ''
+        );
+
         cleanedDescription = cleanedDescription
-            // Remove unwanted headers/sections
-            .replace(
-                /(Current Openings|Job Summary|About\s+RateGain)[\s\S]*?(?:Apply\.?\s*)?(?=\n{2,}|$)/gi,
-                ''
-            )
-            // Remove "Job Description" phrase (case-insensitive)
-            .replace(/\bJob\s+Description\b[:\-]?\s*/gi, '')
-            // Add spacing for numbered lists
             .replace(/(\n\s*)(\d+\.\s+)(.*?)(\n)/gi, '\n\n$1$2$3$4\n\n')
-            // Add spacing for bullets
             .replace(/(\n\s*)([•\-]\s+)(.*?)(\n)/gi, '\n\n$1$2$3$4\n\n')
-            // Fix spacing after punctuation
             .replace(/([.!?])\s+/g, '$1  ')
-            // Trim trailing spaces/tabs
             .replace(/[ \t]+$/gm, '')
-            // Limit multiple newlines
             .replace(/\n{3,}/g, '\n\n')
-            // Ensure spacing between lines
             .replace(/(\S)\n(\S)/g, '$1\n\n$2')
             .trim();
 
@@ -225,8 +274,6 @@ const extractWiproData = (job) => {
     } else {
         cleanedDescription = 'Description not available\n';
     }
-
-
 
     if (job.title && cleanedDescription.startsWith(job.title)) {
         const match = cleanedDescription.match(/Primary Skills\s*[:\-–]?\s*/i);
@@ -257,18 +304,18 @@ const extractWiproData = (job) => {
 
 
 // ✅ Exportable runner function
-const runCyberTechJobsScraper = async ({ headless = true } = {}) => {
-    const scraper = new CyberTechJobsScraper(headless);
+const runCybertechJobsScraper = async ({ headless = true } = {}) => {
+    const scraper = new CybertechJobsScraper(headless);
     await scraper.run();
     return scraper.allJobs;
 };
 
-export default runCyberTechJobsScraper;
+export default runCybertechJobsScraper;
 
 // ✅ CLI support: node phonepe.js --headless=false
 if (import.meta.url === `file://${process.argv[1]}`) {
     const headlessArg = process.argv.includes('--headless=false') ? false : true;
     (async () => {
-        await runCyberTechJobsScraper({ headless: headlessArg });
+        await runCybertechJobsScraper({ headless: headlessArg });
     })();
 }
