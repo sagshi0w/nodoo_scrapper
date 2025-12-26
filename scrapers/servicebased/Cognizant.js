@@ -26,7 +26,7 @@ class BrillioJobsScraper {
         try {
             await this.page.goto('https://careers.cognizant.com/india-en/jobs/?keyword=&location=India&radius=100&lat=&lng=&cname=India&ccode=IN&pagesize=10#results', {
                 waitUntil: 'networkidle2',
-                timeout: 60000
+                timeout: 100000
             });
             await delay(5000);
             
