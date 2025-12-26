@@ -44,6 +44,7 @@ import Cognizant from "./scrapers/servicebased/Cognizant.js"
 import Cybage from "./scrapers/servicebased/cybage.js"
 import Cybertech from "./scrapers/servicebased/cybertech.js"
 import GlobalLogic from "./scrapers/servicebased/GlobalLogic.js"
+import HclTech from "./scrapers/servicebased/hclTech.js"
 
 const config = {
   concurrency: 5,
@@ -113,7 +114,7 @@ ${error.stack}`;
 };
 
 const scrapers = [
-   { fn: GlobalLogic, headless: true },
+   { fn: HclTech, headless: true },
 ];
 
 const runAllScrapers = async () => {
