@@ -34,22 +34,31 @@ class GlobalLogicJobsScraper {
         const existingLinks = new Set();
 
         while (true) {
-            // Wait for job links to load (with longer timeout and error handling)
+            // Wait for job links container to load (with longer timeout and error handling)
             try {
-                await this.page.waitForSelector('a.job_box', { timeout: 15000 });
+                await this.page.waitForSelector('.career_filter_result', { timeout: 15000 });
+                await delay(2000); // Give extra time for links to render
             } catch (err) {
-                console.log('⚠️ Job links selector not found, checking if page loaded...');
+                console.log('⚠️ Job links container not found, checking if page loaded...');
                 await delay(3000);
             }
 
             // Collect current links before clicking
             const linksBeforeClick = this.allJobLinks.length;
 
-            // Collect new links
-            const jobLinks = await this.page.$$eval(
-                'a.job_box',
+            // Collect new links - try both selectors
+            let jobLinks = await this.page.$$eval(
+                '.career_filter_result a.job_box',
                 anchors => anchors.map(a => a.href)
             ).catch(() => []);
+
+            // Fallback to simpler selector if first one doesn't work
+            if (jobLinks.length === 0) {
+                jobLinks = await this.page.$$eval(
+                    'a.job_box',
+                    anchors => anchors.map(a => a.href)
+                ).catch(() => []);
+            }
 
             if (jobLinks.length === 0) {
                 console.log('⚠️ No job links found on this page.');
