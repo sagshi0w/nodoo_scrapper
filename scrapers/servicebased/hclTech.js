@@ -125,7 +125,8 @@ class HclTechJobsScraper {
             console.log(`📄 Collected ${this.allJobLinks.length} unique job links (${newJobsCount} new)...`);
 
             // Check if "Load More" button exists and is visible
-            const loadMoreButton = await this.page.$('a.filters-more[aria-label*="Load More"]');
+            // Updated selector to match the actual HTML structure: ul.js-pager__items.pager > li > a with title="Load more items"
+            const loadMoreButton = await this.page.$('ul.js-pager__items.pager a[title="Load more items"], ul.pager a[rel="next"][title*="Load more"], a.button.btn[title*="Load more"]');
             
             if (!loadMoreButton) {
                 console.log('✅ No "Load More" button found. All jobs loaded.');
