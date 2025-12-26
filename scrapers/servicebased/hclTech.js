@@ -15,31 +15,54 @@ class HclTechJobsScraper {
     async initialize() {
         this.browser = await puppeteer.launch({
             headless: this.headless,
-            args: ['--no-sandbox', ...(this.headless ? [] : ['--start-maximized'])],
+            args: [
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--disable-dev-shm-usage',
+                '--disable-blink-features=AutomationControlled',
+                '--disable-features=IsolateOrigins,site-per-process',
+                ...(this.headless ? [] : ['--start-maximized'])
+            ],
             defaultViewport: this.headless ? { width: 1920, height: 1080 } : null
         });
         this.page = await this.browser.newPage();
+        await this.page.setUserAgent(
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 ' +
+            '(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        );
     }
 
     async navigateToJobsPage() {
         console.log('🌐 Navigating to HclTech Careers...');
-        try {
-            await this.page.goto('https://www.hcltech.com/engineering/job-opening#engineering-job-section', {
-                waitUntil: 'domcontentloaded',
-                timeout: 60000
-            });
-            await delay(5000);
-            
-            // Wait for job links to be available
+        const maxRetries = 3;
+        let retryCount = 0;
+        
+        while (retryCount < maxRetries) {
             try {
-                await this.page.waitForSelector('td.views-field-title a[href]', { timeout: 10000 });
-                console.log('✅ Page loaded successfully');
-            } catch (err) {
-                console.log('⚠️ Job links not immediately available, continuing anyway...');
+                await this.page.goto('https://www.hcltech.com/engineering/job-opening#engineering-job-section', {
+                    waitUntil: 'domcontentloaded',
+                    timeout: 60000
+                });
+                await delay(5000);
+                
+                // Wait for job links to be available
+                try {
+                    await this.page.waitForSelector('td.views-field-title a[href]', { timeout: 10000 });
+                    console.log('✅ Page loaded successfully');
+                    return; // Success, exit retry loop
+                } catch (err) {
+                    console.log('⚠️ Job links not immediately available, continuing anyway...');
+                    return; // Page loaded but selector not found, continue anyway
+                }
+            } catch (error) {
+                retryCount++;
+                if (retryCount >= maxRetries) {
+                    console.error(`❌ Navigation error after ${maxRetries} attempts:`, error.message);
+                    throw error;
+                }
+                console.log(`⚠️ Navigation attempt ${retryCount} failed, retrying... (${error.message})`);
+                await delay(3000 * retryCount); // Exponential backoff
             }
-        } catch (error) {
-            console.error('❌ Navigation error:', error.message);
-            throw error;
         }
     }
 
@@ -127,10 +150,33 @@ class HclTechJobsScraper {
     async extractJobDetailsFromLink(url) {
         const jobPage = await this.browser.newPage();
         try {
-            await jobPage.goto(url, { 
-                waitUntil: 'domcontentloaded',
-                timeout: 60000 
-            });
+            // Set user agent for job page as well
+            await jobPage.setUserAgent(
+                'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 ' +
+                '(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+            );
+            
+            const maxRetries = 2;
+            let retryCount = 0;
+            let navigationSuccess = false;
+            
+            while (retryCount < maxRetries && !navigationSuccess) {
+                try {
+                    await jobPage.goto(url, { 
+                        waitUntil: 'domcontentloaded',
+                        timeout: 60000 
+                    });
+                    navigationSuccess = true;
+                } catch (err) {
+                    retryCount++;
+                    if (retryCount >= maxRetries) {
+                        throw err;
+                    }
+                    console.log(`⚠️ Retrying navigation to ${url} (attempt ${retryCount + 1})...`);
+                    await delay(2000 * retryCount);
+                }
+            }
+            
             await delay(5000);
             
             // Wait for key elements to be available
