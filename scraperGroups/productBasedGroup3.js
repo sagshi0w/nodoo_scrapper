@@ -19,7 +19,7 @@ import Groww from "../scrapers/productBased/groww.js";
 import Paypal from "../scrapers/productBased/paypal.js";
 import Phonepe from "../scrapers/productBased/phonepe.js";
 
-import  VirtualGalaxy from "../scrapers/servicebased/virtualGalaxy.js"
+import VirtualGalaxy from "../scrapers/servicebased/virtualGalaxy.js"
 import YashTechnologies from "../scrapers/servicebased/yashTechnologies.js"
 
 const config = {
