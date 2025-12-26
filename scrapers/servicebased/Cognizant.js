@@ -30,11 +30,28 @@ class BrillioJobsScraper {
             });
             await delay(5000);
             
-            // Scroll to trigger lazy loading
-            await this.page.evaluate(() => {
-                window.scrollTo(0, document.body.scrollHeight / 2);
+            // Scroll multiple times to trigger lazy loading
+            await this.page.evaluate(async () => {
+                const scrollStep = 500;
+                const scrollDelay = 300;
+                const maxScrolls = 10;
+                let scrolls = 0;
+                let lastHeight = document.body.scrollHeight;
+                
+                while (scrolls < maxScrolls) {
+                    window.scrollBy(0, scrollStep);
+                    await new Promise(resolve => setTimeout(resolve, scrollDelay));
+                    scrolls++;
+                    
+                    const newHeight = document.body.scrollHeight;
+                    if (newHeight === lastHeight) break;
+                    lastHeight = newHeight;
+                }
+                
+                // Scroll back to top
+                window.scrollTo(0, 0);
             });
-            await delay(2000);
+            await delay(3000);
             
             // Wait for job links to be available with multiple selector attempts
             try {
@@ -62,17 +79,41 @@ class BrillioJobsScraper {
         let loadMoreClicks = 0;
         const maxClicks = 100; // Safety limit to prevent infinite loops
 
+        // Debug: Check what's on the page
+        const pageInfo = await this.page.evaluate(() => {
+            const allLinks = Array.from(document.querySelectorAll('a'));
+            const jobRelatedLinks = allLinks.filter(a => {
+                const href = a.getAttribute('href') || '';
+                return href.includes('/jobs/') || href.includes('job');
+            });
+            return {
+                totalLinks: allLinks.length,
+                jobRelatedLinks: jobRelatedLinks.map(a => ({
+                    href: a.getAttribute('href'),
+                    classes: a.className,
+                    text: a.textContent.trim().substring(0, 50)
+                }))
+            };
+        });
+        console.log(`🔍 Debug: Found ${pageInfo.totalLinks} total links, ${pageInfo.jobRelatedLinks.length} job-related links`);
+        if (pageInfo.jobRelatedLinks.length > 0) {
+            console.log('🔍 Sample job links:', pageInfo.jobRelatedLinks.slice(0, 3));
+        }
+
         while (true) {
             // Collect current links on the page - try multiple selectors
             let jobLinks = [];
+            
+            // Try the most specific selector first
             try {
                 jobLinks = await this.page.$$eval(
-                    'a.js-view-job[href*="/jobs/"], a.stretched-link.js-view-job[href*="/jobs/"]',
+                    'a.js-view-job',
                     anchors =>
                         [...new Set(
                             anchors
                                 .map(a => a.getAttribute('href'))
                                 .filter(Boolean)
+                                .filter(href => href.includes('/jobs/'))
                                 .map(href =>
                                     href.startsWith('http')
                                         ? href
@@ -80,8 +121,41 @@ class BrillioJobsScraper {
                                 )
                         )]
                 );
+                if (jobLinks.length > 0) {
+                    console.log(`✅ Found ${jobLinks.length} links with a.js-view-job`);
+                }
             } catch (err) {
-                // Fallback to more generic selector
+                // Continue to next selector
+            }
+
+            // If no links found, try with stretched-link class
+            if (jobLinks.length === 0) {
+                try {
+                    jobLinks = await this.page.$$eval(
+                        'a.stretched-link.js-view-job',
+                        anchors =>
+                            [...new Set(
+                                anchors
+                                    .map(a => a.getAttribute('href'))
+                                    .filter(Boolean)
+                                    .filter(href => href.includes('/jobs/'))
+                                    .map(href =>
+                                        href.startsWith('http')
+                                            ? href
+                                            : `https://careers.cognizant.com${href}`
+                                    )
+                            )]
+                    );
+                    if (jobLinks.length > 0) {
+                        console.log(`✅ Found ${jobLinks.length} links with a.stretched-link.js-view-job`);
+                    }
+                } catch (err) {
+                    // Continue to next selector
+                }
+            }
+
+            // If still no links, try generic href pattern
+            if (jobLinks.length === 0) {
                 try {
                     jobLinks = await this.page.$$eval(
                         'a[href*="/india-en/jobs/"]',
@@ -90,17 +164,24 @@ class BrillioJobsScraper {
                                 anchors
                                     .map(a => a.getAttribute('href'))
                                     .filter(Boolean)
-                                    .filter(href => href.includes('/jobs/') && !href.includes('#'))
-                                    .map(href =>
-                                        href.startsWith('http')
-                                            ? href
-                                            : `https://careers.cognizant.com${href}`
-                                    )
+                                    .filter(href => {
+                                        const cleanHref = href.split('#')[0];
+                                        return cleanHref.includes('/jobs/') && 
+                                               cleanHref.match(/\/jobs\/\d+\//); // Must match pattern /jobs/numbers/
+                                    })
+                                    .map(href => {
+                                        const cleanHref = href.split('#')[0];
+                                        return cleanHref.startsWith('http')
+                                            ? cleanHref
+                                            : `https://careers.cognizant.com${cleanHref}`;
+                                    })
                             )]
                     );
+                    if (jobLinks.length > 0) {
+                        console.log(`✅ Found ${jobLinks.length} links with a[href*="/india-en/jobs/"]`);
+                    }
                 } catch (err2) {
-                    console.log('⚠️ Could not collect job links:', err2.message);
-                    jobLinks = [];
+                    console.log('⚠️ Could not collect job links with generic selector:', err2.message);
                 }
             }
 
