@@ -25,50 +25,75 @@ class GlobalLogicJobsScraper {
         console.log('🌐 Navigating to GlobalLogic Careers...');
         await this.page.goto(
             'https://www.globallogic.com/careers/open-positions',
-            { waitUntil: 'domcontentloaded', timeout: 60000 }
+            { waitUntil: 'networkidle2', timeout: 60000 }
         );
+        await delay(5000); // Give time for AJAX content to load
     }
 
     // ✅ FIXED: AJAX-safe job link collection
     async collectAllJobCardLinks() {
         console.log('🔍 Waiting for job cards (AJAX)...');
 
+        // Try multiple strategies to find job links
+        let jobLinks = [];
+
+        // Strategy 1: Wait for specific selector
         try {
-            // Wait for the container first
-            await this.page.waitForSelector('.career_filter_result', { timeout: 20000 });
-            
-            // Then wait for job links to appear
-            await this.page.waitForFunction(
-                () => document.querySelectorAll('.career_filter_result a.job_box').length > 0,
-                { timeout: 20000 }
-            );
-
-            await delay(3000); // allow full render
-
-            const jobLinks = await this.page.$$eval(
+            await this.page.waitForSelector('.career_filter_result a.job_box', { timeout: 30000 });
+            await delay(2000);
+            jobLinks = await this.page.$$eval(
                 '.career_filter_result a.job_box',
                 anchors => anchors.map(a => a.href)
             );
-
-            this.allJobLinks = [...new Set(jobLinks)];
-
-            console.log(`✅ Collected ${this.allJobLinks.length} job links`);
+            console.log(`✅ Found ${jobLinks.length} links with .career_filter_result a.job_box`);
         } catch (err) {
-            console.warn(`⚠️ Error collecting links: ${err.message}`);
-            // Try fallback selector
+            console.log(`⚠️ Strategy 1 failed: ${err.message}`);
+        }
+
+        // Strategy 2: Try without container selector
+        if (jobLinks.length === 0) {
             try {
-                const jobLinks = await this.page.$$eval(
+                await this.page.waitForSelector('a.job_box', { timeout: 10000 });
+                await delay(2000);
+                jobLinks = await this.page.$$eval(
                     'a.job_box',
                     anchors => anchors.map(a => a.href)
                 );
-                this.allJobLinks = [...new Set(jobLinks)];
-                console.log(`✅ Collected ${this.allJobLinks.length} job links (fallback)`);
-            } catch (fallbackErr) {
-                console.error(`❌ Failed to collect links: ${fallbackErr.message}`);
-                this.allJobLinks = [];
+                console.log(`✅ Found ${jobLinks.length} links with a.job_box`);
+            } catch (err) {
+                console.log(`⚠️ Strategy 2 failed: ${err.message}`);
             }
         }
 
+        // Strategy 3: Debug - check what's actually on the page
+        if (jobLinks.length === 0) {
+            const pageInfo = await this.page.evaluate(() => {
+                const containers = document.querySelectorAll('[class*="career"], [class*="job"], [class*="filter"]');
+                const links = document.querySelectorAll('a[href*="/careers/"]');
+                return {
+                    containerCount: containers.length,
+                    linkCount: links.length,
+                    containerClasses: Array.from(containers).slice(0, 5).map(el => el.className),
+                    linkHrefs: Array.from(links).slice(0, 5).map(a => a.href)
+                };
+            });
+            console.log('🔍 Page debug info:', JSON.stringify(pageInfo, null, 2));
+            
+            // Try to find any links with /careers/ in href
+            try {
+                jobLinks = await this.page.$$eval(
+                    'a[href*="/careers/"]',
+                    anchors => anchors.map(a => a.href).filter(href => href.includes('/careers/') && !href.includes('#') && !href.includes('?'))
+                );
+                console.log(`✅ Found ${jobLinks.length} links with /careers/ pattern`);
+            } catch (err) {
+                console.log(`⚠️ Strategy 3 failed: ${err.message}`);
+            }
+        }
+
+        this.allJobLinks = [...new Set(jobLinks)];
+        console.log(`✅ Collected ${this.allJobLinks.length} unique job links`);
+        
         return this.allJobLinks;
     }
 
