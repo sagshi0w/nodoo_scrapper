@@ -56,7 +56,7 @@ class CybertechJobsScraper {
             console.log(`📄 Collected ${this.allJobLinks.length} unique job links so far...`);
 
             // Check if "Load more" button exists
-            const loadMoreButton = await this.page.$('.pager--load-more a');
+            const loadMoreButton = await this.page.$('#load_more_jobs');
             
             if (!loadMoreButton) {
                 console.log('✅ No "Load more" button found. Done.');
@@ -71,7 +71,8 @@ class CybertechJobsScraper {
             const isVisible = await loadMoreButton.isIntersectingViewport();
             const isEnabled = await loadMoreButton.evaluate(el => {
                 return !el.hasAttribute('disabled') && 
-                       !el.closest('.pager--load-more')?.classList.contains('hidden');
+                       el.style.display !== 'none' &&
+                       !el.closest('.loadmore_jobs')?.classList.contains('hidden');
             });
 
             if (!isVisible || !isEnabled) {
