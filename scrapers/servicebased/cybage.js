@@ -55,7 +55,7 @@ class CybageJobsScraper {
 
             console.log(`📄 Collected ${this.allJobLinks.length} unique job links so far...`);
 
-            // Check if "Load more" button exists and is visible
+            // Check if "Load more" button exists
             const loadMoreButton = await this.page.$('.pager--load-more a');
             
             if (!loadMoreButton) {
@@ -63,10 +63,19 @@ class CybageJobsScraper {
                 break;
             }
 
-            // Check if button is visible and enabled
+            // Scroll to the button to ensure it's in viewport
+            await loadMoreButton.evaluate(el => el.scrollIntoView({ behavior: 'smooth', block: 'center' }));
+            await delay(500);
+
+            // Check if button is actually visible and clickable
             const isVisible = await loadMoreButton.isIntersectingViewport();
-            if (!isVisible) {
-                console.log('✅ "Load more" button not visible. Done.');
+            const isEnabled = await loadMoreButton.evaluate(el => {
+                return !el.hasAttribute('disabled') && 
+                       !el.closest('.pager--load-more')?.classList.contains('hidden');
+            });
+
+            if (!isVisible || !isEnabled) {
+                console.log('✅ "Load more" button not available. Done.');
                 break;
             }
 
