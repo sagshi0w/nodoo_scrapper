@@ -25,6 +25,7 @@ import Deloitte from "../scrapers/servicebased/Deloitte.js"
 
 import Oracle from "../scrapers/productBased/oracle.js"
 import Cybage from "../scrapers/servicebased/cybage.js"
+import Cybertech from "../scrapers/servicebased/cybertech.js"
 
 
 const config = {
@@ -104,6 +105,7 @@ const scrapers = [
   { fn: Deloitte, headless: true },
   { fn: Oracle, headless: true },
   { fn: Cybage, headless: true },
+  { fn: Cybertech, headless: true },
 ];
 
 const runAllScrapers = async () => {
