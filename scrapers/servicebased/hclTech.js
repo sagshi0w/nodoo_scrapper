@@ -204,9 +204,13 @@ class HclTechJobsScraper {
             
             // Wait for key elements to be available
             try {
-                await jobPage.waitForSelector('h2 span.field--name-title, span.box-tag', { timeout: 10000 });
+                await jobPage.waitForSelector('h2 span.field--name-title, span.box-tag, div.field--name-body', { timeout: 15000 });
+                // Additional wait to ensure content is fully loaded
+                await delay(2000);
             } catch (err) {
                 console.log('⚠️ Job page elements not immediately available, continuing anyway...');
+                // Still wait a bit even if selector not found
+                await delay(2000);
             }
 
             const job = await jobPage.evaluate(() => {
@@ -216,9 +220,37 @@ class HclTechJobsScraper {
                 let description = '';
 
                 // Primary: Look for the job description in the field--name-body div
-                description = getText('div.field--name-body.field__item') || 
-                             getText('div.field--name-body') ||
-                             getText('div[class*="field--name-body"]');
+                // Try multiple selector variations and methods
+                const descSelectors = [
+                    'div.field--name-body.field__item',
+                    'div.field--name-body',
+                    'div[class*="field--name-body"][class*="field__item"]',
+                    'div[class*="field--name-body"]',
+                    '.field--name-body.field__item',
+                    '.field--name-body'
+                ];
+                
+                for (const selector of descSelectors) {
+                    const element = document.querySelector(selector);
+                    if (element) {
+                        // Try innerText first, then textContent, then innerHTML (strip tags)
+                        description = element.innerText?.trim() || 
+                                     element.textContent?.trim() || 
+                                     (element.innerHTML ? element.innerHTML.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim() : '');
+                        if (description && description.length > 10) break; // Ensure we got meaningful content
+                    }
+                }
+                
+                // Alternative: Find by class name directly
+                if (!description || description.length < 10) {
+                    const allDivs = document.querySelectorAll('div');
+                    for (const div of allDivs) {
+                        if (div.classList.contains('field--name-body') && div.classList.contains('field__item')) {
+                            description = div.innerText?.trim() || div.textContent?.trim() || '';
+                            if (description && description.length > 10) break;
+                        }
+                    }
+                }
 
                 // Fallback: Find the parent container that holds all description sections
                 // Look for divs containing sections with h2 headings like "Your role", "Your profile", etc.
