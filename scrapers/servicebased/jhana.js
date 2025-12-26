@@ -54,21 +54,6 @@ class JhanaJobsScraper {
                 console.log("✅ No more pages found. Pagination finished.");
                 break;
             }
-
-            // console.log("➡️ Clicking Load More...");
-            // await this.page.click('#load_more_jobs');
-
-            // ⏳ Wait for new jobs to load
-            // await this.page.waitForFunction(
-            //     (prevCount) => {
-            //         return document.querySelectorAll("h5 > a").length > prevCount;
-            //     },
-            //     {},
-            //     jobLinks.length
-            // );
-
-            // // Optional: small delay to stabilize
-            // await delay(5000);
         }
 
         return this.allJobLinks;
