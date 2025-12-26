@@ -25,17 +25,30 @@ class BrillioJobsScraper {
         console.log('🌐 Navigating to Cognizant Careers...');
         try {
             await this.page.goto('https://careers.cognizant.com/india-en/jobs/?keyword=&location=India&radius=100&lat=&lng=&cname=India&ccode=IN&pagesize=10#results', {
-                waitUntil: 'domcontentloaded',
+                waitUntil: 'networkidle2',
                 timeout: 60000
             });
             await delay(5000);
             
-            // Wait for job links to be available
+            // Scroll to trigger lazy loading
+            await this.page.evaluate(() => {
+                window.scrollTo(0, document.body.scrollHeight / 2);
+            });
+            await delay(2000);
+            
+            // Wait for job links to be available with multiple selector attempts
             try {
-                await this.page.waitForSelector('a.js-view-job', { timeout: 10000 });
+                await this.page.waitForSelector('a.js-view-job, a.stretched-link.js-view-job', { timeout: 15000 });
                 console.log('✅ Page loaded successfully');
             } catch (err) {
-                console.log('⚠️ Job links not immediately available, continuing anyway...');
+                console.log('⚠️ Job links not immediately available, trying alternative selectors...');
+                // Try waiting for any job-related elements
+                try {
+                    await this.page.waitForSelector('a[href*="/jobs/"]', { timeout: 10000 });
+                    console.log('✅ Found job links with alternative selector');
+                } catch (err2) {
+                    console.log('⚠️ Job links not found, continuing anyway...');
+                }
             }
         } catch (error) {
             console.error('❌ Navigation error:', error.message);
@@ -50,21 +63,46 @@ class BrillioJobsScraper {
         const maxClicks = 100; // Safety limit to prevent infinite loops
 
         while (true) {
-            // Collect current links on the page
-            const jobLinks = await this.page.$$eval(
-                'a.js-view-job[href^="/india-en/jobs/"]',
-                anchors =>
-                    [...new Set(
-                        anchors
-                            .map(a => a.getAttribute('href'))
-                            .filter(Boolean)
-                            .map(href =>
-                                href.startsWith('http')
-                                    ? href
-                                    : `https://careers.cognizant.com${href}`
-                            )
-                    )]
-            );
+            // Collect current links on the page - try multiple selectors
+            let jobLinks = [];
+            try {
+                jobLinks = await this.page.$$eval(
+                    'a.js-view-job[href*="/jobs/"], a.stretched-link.js-view-job[href*="/jobs/"]',
+                    anchors =>
+                        [...new Set(
+                            anchors
+                                .map(a => a.getAttribute('href'))
+                                .filter(Boolean)
+                                .map(href =>
+                                    href.startsWith('http')
+                                        ? href
+                                        : `https://careers.cognizant.com${href}`
+                                )
+                        )]
+                );
+            } catch (err) {
+                // Fallback to more generic selector
+                try {
+                    jobLinks = await this.page.$$eval(
+                        'a[href*="/india-en/jobs/"]',
+                        anchors =>
+                            [...new Set(
+                                anchors
+                                    .map(a => a.getAttribute('href'))
+                                    .filter(Boolean)
+                                    .filter(href => href.includes('/jobs/') && !href.includes('#'))
+                                    .map(href =>
+                                        href.startsWith('http')
+                                            ? href
+                                            : `https://careers.cognizant.com${href}`
+                                    )
+                            )]
+                    );
+                } catch (err2) {
+                    console.log('⚠️ Could not collect job links:', err2.message);
+                    jobLinks = [];
+                }
+            }
 
             // Add new links
             let newLinksCount = 0;
