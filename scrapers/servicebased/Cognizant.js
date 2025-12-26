@@ -67,15 +67,23 @@ class BrillioJobsScraper {
             });
             console.log('🔍 Page Debug:', JSON.stringify(pageDebug, null, 2));
             
+            // Wait for card-body containers which hold the job listings
+            try {
+                await this.page.waitForSelector('div.card-body, h2.card-title', { timeout: 20000 });
+                console.log('✅ Job card containers loaded');
+            } catch (err) {
+                console.log('⚠️ Card containers not immediately available...');
+            }
+            
             // Wait for job card titles (h2.card-title) which contain the job links
             try {
-                await this.page.waitForSelector('h2.card-title a.js-view-job, h2.card-title a.stretched-link.js-view-job', { timeout: 20000 });
-                console.log('✅ Job cards loaded');
+                await this.page.waitForSelector('h2.card-title a.js-view-job', { timeout: 15000 });
+                console.log('✅ Job links found in card titles');
             } catch (err) {
-                console.log('⚠️ Job cards not immediately available, trying alternative selectors...');
+                console.log('⚠️ Job links not immediately available, trying alternative selectors...');
                 // Try waiting for card-title or any job link
                 try {
-                    await this.page.waitForSelector('h2.card-title, a.js-view-job, a[href*="/india-en/jobs/"]', { timeout: 15000 });
+                    await this.page.waitForSelector('a.js-view-job, a[href*="/india-en/jobs/"]', { timeout: 10000 });
                     console.log('✅ Found job elements with alternative selector');
                 } catch (err2) {
                     console.log('⚠️ Job elements not found, continuing anyway...');
@@ -104,11 +112,13 @@ class BrillioJobsScraper {
             // Check for common job listing containers
             const containers = [
                 { sel: '#results', count: document.querySelectorAll('#results').length },
+                { sel: 'div.card-body', count: document.querySelectorAll('div.card-body').length },
+                { sel: 'h2.card-title', count: document.querySelectorAll('h2.card-title').length },
+                { sel: 'a.js-view-job', count: document.querySelectorAll('a.js-view-job').length },
                 { sel: '.job-card', count: document.querySelectorAll('.job-card').length },
                 { sel: '.job-listing', count: document.querySelectorAll('.job-listing').length },
                 { sel: '[class*="job"]', count: document.querySelectorAll('[class*="job"]').length },
                 { sel: 'article', count: document.querySelectorAll('article').length },
-                { sel: '.js-view-job', count: document.querySelectorAll('.js-view-job').length },
                 { sel: 'a[href*="/jobs/"]', count: document.querySelectorAll('a[href*="/jobs/"]').length }
             ];
             
