@@ -24,6 +24,8 @@ import Capgemini from "../scrapers/servicebased/Capgemini.js"
 import Deloitte from "../scrapers/servicebased/Deloitte.js"
 
 import Oracle from "../scrapers/productBased/oracle.js"
+import Cybage from "../scrapers/servicebased/cybage.js"
+
 
 const config = {
   concurrency: 5,
@@ -101,6 +103,7 @@ const scrapers = [
   { fn: Capgemini, headless: true },
   { fn: Deloitte, headless: true },
   { fn: Oracle, headless: true },
+  { fn: Cybage, headless: true },
 ];
 
 const runAllScrapers = async () => {

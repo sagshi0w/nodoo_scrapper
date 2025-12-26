@@ -31,12 +31,14 @@ class CybageJobsScraper {
 
     async collectAllJobCardLinks() {
         this.allJobLinks = [];
-        let pageIndex = 1;
         const existingLinks = new Set();
 
         while (true) {
             // Wait for job links to load
-            //await this.page.waitForSelector('div.op-job-apply-bt', { timeout: 10000 });
+            await this.page.waitForSelector('td.views-field.views-field-title a', { timeout: 10000 });
+
+            // Collect current links before clicking
+            const linksBeforeClick = this.allJobLinks.length;
 
             // Collect new links
             const jobLinks = await this.page.$$eval(
@@ -53,36 +55,41 @@ class CybageJobsScraper {
 
             console.log(`📄 Collected ${this.allJobLinks.length} unique job links so far...`);
 
-            const pageNumbers = await this.page.$$eval('ul.pagination li a', links =>
-                links
-                    .map(a => ({
-                        text: a.textContent.trim(),
-                        href: a.getAttribute('href'),
-                    }))
-                    .filter(a => /^\d+$/.test(a.text)) // Only page numbers
-            );
-
-            // Try to click "See more results" button
-            // Check if "Show More Results" button exists and is visible
-            const nextPage = pageNumbers.find(p => Number(p.text) === pageIndex + 1);
-
-            if (!nextPage) {
-                console.log('✅ No more pages left. Done.');
+            // Check if "Load more" button exists and is visible
+            const loadMoreButton = await this.page.$('.pager--load-more a');
+            
+            if (!loadMoreButton) {
+                console.log('✅ No "Load more" button found. Done.');
                 break;
             }
 
-            // Click the next page
-            console.log(`➡️ Clicking page ${pageIndex + 1}`);
-            await Promise.all([
-                //this.page.click(`ul.pagination li a[title="Page ${pageIndex + 1}"]`),
-                //this.page.waitForNavigation({ waitUntil: 'networkidle2' }),
-            ]);
+            // Check if button is visible and enabled
+            const isVisible = await loadMoreButton.isIntersectingViewport();
+            if (!isVisible) {
+                console.log('✅ "Load more" button not visible. Done.');
+                break;
+            }
 
-            pageIndex++;
+            // Click the "Load more" button
+            console.log('➡️ Clicking "Load more" button...');
+            await loadMoreButton.click();
+            
+            // Wait for new content to load (AJAX request)
+            await this.page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 10000 }).catch(() => {
+                // If no navigation happens (AJAX load), just wait for content
+                console.log('Waiting for AJAX content to load...');
+            });
+            await delay(3000);
 
+            // Check if we got new links
+            const linksAfterClick = this.allJobLinks.length;
+            if (linksAfterClick === linksBeforeClick) {
+                console.log('✅ No new links loaded. Done.');
+                break;
+            }
         }
 
-        return this.allJobLinks;;
+        return this.allJobLinks;
     }
 
 
