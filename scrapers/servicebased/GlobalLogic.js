@@ -34,8 +34,13 @@ class GlobalLogicJobsScraper {
         const existingLinks = new Set();
 
         while (true) {
-            // Wait for job links to load
-            await this.page.waitForSelector('.career_filter_result a.job_box', { timeout: 10000 });
+            // Wait for job links to load (with longer timeout and error handling)
+            try {
+                await this.page.waitForSelector('.career_filter_result a.job_box', { timeout: 15000 });
+            } catch (err) {
+                console.log('⚠️ Job links selector not found, checking if page loaded...');
+                await delay(3000);
+            }
 
             // Collect current links before clicking
             const linksBeforeClick = this.allJobLinks.length;
@@ -44,7 +49,22 @@ class GlobalLogicJobsScraper {
             const jobLinks = await this.page.$$eval(
                 '.career_filter_result a.job_box',
                 anchors => anchors.map(a => a.href)
-            );
+            ).catch(() => []);
+
+            if (jobLinks.length === 0) {
+                console.log('⚠️ No job links found on this page.');
+                // If we haven't collected any links yet, the selector might be wrong
+                if (this.allJobLinks.length === 0) {
+                    console.log('❌ No links collected. Selector might be incorrect or page structure changed.');
+                    break;
+                }
+                // If we have links but this page has none, check pagination
+                const hasPagination = await this.page.$('.pagination');
+                if (!hasPagination) {
+                    console.log('✅ No pagination found. Done.');
+                    break;
+                }
+            }
 
             for (const link of jobLinks) {
                 if (!existingLinks.has(link)) {
@@ -97,12 +117,13 @@ class GlobalLogicJobsScraper {
                 break;
             }
 
-            // Click the next page
+            // Navigate to the next page
             console.log(`➡️ Navigating to page ${paginationInfo.currentPage + 1}...`);
-            await Promise.all([
-                this.page.goto(paginationInfo.nextPageUrl, { waitUntil: 'networkidle2' }),
-            ]);
-            await delay(3000);
+            await this.page.goto(paginationInfo.nextPageUrl, { 
+                waitUntil: 'networkidle2',
+                timeout: 30000 
+            });
+            await delay(5000); // Give extra time for content to load
         }
 
         return this.allJobLinks;
