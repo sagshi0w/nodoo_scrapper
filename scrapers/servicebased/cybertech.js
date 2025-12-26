@@ -23,7 +23,7 @@ class CybertechJobsScraper {
 
     async navigateToJobsPage() {
         console.log('🌐 Navigating to Cybertech Careers...');
-        await this.page.goto('https://cybertech.in/careers/', {
+        await this.page.goto('https://cybertech.com/careers/', {
             waitUntil: 'networkidle2'
         });
         await delay(5000);
