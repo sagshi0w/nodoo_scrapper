@@ -36,7 +36,7 @@ class GlobalLogicJobsScraper {
         while (true) {
             // Wait for job links to load (with longer timeout and error handling)
             try {
-                await this.page.waitForSelector('.career_filter_result a.job_box', { timeout: 15000 });
+                await this.page.waitForSelector('a.job_box', { timeout: 15000 });
             } catch (err) {
                 console.log('⚠️ Job links selector not found, checking if page loaded...');
                 await delay(3000);
@@ -47,7 +47,7 @@ class GlobalLogicJobsScraper {
 
             // Collect new links
             const jobLinks = await this.page.$$eval(
-                '.career_filter_result a.job_box',
+                'a.job_box',
                 anchors => anchors.map(a => a.href)
             ).catch(() => []);
 
