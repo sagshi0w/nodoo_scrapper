@@ -33,21 +33,42 @@ class GlobalLogicJobsScraper {
     async collectAllJobCardLinks() {
         console.log('🔍 Waiting for job cards (AJAX)...');
 
-        await this.page.waitForFunction(
-            () => document.querySelectorAll('a.job_box').length > 0,
-            { timeout: 20000 }
-        );
+        try {
+            // Wait for the container first
+            await this.page.waitForSelector('.career_filter_result', { timeout: 20000 });
+            
+            // Then wait for job links to appear
+            await this.page.waitForFunction(
+                () => document.querySelectorAll('.career_filter_result a.job_box').length > 0,
+                { timeout: 20000 }
+            );
 
-        await delay(3000); // allow full render
+            await delay(3000); // allow full render
 
-        const jobLinks = await this.page.$$eval(
-            'a.job_box',
-            anchors => anchors.map(a => a.href)
-        );
+            const jobLinks = await this.page.$$eval(
+                '.career_filter_result a.job_box',
+                anchors => anchors.map(a => a.href)
+            );
 
-        this.allJobLinks = [...new Set(jobLinks)];
+            this.allJobLinks = [...new Set(jobLinks)];
 
-        console.log(`✅ Collected ${this.allJobLinks.length} job links`);
+            console.log(`✅ Collected ${this.allJobLinks.length} job links`);
+        } catch (err) {
+            console.warn(`⚠️ Error collecting links: ${err.message}`);
+            // Try fallback selector
+            try {
+                const jobLinks = await this.page.$$eval(
+                    'a.job_box',
+                    anchors => anchors.map(a => a.href)
+                );
+                this.allJobLinks = [...new Set(jobLinks)];
+                console.log(`✅ Collected ${this.allJobLinks.length} job links (fallback)`);
+            } catch (fallbackErr) {
+                console.error(`❌ Failed to collect links: ${fallbackErr.message}`);
+                this.allJobLinks = [];
+            }
+        }
+
         return this.allJobLinks;
     }
 
