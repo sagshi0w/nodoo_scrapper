@@ -23,7 +23,7 @@ class GlobalLogicJobsScraper {
 
     async navigateToJobsPage() {
         console.log('🌐 Navigating to GlobalLogic Careers...');
-        await this.page.goto('https://www.globallogic.com/career-search-page/?location=india', {
+        await this.page.goto('https://www.globallogic.com/careers/open-positions', {
             waitUntil: 'networkidle2'
         });
         await delay(5000);
@@ -31,16 +31,18 @@ class GlobalLogicJobsScraper {
 
     async collectAllJobCardLinks() {
         this.allJobLinks = [];
-        let pageIndex = 1;
         const existingLinks = new Set();
 
         while (true) {
             // Wait for job links to load
-            //await this.page.waitForSelector('div.op-job-apply-bt', { timeout: 10000 });
+            await this.page.waitForSelector('.career_filter_result a.job_box', { timeout: 10000 });
+
+            // Collect current links before clicking
+            const linksBeforeClick = this.allJobLinks.length;
 
             // Collect new links
             const jobLinks = await this.page.$$eval(
-                'a.job_box',
+                '.career_filter_result a.job_box',
                 anchors => anchors.map(a => a.href)
             );
 
@@ -53,36 +55,57 @@ class GlobalLogicJobsScraper {
 
             console.log(`📄 Collected ${this.allJobLinks.length} unique job links so far...`);
 
-            const pageNumbers = await this.page.$$eval('ul.pagination li a', links =>
-                links
-                    .map(a => ({
-                        text: a.textContent.trim(),
-                        href: a.getAttribute('href'),
-                    }))
-                    .filter(a => /^\d+$/.test(a.text)) // Only page numbers
-            );
+            // Find next page link
+            const paginationInfo = await this.page.evaluate(() => {
+                const currentPage = document.querySelector('.page-numbers.current');
+                const currentPageNum = currentPage ? parseInt(currentPage.textContent.trim()) : null;
+                
+                // Try to find "Next" button first
+                const nextButton = document.querySelector('.pagination a.next.page-numbers');
+                if (nextButton) {
+                    return {
+                        currentPage: currentPageNum,
+                        nextPageUrl: nextButton.href,
+                        hasNext: true
+                    };
+                }
+                
+                // If no "Next" button, find the next page number
+                const allPageLinks = Array.from(document.querySelectorAll('.pagination a.page-numbers'));
+                const nextPageLink = allPageLinks.find(link => {
+                    const pageNum = parseInt(link.textContent.trim());
+                    return !isNaN(pageNum) && pageNum === currentPageNum + 1;
+                });
+                
+                if (nextPageLink) {
+                    return {
+                        currentPage: currentPageNum,
+                        nextPageUrl: nextPageLink.href,
+                        hasNext: true
+                    };
+                }
+                
+                return {
+                    currentPage: currentPageNum,
+                    nextPageUrl: null,
+                    hasNext: false
+                };
+            });
 
-            // Try to click "See more results" button
-            // Check if "Show More Results" button exists and is visible
-            const nextPage = pageNumbers.find(p => Number(p.text) === pageIndex + 1);
-
-            if (!nextPage) {
-                console.log('✅ No more pages left. Done.');
+            if (!paginationInfo.hasNext || !paginationInfo.nextPageUrl) {
+                console.log('✅ No more pages. Done.');
                 break;
             }
 
             // Click the next page
-            console.log(`➡️ Clicking page ${pageIndex + 1}`);
+            console.log(`➡️ Navigating to page ${paginationInfo.currentPage + 1}...`);
             await Promise.all([
-                //this.page.click(`ul.pagination li a[title="Page ${pageIndex + 1}"]`),
-                //this.page.waitForNavigation({ waitUntil: 'networkidle2' }),
+                this.page.goto(paginationInfo.nextPageUrl, { waitUntil: 'networkidle2' }),
             ]);
-
-            pageIndex++;
-
+            await delay(3000);
         }
 
-        return this.allJobLinks;;
+        return this.allJobLinks;
     }
 
 
@@ -95,11 +118,61 @@ class GlobalLogicJobsScraper {
 
             const job = await jobPage.evaluate(() => {
                 const getText = sel => document.querySelector(sel)?.innerText.trim() || '';
+                
+                // Helper function to find value by label in career_banner_details
+                const getDetailValue = (label) => {
+                    const details = document.querySelectorAll('.career_banner_details');
+                    for (const detail of details) {
+                        const span = detail.querySelector('span');
+                        if (span && span.textContent.trim() === label) {
+                            const p = detail.querySelector('p');
+                            return p ? p.innerText.trim() : '';
+                        }
+                    }
+                    return '';
+                };
+                
+                // Extract description excluding "About GlobalLogic" section
+                let description = '';
+                const careerDetailArea = document.querySelector('div.career_detail_area');
+                if (careerDetailArea) {
+                    const h4s = careerDetailArea.querySelectorAll('h4');
+                    const sections = [];
+                    
+                    for (let i = 0; i < h4s.length; i++) {
+                        const h4 = h4s[i];
+                        const headingText = h4.textContent.trim();
+                        
+                        // Skip "About GlobalLogic" section
+                        if (headingText.includes('About GlobalLogic')) {
+                            continue;
+                        }
+                        
+                        // Get content from this h4 to the next h4 (or end)
+                        let sectionContent = headingText + '\n';
+                        let nextElement = h4.nextElementSibling;
+                        
+                        while (nextElement) {
+                            if (nextElement.tagName === 'H4') {
+                                break;
+                            }
+                            sectionContent += nextElement.textContent.trim() + '\n';
+                            nextElement = nextElement.nextElementSibling;
+                        }
+                        
+                        sections.push(sectionContent.trim());
+                    }
+                    
+                    description = sections.join('\n\n');
+                }
+                
                 return {
-                    title: getText('h1'),
+                    title: getText('.career_detail_banner_right h1'),
                     company: 'GlobalLogic',
-                    location: getText('div.col-4.career_banner_details > span:contains("Location") + p'),
-                    description: getText('div.career_detail_area'),
+                    location: getDetailValue('Location'),
+                    experience: getDetailValue('Experience'),
+                    skills: getDetailValue('Skills'),
+                    description: description || getText('div.career_detail_area'),
                     url: window.location.href
                 };
             });
@@ -133,7 +206,7 @@ class GlobalLogicJobsScraper {
 
     async saveResults() {
         // fs.writeFileSync('./scrappedJobs/phonepeJobs.json', JSON.stringify(this.allJobs, null, 2));
-        console.log(`💾 Saved ${this.allJobs.length} jobs to YashTechnologies.json`);
+        console.log(`💾 Saved ${this.allJobs.length} jobs.`);
     }
 
     async close() {
