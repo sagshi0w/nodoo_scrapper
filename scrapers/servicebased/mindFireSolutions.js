@@ -39,8 +39,12 @@ class MindFireSolutionsJobsScraper {
 
             // Collect new links
             const jobLinks = await this.page.$$eval(
-                'a.JobOpenings_openings_row__26eaA',
-                anchors => anchors.map(a => a.href)
+                'a.JobOpenings_openings_row__3Q1dw',
+                anchors => anchors.map(a => {
+                    // Convert relative URLs to absolute URLs
+                    const href = a.getAttribute('href');
+                    return href.startsWith('http') ? href : `https://apply.mindfiresolutions.com${href}`;
+                })
             );
 
             for (const link of jobLinks) {
@@ -91,12 +95,34 @@ class MindFireSolutionsJobsScraper {
 
             const job = await jobPage.evaluate(() => {
                 const getText = sel => document.querySelector(sel)?.innerText.trim() || '';
+                
+                // Extract description from all card sections
+                let description = '';
+                const cards = document.querySelectorAll('div.JobDetails_card_style__2LZPg');
+                cards.forEach(card => {
+                    const header = card.querySelector('div.JobDetails_card_header__1SFfJ');
+                    const body = card.querySelector('div.JobDetails_card_body__3b-1y');
+                    
+                    if (header && body) {
+                        const headerText = header.textContent.trim();
+                        const bodyText = body.textContent.trim();
+                        
+                        // Skip "Featured" badge text if present
+                        const headerClean = headerText.replace(/Featured/i, '').trim();
+                        
+                        if (headerClean && bodyText) {
+                            if (description) description += '\n\n';
+                            description += `${headerClean}\n${bodyText}`;
+                        }
+                    }
+                });
+                
                 return {
-                    title: getText('p.JobDetails_job_title__2xaK6'),
+                    title: getText('p.JobDetails_job_title__2Y9u1'),
                     company: 'Mindfire Solutions',
-                    location: getText('p.JobDetails_text_muted__2YlRe'),
-                    experience: getText('p.JobDetails_jobExp__ZmBE0'),
-                    description: getText('div.JobDetails_subcontainer__1oVbA'),
+                    location: getText('p.JobDetails_text_muted__1uToa'),
+                    experience: getText('p.JobDetails_jobExp__9IWTZ'),
+                    description: description || getText('div.JobDetails_subcontainer__1oVbA'),
                     url: window.location.href
                 };
             });
@@ -162,10 +188,26 @@ const extractWiproData = (job) => {
     let location = null;
 
     // Extract experience from job.experience field
-    if (typeof job.experience === 'number' || /^\d+$/.test(job.experience)) {
-        const minExp = parseInt(job.experience, 10);
-        const maxExp = minExp + 2;
-        experience = `${minExp} - ${maxExp} yrs`;
+    if (job.experience) {
+        // Handle format like "Experience : 2 - 6 years"
+        const expMatch = job.experience.match(/(\d+)\s*[-–]\s*(\d+)\s*(?:years|yrs)/i);
+        if (expMatch) {
+            const minExp = parseInt(expMatch[1], 10);
+            const maxExp = parseInt(expMatch[2], 10);
+            experience = `${minExp} - ${maxExp} yrs`;
+        } else if (typeof job.experience === 'number' || /^\d+$/.test(job.experience)) {
+            const minExp = parseInt(job.experience, 10);
+            const maxExp = minExp + 2;
+            experience = `${minExp} - ${maxExp} yrs`;
+        } else {
+            // Try to extract any number range from the string
+            const singleExpMatch = job.experience.match(/(\d+)\s*(?:years|yrs)/i);
+            if (singleExpMatch) {
+                const minExp = parseInt(singleExpMatch[1], 10);
+                const maxExp = minExp + 2;
+                experience = `${minExp} - ${maxExp} yrs`;
+            }
+        }
     }
 
     if (cleanedDescription) {
@@ -191,11 +233,14 @@ const extractWiproData = (job) => {
         cleanedDescription = cleanedDescription.replace(/^\s*Apply\.?\s*$/gim, '');
         cleanedDescription = cleanedDescription.replace(/\bApply\b[:\-]?.*/gi, '');
 
-        // Remove "About the Job" and surrounding fluff
-        cleanedDescription = cleanedDescription.replace(
-            /About the Job[\s\S]*?(?=(\n{2,}|Responsibilities|Skills|Qualifications|Requirements|$))/i,
-            ''
-        );
+        // Note: "About the Job" is now kept as a structured section header
+        // Only remove if it's standalone without proper structure
+        if (!cleanedDescription.includes('Core Responsibilities') && !cleanedDescription.includes('Required Skills')) {
+            cleanedDescription = cleanedDescription.replace(
+                /About the Job[\s\S]*?(?=(\n{2,}|Responsibilities|Skills|Qualifications|Requirements|$))/i,
+                ''
+            );
+        }
 
         // Extract location from description if still not present
         const locationMatch = cleanedDescription.match(/location\s*[:\-]\s*(.+?)(?:[\n\r]|$)/i);
