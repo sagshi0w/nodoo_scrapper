@@ -77,7 +77,7 @@ class MetaformsJobsScraper {
                 const getText = sel => document.querySelector(sel)?.innerText.trim() || '';
 
                 // Extract and clean job title
-                let rawTitle = getText('h1[contenteditable="false"][data-content-editable-leaf="true"]');
+                let rawTitle = getText('h1.ashby-job-posting-heading') || getText('h1._title_ud4nd_34');
                 let title = rawTitle.trim();
 
                 // Extract location from the Location section
