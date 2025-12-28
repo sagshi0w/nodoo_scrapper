@@ -27,6 +27,7 @@ import Oracle from "../scrapers/productBased/oracle.js"
 import Cybage from "../scrapers/servicebased/cybage.js"
 import Cybertech from "../scrapers/servicebased/cybertech.js"
 import HclTech from "../scrapers/servicebased/hclTech.js"
+import Metaforms from "../scrapers/servicebased/metaforms.js"
 
 
 const config = {
@@ -108,6 +109,7 @@ const scrapers = [
   { fn: Cybage, headless: true },
   { fn: Cybertech, headless: true },
   { fn: HclTech, headless: true },
+  { fn: Metaforms, headless: true },
 ];
 
 const runAllScrapers = async () => {
