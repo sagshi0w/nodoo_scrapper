@@ -37,7 +37,7 @@ class NessDigitalEngineeringJobsScraper {
         while (true) {
             // Collect new links
             const jobLinks = await this.page.$$eval(
-                'h2.heading-5.space-none',
+                'h2.heading-5.space-none a',
                 anchors => anchors.map(a => a.href)
             );
 
@@ -94,15 +94,39 @@ class NessDigitalEngineeringJobsScraper {
                 const getText = sel => document.querySelector(sel)?.innerText.trim() || '';
 
                 function getLocation() {
-                    const p = document.querySelector('p');
-                    if (!p) return '';
-                    const match = p.innerText.match(/Location:\s*(.*)/);
-                    return match ? match[1].split('\n')[0].trim() : '';
+                    // Look for the p tag containing location information
+                    const paragraphs = document.querySelectorAll('p');
+                    for (const p of paragraphs) {
+                        const text = p.innerText || p.textContent || '';
+                        const match = text.match(/Location:\s*([^\n\r<]+)/i);
+                        if (match) {
+                            let location = match[1].trim();
+                            // Remove duplicate "India" if present (e.g., "Hyderabad, India, India" -> "Hyderabad, India")
+                            location = location.replace(/,\s*India\s*,\s*India$/i, ', India');
+                            // Extract just the city if it's in format "City, Country, Country"
+                            const cityMatch = location.match(/^([^,]+)/);
+                            return cityMatch ? cityMatch[1].trim() : location;
+                        }
+                    }
+                    return '';
                 }
 
                 function getDescription() {
                     const descEl = document.querySelector('.padded-v-medium.space-medium');
-                    return descEl?.innerText.trim() || 'Description not available.';
+                    if (!descEl) return 'Description not available.';
+                    
+                    let description = descEl.innerText.trim();
+                    
+                    // Remove "Why Ness" section (heading and all content until "Requirements and responsibilities")
+                    description = description.replace(
+                        /Why\s+Ness[\s\S]*?(?=Requirements\s+and\s+responsibilities|What\s+you|$)/gi,
+                        ''
+                    );
+                    
+                    // Remove "Description" heading if present at the start
+                    description = description.replace(/^Description\s*/i, '').trim();
+                    
+                    return description || 'Description not available.';
                 }
 
                 return {
@@ -172,6 +196,21 @@ const extractWiproData = (job) => {
 
     if (cleanedDescription) {
         cleanedDescription = cleanedDescription
+            // Remove "Why Ness" section if still present (fallback)
+            .replace(
+                /Why\s+Ness[\s\S]*?(?=Requirements\s+and\s+responsibilities|What\s+you|$)/gi,
+                ''
+            )
+            // Remove "Not checking every single requirement?" section
+            .replace(
+                /Not\s+checking\s+every\s+single\s+requirement\?[\s\S]*?(?=At\s+Ness|$)/gi,
+                ''
+            )
+            // Remove closing paragraph about Ness Digital Engineering
+            .replace(
+                /At\s+Ness\s+Digital\s+Engineering[\s\S]*$/gi,
+                ''
+            )
             // Remove "Job Summary" heading and similar section titles
             .replace(/\n\s*Job Overview\s*\n/gi, '\n')
 
