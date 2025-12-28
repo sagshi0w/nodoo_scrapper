@@ -46,6 +46,7 @@ import Cybertech from "./scrapers/servicebased/cybertech.js"
 import GlobalLogic from "./scrapers/servicebased/GlobalLogic.js"
 import HclTech from "./scrapers/servicebased/hclTech.js"
 import Jhana from "./scrapers/servicebased/jhana.js"
+import Metaforms from "./scrapers/servicebased/metaforms.js"
 
 const config = {
   concurrency: 5,
@@ -115,7 +116,7 @@ ${error.stack}`;
 };
 
 const scrapers = [
-   { fn: Jhana, headless: true },
+   { fn: Metaforms, headless: true },
 ];
 
 const runAllScrapers = async () => {

@@ -23,7 +23,7 @@ class MetaformsJobsScraper {
 
     async navigateToJobsPage() {
         console.log('🌐 Navigating to Metaforms Careers...');
-        await this.page.goto('https://metaformscareers.notion.site/', {
+        await this.page.goto('https://jobs.ashbyhq.com/metaforms', {
             waitUntil: 'networkidle2'
         });
         await delay(5000);
@@ -35,8 +35,12 @@ class MetaformsJobsScraper {
 
         while (true) {
             // Collect job links on current page
-            const jobLinks = await this.page.$$eval(`a[role="link"][href^="/"]`, anchors =>
-                anchors.map(a => a.href)
+            const jobLinks = await this.page.$$eval(`a[href^="/metaforms/"]`, anchors =>
+                anchors.map(a => {
+                    // Convert relative URLs to absolute URLs
+                    const href = a.href;
+                    return href.startsWith('http') ? href : `https://jobs.ashbyhq.com${a.getAttribute('href')}`;
+                })
             );
 
             for (const link of jobLinks) {
@@ -54,21 +58,6 @@ class MetaformsJobsScraper {
                 console.log("✅ No more pages found. Pagination finished.");
                 break;
             }
-
-            // console.log("➡️ Clicking Load More...");
-            // await this.page.click('#load_more_jobs');
-
-            // ⏳ Wait for new jobs to load
-            // await this.page.waitForFunction(
-            //     (prevCount) => {
-            //         return document.querySelectorAll("h5 > a").length > prevCount;
-            //     },
-            //     {},
-            //     jobLinks.length
-            // );
-
-            // // Optional: small delay to stabilize
-            // await delay(5000);
         }
 
         return this.allJobLinks;
@@ -91,11 +80,26 @@ class MetaformsJobsScraper {
                 let rawTitle = getText('h1[contenteditable="false"][data-content-editable-leaf="true"]');
                 let title = rawTitle.trim();
 
+                // Extract location from the Location section
+                let location = '';
+                const locationHeading = Array.from(document.querySelectorAll('h2._heading_101oc_53')).find(
+                    h2 => h2.textContent.trim() === 'Location'
+                );
+                if (locationHeading) {
+                    const locationSection = locationHeading.closest('div._section_101oc_37');
+                    if (locationSection) {
+                        const locationP = locationSection.querySelector('p');
+                        if (locationP) {
+                            location = locationP.textContent.trim();
+                        }
+                    }
+                }
+
                 return {
                     title,
                     company: 'Metaforms',
-                    location: getText('div[role="row"][aria-labelledby=":r5:"] div[role="cell"] div[data-block-id] span'),
-                    description: getText('div.notion-page-content'),
+                    location,
+                    description: getText('div._descriptionText_oj0x8_198'),
                     experience: getText('div[role="row"][aria-labelledby=":r7:"] div[role="cell"] div[data-block-id] span'),
                     url: window.location.href
                 };
@@ -168,6 +172,12 @@ const extractWiproData = (job) => {
     // Step 1: Clean description
     if (cleanedDescription) {
         cleanedDescription = cleanedDescription
+            // Remove "About Metaforms" section (including heading, paragraphs, bullets, and funding info)
+            .replace(
+                /About\s+Metaforms[\s\S]*?(?=\s*(?:💡\s*)?The\s+Role|🌟\s+Why\s+Join|🔨\s+What\s+You|🧑‍💻\s+What\s+We|🎁\s+Benefits|$)/gi,
+                ''
+            )
+
             // Remove "About RS Software" section
             .replace(
                 /About\s+RS\s+Software[\s\S]*?(?=(?:\n{2,}[A-Z][^\n]*|$))/gi,
