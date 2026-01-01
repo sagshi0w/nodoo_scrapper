@@ -61,31 +61,36 @@ class NetSolutionsJobsScraper {
 
             console.log(`📄 Collected ${this.allJobLinks.length} unique job links so far...`);
 
-            const pageNumbers = await this.page.$$eval('ul.pagination li a', links =>
-                links
-                    .map(a => ({
-                        text: a.textContent.trim(),
-                        href: a.getAttribute('href'),
-                    }))
-                    .filter(a => /^\d+$/.test(a.text)) // Only page numbers
-            );
-
-            // Try to click "See more results" button
-            // Check if "Show More Results" button exists and is visible
-            const nextPage = pageNumbers.find(p => Number(p.text) === pageIndex + 1);
-
-            if (!nextPage) {
+            // Check if next page button exists and is not disabled
+            const nextPageButton = await this.page.$('button.pagination-arrow.next-page');
+            
+            if (!nextPageButton) {
                 console.log('✅ No more pages left. Done.');
                 break;
             }
 
-            // Click the next page
-            console.log(`➡️ Clicking page ${pageIndex + 1}`);
-            await Promise.all([
-                //this.page.click(`ul.pagination li a[title="Page ${pageIndex + 1}"]`),
-                //this.page.waitForNavigation({ waitUntil: 'networkidle2' }),
-            ]);
+            // Check if button is disabled or not visible
+            const isDisabled = await this.page.evaluate(button => {
+                return button.disabled || button.classList.contains('disabled') || 
+                       window.getComputedStyle(button).display === 'none';
+            }, nextPageButton);
 
+            if (isDisabled) {
+                console.log('✅ Next page button is disabled. Done.');
+                break;
+            }
+
+            // Click the next page button
+            console.log(`➡️ Clicking next page button (Page ${pageIndex + 1})`);
+            await Promise.all([
+                this.page.click('button.pagination-arrow.next-page'),
+                this.page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 10000 }).catch(() => {
+                    // If navigation doesn't happen (SPA), wait for content to update
+                    return this.page.waitForSelector('.job-header', { timeout: 10000 });
+                })
+            ]);
+            
+            await delay(3000); // Additional delay to ensure content is loaded
             pageIndex++;
 
         }
@@ -103,11 +108,25 @@ class NetSolutionsJobsScraper {
 
             const job = await jobPage.evaluate(() => {
                 const getText = sel => document.querySelector(sel)?.innerText.trim() || '';
+                
+                // Combine job description and requirements sections
+                const jobDescriptionSection = document.querySelector('section.job-description');
+                const requirementsSection = document.querySelector('section.requirements');
+                
+                let description = '';
+                if (jobDescriptionSection) {
+                    description += jobDescriptionSection.innerText.trim();
+                }
+                if (requirementsSection) {
+                    if (description) description += '\n\n';
+                    description += requirementsSection.innerText.trim();
+                }
+                
                 return {
-                    title: getText('h2.main-heading'),
+                    title: getText('h1.job-title'),
                     company: 'Net Solutions',
-                    location: getText('span.career-location'),
-                    description: getText('div.elementor-element.elementor-element-4297b63.elementor-widget.elementor-widget-sidebar'),
+                    location: getText('span.location'),
+                    description: description || '',
                     url: window.location.href
                 };
             });
@@ -279,3 +298,4 @@ if (import.meta.url === `file://${process.argv[1]}`) {
         await runNetSolutionsJobsScraper({ headless: headlessArg });
     })();
 }
+
