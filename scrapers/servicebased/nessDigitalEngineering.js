@@ -35,11 +35,59 @@ class NessDigitalEngineeringJobsScraper {
         const seenLinks = new Set();
 
         while (true) {
-            // Collect new links
-            const jobLinks = await this.page.$$eval(
-                'div.jobs-section__item h2.heading-5.space-none a',
-                anchors => anchors.map(a => a.href)
-            );
+            // Wait for job links to load
+            try {
+                await this.page.waitForSelector('div.jobs-section__item h2.heading-5.space-none a', { timeout: 10000 });
+            } catch (err) {
+                console.log('⚠️ No job links found on this page, trying alternative selector...');
+                // Try alternative selector
+                try {
+                    await this.page.waitForSelector('h2.heading-5.space-none a', { timeout: 5000 });
+                } catch (err2) {
+                    console.log('❌ No job links found. Stopping collection.');
+                    break;
+                }
+            }
+            
+            await delay(2000); // Additional wait for dynamic content
+            
+            // Debug: Check what's on the page
+            const pageContent = await this.page.evaluate(() => {
+                const items = document.querySelectorAll('div.jobs-section__item');
+                const headings = document.querySelectorAll('h2.heading-5.space-none');
+                const links = document.querySelectorAll('h2.heading-5.space-none a');
+                return {
+                    jobItems: items.length,
+                    headings: headings.length,
+                    links: links.length,
+                    firstLinkHref: links.length > 0 ? links[0].href : null
+                };
+            });
+            console.log(`🔍 Debug - Job items: ${pageContent.jobItems}, Headings: ${pageContent.headings}, Links: ${pageContent.links}`);
+            
+            // Collect new links - try specific selector first, then fallback
+            let jobLinks = [];
+            try {
+                jobLinks = await this.page.$$eval(
+                    'div.jobs-section__item h2.heading-5.space-none a',
+                    anchors => anchors.map(a => a.href)
+                );
+            } catch (err) {
+                // Fallback to simpler selector
+                try {
+                    jobLinks = await this.page.$$eval(
+                        'h2.heading-5.space-none a',
+                        anchors => anchors.map(a => a.href)
+                    );
+                } catch (err2) {
+                    console.log('⚠️ Could not extract job links with either selector');
+                }
+            }
+
+            if (jobLinks.length === 0) {
+                console.log('⚠️ No job links found on this page. Stopping collection.');
+                break;
+            }
 
             for (const link of jobLinks) {
                 if (!seenLinks.has(link)) {
@@ -48,7 +96,7 @@ class NessDigitalEngineeringJobsScraper {
                 }
             }
 
-            console.log(`📄 Collected ${this.allJobLinks.length} unique job links so far...`);
+            console.log(`📄 Collected ${jobLinks.length} links on this page, ${this.allJobLinks.length} unique job links total...`);
 
             const pageNumbers = await this.page.$$eval('ul.pagination li a', links =>
                 links
