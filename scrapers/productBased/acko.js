@@ -1,5 +1,5 @@
-import { launch } from 'puppeteer';
-import { writeFileSync } from 'fs';
+import puppeteer from 'puppeteer';
+import fs from 'fs';
 
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
@@ -8,141 +8,141 @@ class AckoJobsScraper {
         this.headless = headless;
         this.browser = null;
         this.page = null;
+        this.allJobLinks = [];
         this.allJobs = [];
-        this.jobLinks = [];
     }
 
     async initialize() {
-        this.browser = await launch({
-            headless: this.headless ? true : false,
+        this.browser = await puppeteer.launch({
+            headless: this.headless,
             args: ['--no-sandbox', ...(this.headless ? [] : ['--start-maximized'])],
             defaultViewport: this.headless ? { width: 1920, height: 1080 } : null
         });
-
         this.page = await this.browser.newPage();
-        await this.page.setUserAgent(
-            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-        );
     }
 
     async navigateToJobsPage() {
-        console.log('🌐 Navigating to Acko Careers page...');
+        console.log('🌐 Navigating to Acko Careers...');
         await this.page.goto('https://www.acko.com/careers/jobs/', {
-            waitUntil: 'networkidle2',
+            waitUntil: 'networkidle2'
         });
         await delay(5000);
     }
 
     async collectAllJobCardLinks() {
-        console.log('📋 Collecting job links...');
+        this.allJobLinks = [];
+        let pageIndex = 1;
         const existingLinks = new Set();
 
         while (true) {
-            await delay(2000);
-            const newJobUrls = await this.page.evaluate(() => {
-                return Array.from(document.querySelectorAll('a.chakra-link[href*="/acko/"]'))
-                    .map(a => {
-                        const href = a.getAttribute('href');
-                        // Extract job ID from href like "/acko/10730/?jobs=true"
-                        const match = href.match(/\/acko\/(\d+)/);
-                        if (match) {
-                            const jobId = match[1];
-                            return `https://www.acko.com/careers/jobs/${jobId}`;
-                        }
-                        return null;
-                    })
-                    .filter(url => url !== null);
-            });
+            // Wait for job links to load
+            //await this.page.waitForSelector('div.op-job-apply-bt', { timeout: 10000 });
 
-            for (const link of newJobUrls) {
+            // Collect new links
+            const jobLinks = await this.page.$$eval(
+                'a.chakra-link[href^="/acko/"]',
+                anchors => anchors.map(a => {
+                    const href = a.getAttribute('href');
+                    return href.startsWith('http') ? href : `https://www.acko.com${href}`;
+                })
+            );
+
+            for (const link of jobLinks) {
                 if (!existingLinks.has(link)) {
                     existingLinks.add(link);
-                    this.jobLinks.push(link);
+                    this.allJobLinks.push(link);
                 }
             }
 
-            console.log(`🔗 Found ${this.jobLinks.length} unique job links so far...`);
+            console.log(`📄 Collected ${this.allJobLinks.length} unique job links so far...`);
 
-            const loadMoreSelector = 'button.iconNext';
-            const loadMoreBtn = await this.page.$(loadMoreSelector);
-            if (!loadMoreBtn) {
-                console.log('❌ No more "Load more" button — all jobs loaded.');
+            const pageNumbers = await this.page.$$eval('ul.pagination li a', links =>
+                links
+                    .map(a => ({
+                        text: a.textContent.trim(),
+                        href: a.getAttribute('href'),
+                    }))
+                    .filter(a => /^\d+$/.test(a.text)) // Only page numbers
+            );
+
+            // Try to click "See more results" button
+            // Check if "Show More Results" button exists and is visible
+            const nextPage = pageNumbers.find(p => Number(p.text) === pageIndex + 1);
+
+            if (!nextPage) {
+                console.log('✅ No more pages left. Done.');
                 break;
             }
 
-            try {
-                console.log('🔄 Clicking "Load more"...');
-                await this.page.evaluate(selector => {
-                    const btn = document.querySelector(selector);
-                    if (btn) btn.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }, loadMoreSelector);
+            // Click the next page
+            console.log(`➡️ Clicking page ${pageIndex + 1}`);
+            await Promise.all([
+                //this.page.click(`ul.pagination li a[title="Page ${pageIndex + 1}"]`),
+                //this.page.waitForNavigation({ waitUntil: 'networkidle2' }),
+            ]);
 
-                await this.page.waitForSelector(loadMoreSelector, { visible: true, timeout: 5000 });
-                await loadMoreBtn.click();
-                await delay(2000);
-            } catch (err) {
-                console.warn(`⚠️ Skipping click due to error: ${err.message}`);
-                break;
-            }
+            pageIndex++;
+
         }
 
-        console.log(`✅ Total unique jobs collected: ${this.jobLinks.length}`);
+        return this.allJobLinks;;
     }
+
 
     async extractJobDetailsFromLink(url) {
         const jobPage = await this.browser.newPage();
         try {
-            await jobPage.goto(url, { waitUntil: 'networkidle2', timeout: 60000 });
+            await jobPage.goto(url, { waitUntil: 'networkidle2' });
+            await delay(5000);
+            //await jobPage.waitForSelector('div.job__description.body', { timeout: 10000 });
 
-            const jobData = await jobPage.evaluate(() => {
-                const getText = (sel) => document.querySelector(sel)?.innerText.trim() || '';
-                const title = getText('h1');
-                const locationFull = getText('div.jobsInfo_subHeadings__vFC5M');
-                const location = locationFull.split(/\s+/).pop();
-                const description = getText('div.jobsInfo_jobDescriptionContainer__Dwm6V');
-
+            const job = await jobPage.evaluate(() => {
+                const getText = sel => document.querySelector(sel)?.innerText.trim() || '';
                 return {
-                    title,
-                    location,
+                    title: getText('h2.white-header'),
                     company: 'Acko',
-                    description,
+                    location: getText('p.green'),
+                    description: getText('div._detail-content'),
                     url: window.location.href
                 };
             });
 
+            console.log("Before enriching job=", job);
+
             await jobPage.close();
-            return { ...jobData };
+            return job;
         } catch (err) {
             await jobPage.close();
-            console.warn(`⚠️ Failed to extract from ${url}:`, err.message);
-            return { title: '', location: '', description: '', url };
+            console.warn(`❌ Failed to scrape ${url}: ${err.message}`);
+            return null;
         }
     }
 
+
     async processAllJobs() {
-        const seen = new Set();
-
-        for (let i = 0; i < this.jobLinks.length; i++) {
-            console.log(`📝 Processing job ${i + 1}/${this.jobLinks.length}`);
-            const jobData = await this.extractJobDetailsFromLink(this.jobLinks[i]);
-
-            if (jobData.title && !seen.has(jobData.title)) {
-                seen.add(jobData.title);
-                const enrichedJob = extractAckoData(jobData);
+        for (let i = 0; i < this.allJobLinks.length; i++) {
+            const url = this.allJobLinks[i];
+            console.log(`📝 [${i + 1}/${this.allJobLinks.length}] Processing: ${url}`);
+            const jobData = await this.extractJobDetailsFromLink(url);
+            if (jobData && jobData.title) {
+                const enrichedJob = extractWiproData(jobData);
+                console.log("After enriching job=", enrichedJob);
                 this.allJobs.push(enrichedJob);
                 console.log(`✅ ${jobData.title}`);
             }
+            await delay(1000);
         }
     }
 
     async saveResults() {
-        //writeFileSync('./scrappedJobs/ackoJobs.json', JSON.stringify(this.allJobs, null, 2));
-        console.log(`💾 Saved ${this.allJobs.length} jobs to ackoJobs.json`);
+        // fs.writeFileSync('./scrappedJobs/phonepeJobs.json', JSON.stringify(this.allJobs, null, 2));
+        console.log(`💾 Saved ${this.allJobs.length} jobs to YashTechnologies.json`);
     }
 
     async close() {
         await this.browser.close();
     }
+
 
     async run() {
         try {
@@ -159,47 +159,118 @@ class AckoJobsScraper {
     }
 }
 
-const extractAckoData = (job) => {
+const extractWiproData = (job) => {
     if (!job) return job;
+
     let cleanedDescription = job.description || '';
-    if (cleanedDescription) {
-        cleanedDescription = cleanedDescription
-            .replace(/about the role\s*[:\-]?/gi, '')
-            .replace(/role overview\s*[:\-]?/gi, '')
-            .replace(/responsibilities\s*[:\-]?/gi, '')
-            .replace(/job title\s*[:\-]?/gi, '')
-            .replace(/location\s*[:\-]?/gi, '')
-            .replace(/the role\s*[:\-]?/gi, '')
-            .replace(/(Responsibilities:|Requirements:|Skills:|Qualifications:)/gi, '\n$1\n')
-            .replace(/[ \t]+$/gm, '')
-            .replace(/\n{2,}/g, '\n')
-            .trim();
+    let experience = null;
+    let location = null;
+
+    const expPatterns = [
+        /\b(\d{1,2})\s*\+\s*(?:years|yrs|yr)\b/i,
+        /\bminimum\s*(\d{1,2})\s*(?:years|yrs|yr)\b/i,
+        /\bmin(?:imum)?\s*(\d{1,2})\s*(?:years|yrs|yr)\b/i,
+        /\b(\d{1,2})\s*(?:to|–|-|–)\s*(\d{1,2})\s*(?:years|yrs|yr)\b/i,
+        /\b(?:at least|over)\s*(\d{1,2})\s*(?:years|yrs|yr)\b/i,
+        /\b(\d{1,2})\s*(?:years|yrs|yr)\s+experience\b/i,
+        /\bexperience\s*(?:of)?\s*(\d{1,2})\s*(?:years|yrs|yr)\b/i,
+        /\bexperience\s*(?:required)?\s*[:\-]?\s*(\d{1,2})\s*(?:[-to]+)?\s*(\d{1,2})?\s*(?:years|yrs|yr)?/i,
+    ];
+
+    // Step 1: Try job.experience field
+    if (typeof job.experience === 'number' || /^\d+$/.test(job.experience)) {
+        const minExp = parseInt(job.experience, 10);
+        const maxExp = minExp + 2;
+        experience = `${minExp} - ${maxExp} yrs`;
     }
-    let cleanedTitle = job.title ? job.title.trim() : '';
-    let cleanedLocation = job.location ? job.location.trim() : '';
+
+    // Step 2: Parse experience from description
+    if (!experience && cleanedDescription) {
+        for (const pattern of expPatterns) {
+            const match = cleanedDescription.match(pattern);
+            if (match) {
+                const min = match[1];
+                const max = match[2];
+
+                if (min && max) {
+                    experience = `${min} - ${max} yrs`;
+                } else if (min && !max) {
+                    const estMax = parseInt(min) + 2;
+                    experience = `${min} - ${estMax} yrs`;
+                }
+                break;
+            }
+        }
+    }
+
+    // Step 3: Clean description
+    if (cleanedDescription) {
+        cleanedDescription = cleanedDescription.replace(
+            /(Current Openings|Job Summary)[\s\S]*?(?:Apply\.?\s*)?(?=\n{2,}|$)/gi,
+            ''
+        );
+
+        cleanedDescription = cleanedDescription
+            .replace(/(\n\s*)(\d+\.\s+)(.*?)(\n)/gi, '\n\n$1$2$3$4\n\n')
+            .replace(/(\n\s*)([•\-]\s+)(.*?)(\n)/gi, '\n\n$1$2$3$4\n\n')
+            .replace(/([.!?])\s+/g, '$1  ')
+            .replace(/[ \t]+$/gm, '')
+            .replace(/\n{3,}/g, '\n\n')
+            .replace(/(\S)\n(\S)/g, '$1\n\n$2')
+            .trim();
+
+        if (cleanedDescription && !cleanedDescription.endsWith('\n')) {
+            cleanedDescription += '\n';
+        }
+
+        if (!cleanedDescription.trim()) {
+            cleanedDescription = 'Description not available\n';
+        }
+    } else {
+        cleanedDescription = 'Description not available\n';
+    }
+
+    if (job.title && cleanedDescription.startsWith(job.title)) {
+        const match = cleanedDescription.match(/Primary Skills\s*[:\-–]?\s*/i);
+        if (match) {
+            const index = match.index;
+            if (index > 0) {
+                cleanedDescription = cleanedDescription.slice(index).trimStart();
+            }
+        }
+    }
+
+    // Step 4: Extract city from location string
+    if (job.location) {
+        const cityMatch = job.location.match(/^([^,\n]+)/);
+        if (cityMatch) {
+            location = cityMatch[1].trim();
+        }
+    }
+
     return {
         ...job,
-        title: cleanedTitle,
-        location: cleanedLocation || 'India',
+        title: job.title?.trim(),
+        experience,
+        location,
         description: cleanedDescription,
-        company: 'Acko',
-        scrapedAt: new Date().toISOString()
     };
 };
 
-const runAckoScraper = async ({ headless = true } = {}) => {
+
+// ✅ Exportable runner function
+const runAckoJobsScraper = async ({ headless = true } = {}) => {
     const scraper = new AckoJobsScraper(headless);
     await scraper.run();
     return scraper.allJobs;
 };
 
-export default runAckoScraper;
+export default runAckoJobsScraper;
 
-// CLI execution support
+// ✅ CLI support: node phonepe.js --headless=false
 if (import.meta.url === `file://${process.argv[1]}`) {
     const headlessArg = process.argv.includes('--headless=false') ? false : true;
     (async () => {
-        const scraper = new AckoJobsScraper(headlessArg);
-        await scraper.run();
+        await runAckoJobsScraper({ headless: headlessArg });
     })();
 }
