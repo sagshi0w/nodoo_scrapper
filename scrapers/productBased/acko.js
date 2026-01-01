@@ -40,10 +40,18 @@ class AckoJobsScraper {
         while (true) {
             await delay(2000);
             const newJobUrls = await this.page.evaluate(() => {
-                return Array.from(document.querySelectorAll('a[href]'))
-                    .map(a => a.getAttribute('href'))
-                    .filter(href => /^\d+$/.test(href))
-                    .map(id => `https://www.acko.com/careers/jobs/${id}`);
+                return Array.from(document.querySelectorAll('a.chakra-link[href*="/acko/"]'))
+                    .map(a => {
+                        const href = a.getAttribute('href');
+                        // Extract job ID from href like "/acko/10730/?jobs=true"
+                        const match = href.match(/\/acko\/(\d+)/);
+                        if (match) {
+                            const jobId = match[1];
+                            return `https://www.acko.com/careers/jobs/${jobId}`;
+                        }
+                        return null;
+                    })
+                    .filter(url => url !== null);
             });
 
             for (const link of newJobUrls) {
