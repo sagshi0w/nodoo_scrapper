@@ -49,6 +49,7 @@ import Jhana from "./scrapers/servicebased/jhana.js"
 import Metaforms from "./scrapers/servicebased/metaforms.js"
 import MindFireSolutions from "./scrapers/servicebased/mindFireSolutions.js"
 import NessDigitalEngineering from "./scrapers/servicebased/nessDigitalEngineering.js"
+import NetSolutions from "./scrapers/servicebased/netSolutions.js"
 
 const config = {
   concurrency: 5,
@@ -118,7 +119,7 @@ ${error.stack}`;
 };
 
 const scrapers = [
-   { fn: NessDigitalEngineering, headless: true },
+   { fn: NetSolutions, headless: true },
 ];
 
 const runAllScrapers = async () => {

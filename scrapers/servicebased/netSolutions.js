@@ -23,7 +23,7 @@ class NetSolutionsJobsScraper {
 
     async navigateToJobsPage() {
         console.log('🌐 Navigating to Net Solutions Careers...');
-        await this.page.goto('https://www.netsolutions.com/careers/#opportunities', {
+        await this.page.goto('https://www.netsolutions.com/careers/', {
             waitUntil: 'networkidle2'
         });
         await delay(5000);
@@ -36,12 +36,20 @@ class NetSolutionsJobsScraper {
 
         while (true) {
             // Wait for job links to load
-            //await this.page.waitForSelector('div.op-job-apply-bt', { timeout: 10000 });
+            await this.page.waitForSelector('.job-header a[href*="/careers/job-description/"]', { timeout: 10000 });
 
-            // Collect new links
+            // Collect new links - get unique job description links from job-header divs
             const jobLinks = await this.page.$$eval(
-                'li.col-xs-12 > a',
-                anchors => anchors.map(a => a.href)
+                '.job-header a[href*="/careers/job-description/"]',
+                anchors => {
+                    const uniqueLinks = new Set();
+                    anchors.forEach(a => {
+                        if (a.href && a.href.includes('/careers/job-description/')) {
+                            uniqueLinks.add(a.href);
+                        }
+                    });
+                    return Array.from(uniqueLinks);
+                }
             );
 
             for (const link of jobLinks) {
