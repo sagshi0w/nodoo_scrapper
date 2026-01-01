@@ -259,12 +259,22 @@ const extractWiproData = (job) => {
         }
     }
 
-    // Step 4: Extract city from location string
+    // Step 4: Extract city from location string (get the part after comma)
     if (job.location) {
-        const cityMatch = job.location.match(/^([^,\n]+)/);
-        if (cityMatch) {
-            location = cityMatch[1].trim();
+        // Split by comma and get the last part (city name)
+        const parts = job.location.split(',').map(p => p.trim());
+        if (parts.length > 1) {
+            // If there's a comma, take the last part as the city
+            location = parts[parts.length - 1];
+        } else {
+            // If no comma, use the whole string
+            location = job.location.trim();
         }
+    }
+    
+    // Set default location to Chandigarh if not found
+    if (!location || !location.trim()) {
+        location = 'Chandigarh';
     }
 
     return {
