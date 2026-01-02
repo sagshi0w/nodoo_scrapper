@@ -27,7 +27,7 @@ class AdobeJobsScraper {
 
     async navigateToJobsPage() {
         console.log('🌐 Navigating to Adobe Careers page...');
-        await this.page.goto('https://careers.adobe.com/us/en/search-results?keywords=India&from=190&s=1', {
+        await this.page.goto('https://careers.adobe.com/us/en/search-results', {
             waitUntil: 'networkidle2',
             timeout: 60000
         });
@@ -42,7 +42,14 @@ class AdobeJobsScraper {
             console.log(`🔎 Scraping page ${pageCount}...`);
 
             const cards = await this.page.$$eval('a[data-ph-at-id="job-link"]', anchors =>
-                anchors.map(anchor => anchor.href)
+                anchors.map(anchor => ({
+                    url: anchor.href,
+                    title: anchor.getAttribute('data-ph-at-job-title-text') || '',
+                    location: anchor.getAttribute('data-ph-at-job-location-text') || '',
+                    jobId: anchor.getAttribute('data-ph-at-job-id-text') || '',
+                    jobType: anchor.getAttribute('data-ph-at-job-type-text') || '',
+                    category: anchor.getAttribute('data-ph-at-job-category-text') || ''
+                }))
             );
 
             this.jobCardSelectors.push(...cards);
@@ -65,10 +72,10 @@ class AdobeJobsScraper {
         console.log(`✅ Total jobs found: ${this.jobCardSelectors.length}`);
     }
 
-    async extractJobDetailsFromLink(url) {
+    async extractJobDetailsFromLink(jobInfo) {
         const jobPage = await this.browser.newPage();
         try {
-            await jobPage.goto(url, { waitUntil: 'networkidle2' });
+            await jobPage.goto(jobInfo.url, { waitUntil: 'networkidle2' });
 
             await jobPage.waitForSelector('body > main > div.body-wrapper.ph-page-container', { timeout: 10000 });
 
@@ -87,11 +94,25 @@ class AdobeJobsScraper {
             });
 
             await jobPage.close();
-            return { ...jobDetails, url };
+            return { 
+                ...jobDetails, 
+                url: jobInfo.url,
+                jobId: jobInfo.jobId,
+                jobType: jobInfo.jobType,
+                category: jobInfo.category
+            };
         } catch (err) {
             await jobPage.close();
-            console.warn(`⚠️ Failed to extract from ${url}:`, err.message);
-            return { title: '', location: '', description: '', url };
+            console.warn(`⚠️ Failed to extract from ${jobInfo.url}:`, err.message);
+            return { 
+                title: jobInfo.title || '', 
+                location: jobInfo.location || '', 
+                description: '', 
+                url: jobInfo.url,
+                jobId: jobInfo.jobId,
+                jobType: jobInfo.jobType,
+                category: jobInfo.category
+            };
         }
     }
 
