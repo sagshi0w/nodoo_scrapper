@@ -35,50 +35,21 @@ class AckoJobsScraper {
         const existingLinks = new Set();
 
         while (true) {
-            // Wait for job cards to load (using chakra-card as a more stable selector)
-            try {
-                await this.page.waitForSelector('div.chakra-card', { timeout: 10000 });
-                await delay(2000); // Additional wait for dynamic content
-            } catch (err) {
-                console.log('⚠️ No job cards found. Stopping collection.');
-                break;
-            }
+            // Wait for job cards to load
+            await this.page.waitForSelector('div.chakra-card', { timeout: 10000 });
 
-            // Debug: Check what's on the page
-            const pageContent = await this.page.evaluate(() => {
-                const cards = document.querySelectorAll('div.chakra-card');
-                const links = document.querySelectorAll('a.chakra-link[href^="/acko/"]');
-                const allChakraLinks = document.querySelectorAll('a.chakra-link');
-                return {
-                    cards: cards.length,
-                    jobLinks: links.length,
-                    allChakraLinks: allChakraLinks.length,
-                    firstLinkHref: links.length > 0 ? links[0].getAttribute('href') : null,
-                    sampleLinks: Array.from(links).slice(0, 3).map(a => a.getAttribute('href'))
-                };
-            });
-            console.log(`🔍 Debug - Cards: ${pageContent.cards}, Job links: ${pageContent.jobLinks}, All chakra-links: ${pageContent.allChakraLinks}`);
-
-            // Collect new links - try primary selector first
-            let jobLinks = await this.page.$$eval(
-                'a.chakra-link[href^="/acko/"]',
+            // Collect new links - Chakra UI structure
+            const jobLinks = await this.page.$$eval(
+                'div.chakra-card a.chakra-link[href*="/acko/"]',
                 anchors => anchors.map(a => {
                     const href = a.getAttribute('href');
-                    return href.startsWith('http') ? href : `https://www.acko.com${href}`;
-                })
+                    // Convert relative URLs to absolute
+                    if (href && href.startsWith('/')) {
+                        return `https://www.acko.com${href}`;
+                    }
+                    return href;
+                }).filter(Boolean)
             );
-
-            // Fallback: if no links found, try finding links within chakra-card containers
-            if (jobLinks.length === 0) {
-                console.log('🔄 Trying fallback selector (links within chakra-card)...');
-                jobLinks = await this.page.$$eval(
-                    'div.chakra-card a[href^="/acko/"]',
-                    anchors => anchors.map(a => {
-                        const href = a.getAttribute('href');
-                        return href.startsWith('http') ? href : `https://www.acko.com${href}`;
-                    })
-                );
-            }
 
             for (const link of jobLinks) {
                 if (!existingLinks.has(link)) {
@@ -89,25 +60,62 @@ class AckoJobsScraper {
 
             console.log(`📄 Collected ${this.allJobLinks.length} unique job links so far...`);
 
-            // If no links found on first iteration, break
-            if (jobLinks.length === 0 && this.allJobLinks.length === 0) {
-                console.log('⚠️ No job links found. Stopping collection.');
+            // Check for pagination - try multiple possible selectors
+            let pageNumbers = [];
+            let hasLoadMore = false;
+            try {
+                pageNumbers = await this.page.$$eval('ul.pagination li a, button[aria-label*="page"], a[href*="page"]', links =>
+                    links
+                        .map(a => ({
+                            text: a.textContent.trim(),
+                            href: a.getAttribute('href') || a.getAttribute('aria-label') || '',
+                        }))
+                        .filter(a => /^\d+$/.test(a.text) || /page\s*\d+/i.test(a.text)) // Page numbers
+                );
+                
+                // Check for "Load More" or "Show More" buttons
+                const loadMoreButtons = await this.page.$$eval('button', buttons =>
+                    buttons
+                        .map(b => b.textContent.trim().toLowerCase())
+                        .filter(text => text.includes('load more') || text.includes('show more') || text.includes('more'))
+                );
+                hasLoadMore = loadMoreButtons.length > 0;
+            } catch (err) {
+                // No pagination found
+            }
+
+            // Try to find next page button or link
+            const nextPage = pageNumbers.find(p => {
+                const pageNum = p.text.match(/\d+/)?.[0];
+                return pageNum && Number(pageNum) === pageIndex + 1;
+            });
+
+            // If no pagination and no load more, we're done
+            if (!nextPage && pageNumbers.length === 0 && !hasLoadMore) {
+                console.log('✅ No more pages left. Done.');
                 break;
             }
 
-            // Check for pagination or load more button
-            const pageNumbers = await this.page.$$eval('ul.pagination li a', links =>
-                links
-                    .map(a => ({
-                        text: a.textContent.trim(),
-                        href: a.getAttribute('href'),
-                    }))
-                    .filter(a => /^\d+$/.test(a.text)) // Only page numbers
-            );
-
-            // Try to click "See more results" button
-            // Check if "Show More Results" button exists and is visible
-            const nextPage = pageNumbers.find(p => Number(p.text) === pageIndex + 1);
+            // If there's a load more button, click it
+            if (hasLoadMore && !nextPage) {
+                console.log(`➡️ Clicking "Load More" button...`);
+                try {
+                    await this.page.evaluate(() => {
+                        const buttons = Array.from(document.querySelectorAll('button'));
+                        const loadMoreBtn = buttons.find(b => {
+                            const text = b.textContent.trim().toLowerCase();
+                            return text.includes('load more') || text.includes('show more');
+                        });
+                        if (loadMoreBtn) loadMoreBtn.click();
+                    });
+                    await delay(3000);
+                    pageIndex++;
+                    continue;
+                } catch (err) {
+                    console.warn(`⚠️ Could not click load more: ${err.message}`);
+                    break;
+                }
+            }
 
             if (!nextPage) {
                 console.log('✅ No more pages left. Done.');
@@ -116,16 +124,30 @@ class AckoJobsScraper {
 
             // Click the next page
             console.log(`➡️ Clicking page ${pageIndex + 1}`);
-            await Promise.all([
-                //this.page.click(`ul.pagination li a[title="Page ${pageIndex + 1}"]`),
-                //this.page.waitForNavigation({ waitUntil: 'networkidle2' }),
-            ]);
+            try {
+                await this.page.evaluate((pageNum) => {
+                    const links = Array.from(document.querySelectorAll('ul.pagination li a, a[href*="page"]'));
+                    const nextLink = links.find(a => {
+                        const text = a.textContent.trim();
+                        return text === String(pageNum) || text.includes(`Page ${pageNum}`);
+                    });
+                    if (nextLink) {
+                        nextLink.click();
+                        return true;
+                    }
+                    return false;
+                }, pageIndex + 1);
+                await this.page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 10000 });
+            } catch (err) {
+                console.warn(`⚠️ Could not navigate to page ${pageIndex + 1}: ${err.message}`);
+                break;
+            }
 
             pageIndex++;
-
+            await delay(2000);
         }
 
-        return this.allJobLinks;;
+        return this.allJobLinks;
     }
 
 
@@ -134,15 +156,44 @@ class AckoJobsScraper {
         try {
             await jobPage.goto(url, { waitUntil: 'networkidle2' });
             await delay(5000);
-            //await jobPage.waitForSelector('div.job__description.body', { timeout: 10000 });
+            
+            // Wait for job content to load - try multiple possible selectors
+            await jobPage.waitForSelector('div.chakra-card, div[class*="job"], h1, h2', { timeout: 10000 });
 
             const job = await jobPage.evaluate(() => {
-                const getText = sel => document.querySelector(sel)?.innerText.trim() || '';
+                const getText = sel => {
+                    const el = document.querySelector(sel);
+                    return el?.innerText?.trim() || el?.textContent?.trim() || '';
+                };
+                
+                // Try multiple selectors for each field
+                const title = getText('h1') || getText('h2') || getText('h3') || 
+                             getText('p.chakra-text.css-f8zk62') || 
+                             getText('[class*="title"], [class*="job-title"]');
+                
+                // Location - look for text with location icon or location-related classes
+                const location = getText('p.chakra-text.css-7pftiu') || 
+                                getText('[class*="location"]') ||
+                                Array.from(document.querySelectorAll('p, span, div'))
+                                    .find(el => el.textContent.includes('Mumbai') || 
+                                                el.textContent.includes('Bangalore') ||
+                                                el.textContent.includes('Delhi') ||
+                                                el.textContent.includes('Hyderabad'))?.textContent?.trim() || '';
+                
+                // Description - try multiple selectors
+                const description = getText('div[class*="description"]') ||
+                                   getText('div[class*="detail"]') ||
+                                   getText('div[class*="content"]') ||
+                                   getText('div._detail-content') ||
+                                   getText('div.job__description') ||
+                                   Array.from(document.querySelectorAll('div'))
+                                       .find(el => el.textContent.length > 200)?.textContent?.trim() || '';
+                
                 return {
-                    title: getText('h2.white-header'),
+                    title,
                     company: 'Acko',
-                    location: getText('p.green'),
-                    description: getText('div._detail-content'),
+                    location,
+                    description,
                     url: window.location.href
                 };
             });
@@ -176,7 +227,7 @@ class AckoJobsScraper {
 
     async saveResults() {
         // fs.writeFileSync('./scrappedJobs/phonepeJobs.json', JSON.stringify(this.allJobs, null, 2));
-        console.log(`💾 Saved ${this.allJobs.length} jobs to YashTechnologies.json`);
+        console.log(`💾 Saved ${this.allJobs.length} jobs.`);
     }
 
     async close() {
@@ -307,7 +358,7 @@ const runAckoJobsScraper = async ({ headless = true } = {}) => {
 
 export default runAckoJobsScraper;
 
-// ✅ CLI support: node phonepe.js --headless=false
+// ✅ CLI support: node acko.js --headless=false
 if (import.meta.url === `file://${process.argv[1]}`) {
     const headlessArg = process.argv.includes('--headless=false') ? false : true;
     (async () => {
