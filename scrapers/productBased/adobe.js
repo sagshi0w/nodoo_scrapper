@@ -234,15 +234,68 @@ class AdobeJobsScraper {
         try {
             await jobPage.goto(url, { waitUntil: 'networkidle2' });
             await delay(5000);
-            //await jobPage.waitForSelector('div.job__description.body', { timeout: 10000 });
+            
+            // Wait for job content to load
+            await jobPage.waitForSelector('div.job-info, h1.job-title, section.job-description', { timeout: 10000 });
 
             const job = await jobPage.evaluate(() => {
-                const getText = sel => document.querySelector(sel)?.innerText.trim() || '';
+                const getText = sel => {
+                    const el = document.querySelector(sel);
+                    return el?.innerText?.trim() || el?.textContent?.trim() || '';
+                };
+                
+                const getAttr = (sel, attr) => {
+                    const el = document.querySelector(sel);
+                    return el?.getAttribute(attr) || '';
+                };
+                
+                // Extract job title from h1.job-title
+                const title = getText('h1.job-title') || 
+                             getAttr('div.job-info', 'data-ph-at-job-title-text') ||
+                             getText('h1, h2');
+                
+                // Extract location - try multiple sources
+                let location = '';
+                
+                // First try: data-ph-at-job-location-text attribute on job-info div
+                location = getAttr('div.job-info', 'data-ph-at-job-location-text');
+                
+                // Second try: from location list items
+                if (!location) {
+                    const locationItems = Array.from(document.querySelectorAll('li.location[data-ph-at-job-location-text]'));
+                    if (locationItems.length > 0) {
+                        // Get first location or combine all if multiple
+                        const locations = locationItems.map(li => 
+                            li.getAttribute('data-ph-at-job-location-text') || li.textContent.trim()
+                        );
+                        location = locations.join('; '); // Join multiple locations with semicolon
+                    }
+                }
+                
+                // Third try: from location text content
+                if (!location) {
+                    const locationEl = document.querySelector('li.location, span[class*="location"]');
+                    location = locationEl?.textContent?.trim() || '';
+                }
+                
+                // Extract description - try multiple selectors
+                const description = getText('div.jd-info[data-ph-at-id="jobdescription-text"]') ||
+                                   getText('section.job-description div.jd-info') ||
+                                   getText('section.job-description') ||
+                                   getText('div[data-ph-at-id="jobdescription-text"]') ||
+                                   getText('div[class*="description"]') ||
+                                   getText('div[class*="detail"]') ||
+                                   getText('div[class*="content"]') ||
+                                   getText('div._detail-content') ||
+                                   getText('div.job__description') ||
+                                   Array.from(document.querySelectorAll('div'))
+                                       .find(el => el.textContent.length > 200)?.textContent?.trim() || '';
+                
                 return {
-                    title: getText('h2.white-header'),
+                    title,
                     company: 'Adobe',
-                    location: getText('p.green'),
-                    description: getText('div._detail-content'),
+                    location,
+                    description,
                     url: window.location.href
                 };
             });
