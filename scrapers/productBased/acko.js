@@ -35,21 +35,67 @@ class AckoJobsScraper {
         const existingLinks = new Set();
 
         while (true) {
-            // Wait for job cards to load
-            await this.page.waitForSelector('div.chakra-card', { timeout: 10000 });
+            // Wait for job cards to load - try multiple selectors
+            let jobCardsFound = false;
+            const selectors = [
+                'div.chakra-card',
+                'a.chakra-link[href*="/acko/"]',
+                'a[href*="/acko/"]',
+                '[class*="chakra-card"]',
+                '[class*="job"]'
+            ];
 
-            // Collect new links - Chakra UI structure
-            const jobLinks = await this.page.$$eval(
-                'div.chakra-card a.chakra-link[href*="/acko/"]',
-                anchors => anchors.map(a => {
-                    const href = a.getAttribute('href');
-                    // Convert relative URLs to absolute
-                    if (href && href.startsWith('/')) {
-                        return `https://www.acko.com${href}`;
-                    }
-                    return href;
-                }).filter(Boolean)
-            );
+            for (const selector of selectors) {
+                try {
+                    await this.page.waitForSelector(selector, { timeout: 5000 });
+                    jobCardsFound = true;
+                    console.log(`✅ Found elements with selector: ${selector}`);
+                    break;
+                } catch (err) {
+                    // Try next selector
+                    continue;
+                }
+            }
+
+            if (!jobCardsFound) {
+                // Debug: log what's actually on the page
+                const pageContent = await this.page.evaluate(() => {
+                    return {
+                        title: document.title,
+                        bodyClasses: document.body?.className || '',
+                        links: Array.from(document.querySelectorAll('a')).slice(0, 10).map(a => ({
+                            href: a.getAttribute('href'),
+                            text: a.textContent.trim().substring(0, 50),
+                            classes: a.className
+                        })),
+                        divs: Array.from(document.querySelectorAll('div')).slice(0, 5).map(d => ({
+                            classes: d.className,
+                            id: d.id
+                        }))
+                    };
+                });
+                console.log('🔍 Page debug info:', JSON.stringify(pageContent, null, 2));
+                throw new Error('Could not find job cards on the page. Page may have changed structure.');
+            }
+
+            // Collect new links using div.chakra-card a[href] selector
+            let jobLinks = [];
+            try {
+                jobLinks = await this.page.$$eval(
+                    'div.chakra-card a[href]',
+                    anchors => anchors.map(a => {
+                        const href = a.getAttribute('href');
+                        // Convert relative URLs to absolute
+                        if (href && href.startsWith('/')) {
+                            return `https://www.acko.com${href}`;
+                        }
+                        return href;
+                    }).filter(Boolean)
+                );
+            } catch (err) {
+                console.warn('⚠️ Could not extract job links:', err.message);
+                jobLinks = [];
+            }
 
             for (const link of jobLinks) {
                 if (!existingLinks.has(link)) {
