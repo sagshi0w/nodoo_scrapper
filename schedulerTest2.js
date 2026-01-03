@@ -51,6 +51,7 @@ import MindFireSolutions from "./scrapers/servicebased/mindFireSolutions.js"
 import NessDigitalEngineering from "./scrapers/servicebased/nessDigitalEngineering.js"
 import NetSolutions from "./scrapers/servicebased/netSolutions.js"
 import Acko from "./scrapers/productBased/acko.js"
+import Adobe from "./scrapers/productBased/adobe.js"
 
 const config = {
   concurrency: 5,
@@ -120,7 +121,7 @@ ${error.stack}`;
 };
 
 const scrapers = [
-   { fn: Acko, headless: true },
+   { fn: Adobe, headless: true },
 ];
 
 const runAllScrapers = async () => {
