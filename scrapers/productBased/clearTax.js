@@ -49,9 +49,8 @@ class ClearTaxJobsScraper {
             // Wait for job links to appear
             await this.page.waitForFunction(
                 () => {
-                    return document.querySelectorAll('a.clickable.color-blue.custom-theme-color, a[href*="/careers/"]').length > 0 ||
-                           document.body.innerText.includes('Software Engineer') ||
-                           document.body.innerText.includes('Engineer');
+                    return document.querySelectorAll('td.clickable[data-th="Job title"] a.clickable').length > 0 ||
+                           document.querySelectorAll('a[href*="/careers/"]').length > 0;
                 },
                 { timeout: 15000 }
             ).catch(() => {
