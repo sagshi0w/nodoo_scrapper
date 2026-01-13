@@ -52,6 +52,7 @@ import NessDigitalEngineering from "./scrapers/servicebased/nessDigitalEngineeri
 import NetSolutions from "./scrapers/servicebased/netSolutions.js"
 import Acko from "./scrapers/productBased/acko.js"
 import Adobe from "./scrapers/productBased/adobe.js"
+import ClearTax from "./scrapers/productBased/clearTax.js"
 
 const config = {
   concurrency: 5,
@@ -121,7 +122,7 @@ ${error.stack}`;
 };
 
 const scrapers = [
-   { fn: Adobe, headless: true },
+   { fn: ClearTax, headless: true },
 ];
 
 const runAllScrapers = async () => {
