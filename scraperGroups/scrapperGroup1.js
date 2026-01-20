@@ -41,6 +41,7 @@ import Bosch from "../scrapers/servicebased/bosch.js"
 import onePassword from "../scrapers/remote/onePassword.js"
 import Affirm from "../scrapers/remote/Affirm.js"
 import GEA from "../scrapers/servicebased/GEA.js"
+import Securden from "../scrapers/servicebased/Securden.js"
 
 const config = {
     concurrency: 5,
@@ -136,6 +137,7 @@ const scrapers = [
     { fn: onePassword, headless: true },
     { fn: Affirm, headless: true },
     { fn: GEA, headless: true },
+    { fn: Securden, headless: true },
 ];
 
 const runAllScrapers = async () => {
