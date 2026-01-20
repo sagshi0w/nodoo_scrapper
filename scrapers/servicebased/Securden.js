@@ -23,10 +23,42 @@ class SecurdenJobsScraper {
 
     async navigateToJobsPage() {
         console.log('🌐 Navigating to Securden Careers...');
-        await this.page.goto('https://www.securden.com/careers/index.html', {
-            waitUntil: 'networkidle2'
-        });
-        await delay(5000);
+        try {
+            await this.page.goto('https://www.securden.com/careers/index.html', {
+                waitUntil: 'networkidle2',
+                timeout: 30000
+            });
+            
+            // Wait for page to fully render
+            await delay(5000);
+            
+            // Scroll to trigger lazy loading
+            for (let i = 0; i < 3; i++) {
+                await this.page.evaluate(() => {
+                    window.scrollTo(0, document.body.scrollHeight);
+                });
+                await delay(2000);
+            }
+            
+            // Scroll back to top
+            await this.page.evaluate(() => {
+                window.scrollTo(0, 0);
+            });
+            await delay(2000);
+            
+            // Wait for job links to appear
+            await this.page.waitForFunction(
+                () => {
+                    return document.querySelectorAll('.career-view-more a').length > 0;
+                },
+                { timeout: 15000 }
+            ).catch(() => {
+                console.warn('⚠️ Timeout waiting for job links, continuing anyway...');
+            });
+            
+        } catch (err) {
+            console.warn('⚠️ Navigation warning:', err.message);
+        }
     }
 
     async collectAllJobCardLinks() {
@@ -34,10 +66,28 @@ class SecurdenJobsScraper {
         const existingLinks = new Set();
 
         while (true) {
-            // Collect job links on current page
-            const jobLinks = await this.page.$$eval(`.career-view-more a`, anchors =>
-                anchors.map(a => a.href)
-            );
+            // Wait for job links to load
+            try {
+                await this.page.waitForSelector('.career-view-more a', { timeout: 15000 });
+            } catch (err) {
+                console.log('✅ No more job links found. Done.');
+                break;
+            }
+
+            // Collect job links on current page using .career-view-more a selector
+            const jobLinks = await this.page.$$eval('.career-view-more a', anchors => {
+                const baseUrl = window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1);
+                return anchors.map(a => {
+                    const href = a.getAttribute('href');
+                    // Convert relative URLs to absolute
+                    if (href && href.startsWith('/')) {
+                        return window.location.origin + href;
+                    } else if (href && !href.startsWith('http')) {
+                        return baseUrl + href;
+                    }
+                    return href;
+                }).filter(Boolean);
+            });
 
             for (const link of jobLinks) {
                 if (!existingLinks.has(link)) {
@@ -46,29 +96,30 @@ class SecurdenJobsScraper {
                 }
             }
 
-            console.log(`📄 Collected ${this.allJobLinks.length} unique job links so far...`);
+            console.log(`📄 Collected ${this.allJobLinks.length} unique job links so far (${jobLinks.length} new on this page)...`);
 
-            // Check if "Load More" button exists (fresh query every loop)
-            const loadMoreExists = await this.page.$('#load_more_jobs2');
+            // If no job links found, we're done
+            if (jobLinks.length === 0) {
+                console.log('✅ No more job links found. Done.');
+                break;
+            }
+
+            // Check if "Load More" button exists
+            const loadMoreExists = await this.page.$('#load_more_jobs2, #load_more_jobs');
             if (!loadMoreExists) {
                 console.log("✅ No more pages found. Pagination finished.");
                 break;
             }
 
-            // console.log("➡️ Clicking Load More...");
-            // await this.page.click('#load_more_jobs');
-
-            // ⏳ Wait for new jobs to load
-            // await this.page.waitForFunction(
-            //     (prevCount) => {
-            //         return document.querySelectorAll("h5 > a").length > prevCount;
-            //     },
-            //     {},
-            //     jobLinks.length
-            // );
-
-            // // Optional: small delay to stabilize
-            // await delay(5000);
+            // Click "Load More" button
+            console.log("➡️ Clicking Load More...");
+            try {
+                await this.page.click('#load_more_jobs2, #load_more_jobs');
+                await delay(3000); // Wait for new jobs to load
+            } catch (err) {
+                console.warn(`⚠️ Could not click load more: ${err.message}`);
+                break;
+            }
         }
 
         return this.allJobLinks;
@@ -82,20 +133,57 @@ class SecurdenJobsScraper {
         try {
             await jobPage.goto(url, { waitUntil: 'networkidle2' });
             await delay(5000);
-            //await jobPage.waitForSelector('div.job__description.body', { timeout: 10000 });
+            
+            // Wait for job content to load
+            await jobPage.waitForSelector('h1.main-content__title, .place-time-btn', { timeout: 10000 });
+            
             const job = await jobPage.evaluate(() => {
-                const getText = sel => document.querySelector(sel)?.innerText.trim() || '';
+                const getText = sel => {
+                    const el = document.querySelector(sel);
+                    if (!el) return '';
+                    // Get text content and replace <br> tags with spaces
+                    return el.innerText?.trim() || el.textContent?.trim() || '';
+                };
 
-                // Extract job title
-                let rawTitle = getText('h1.main-content__title');
-                let title = rawTitle.trim();
+                // Extract job title from h1.main-content__title
+                // Handle <br> tags by getting textContent which converts them to text
+                const titleElement = document.querySelector('h1.main-content__title');
+                let title = '';
+                if (titleElement) {
+                    // Get text content which handles <br> tags properly
+                    title = titleElement.textContent?.trim() || titleElement.innerText?.trim() || '';
+                    // Replace multiple spaces/newlines with single space
+                    title = title.replace(/\s+/g, ' ').trim();
+                }
 
-                // Extract Location from place-time-btn section
+                // Extract Location from .sec-icon-map p
                 const locationElement = document.querySelector('.sec-icon-map p');
-                const location = locationElement ? locationElement.innerText.trim() : 'Chennai';
+                let location = '';
+                if (locationElement) {
+                    location = locationElement.textContent?.trim() || locationElement.innerText?.trim() || '';
+                }
 
-                // Extract target sections
-                const description = getText('section#about-feature .car-det-wrap');
+                // Extract description from div.car-det-wrap
+                // Try multiple selectors to find the description
+                let description = '';
+                const descriptionElement = document.querySelector('div.car-det-wrap, div.car-det-1, section#about-feature .car-det-wrap');
+                if (descriptionElement) {
+                    description = descriptionElement.innerText?.trim() || descriptionElement.textContent?.trim() || '';
+                }
+                
+                // Fallback: try to find any car-det-wrap div
+                if (!description) {
+                    const allCarDetWraps = Array.from(document.querySelectorAll('div.car-det-wrap'));
+                    if (allCarDetWraps.length > 0) {
+                        // Get the first visible one or the one with most content
+                        const visibleWrap = allCarDetWraps.find(div => {
+                            const style = window.getComputedStyle(div);
+                            return style.display !== 'none' && style.visibility !== 'hidden';
+                        }) || allCarDetWraps[0];
+                        
+                        description = visibleWrap.innerText?.trim() || visibleWrap.textContent?.trim() || '';
+                    }
+                }
 
                 return {
                     title,

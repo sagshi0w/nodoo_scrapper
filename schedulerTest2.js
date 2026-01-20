@@ -54,6 +54,7 @@ import Acko from "./scrapers/productBased/acko.js"
 import Adobe from "./scrapers/productBased/adobe.js"
 import ClearTax from "./scrapers/productBased/clearTax.js"
 import GEA from "./scrapers/servicebased/GEA.js"
+import Securden from "./scrapers/servicebased/Securden.js"
 
 const config = {
   concurrency: 5,
@@ -123,7 +124,7 @@ ${error.stack}`;
 };
 
 const scrapers = [
-   { fn: GEA, headless: true },
+   { fn: Securden, headless: true },
 ];
 
 const runAllScrapers = async () => {
