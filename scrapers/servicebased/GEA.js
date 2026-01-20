@@ -109,91 +109,40 @@ class GEAJobsScraper {
                 break;
             }
 
-            // Check for pagination
-            let pageNumbers = [];
-            let hasLoadMore = false;
+            // Check for next button using button[data-testid="next"]
+            let hasNextButton = false;
             try {
-                pageNumbers = await this.page.$$eval('ul.pagination li a, button[aria-label*="page"], a[href*="page"]', links =>
-                    links
-                        .map(a => ({
-                            text: a.textContent.trim(),
-                            href: a.getAttribute('href') || a.getAttribute('aria-label') || '',
-                        }))
-                        .filter(a => /^\d+$/.test(a.text) || /page\s*\d+/i.test(a.text))
-                );
+                const nextButton = await this.page.$('button[data-testid="next"]');
+                hasNextButton = nextButton !== null;
                 
-                // Check for "Load More" or "Show More" buttons
-                const loadMoreButtons = await this.page.$$eval('button', buttons =>
-                    buttons
-                        .map(b => b.textContent.trim().toLowerCase())
-                        .filter(text => text.includes('load more') || text.includes('show more') || text.includes('more'))
-                );
-                hasLoadMore = loadMoreButtons.length > 0;
-            } catch (err) {
-                // No pagination found
-            }
-
-            // Try to find next page button or link
-            const nextPage = pageNumbers.find(p => {
-                const pageNum = p.text.match(/\d+/)?.[0];
-                return pageNum && Number(pageNum) === pageIndex + 1;
-            });
-
-            // If no pagination and no load more, we're done
-            if (!nextPage && pageNumbers.length === 0 && !hasLoadMore) {
-                console.log('✅ No more pages left. Done.');
-                break;
-            }
-
-            // If there's a load more button, click it
-            if (hasLoadMore && !nextPage) {
-                console.log(`➡️ Clicking "Load More" button...`);
-                try {
-                    await this.page.evaluate(() => {
-                        const buttons = Array.from(document.querySelectorAll('button'));
-                        const loadMoreBtn = buttons.find(b => {
-                            const text = b.textContent.trim().toLowerCase();
-                            return text.includes('load more') || text.includes('show more');
-                        });
-                        if (loadMoreBtn) loadMoreBtn.click();
-                    });
-                    await delay(3000);
-                    pageIndex++;
-                    continue;
-                } catch (err) {
-                    console.warn(`⚠️ Could not click load more: ${err.message}`);
-                    break;
+                // Check if button is disabled
+                if (hasNextButton) {
+                    const isDisabled = await this.page.evaluate((btn) => {
+                        return btn.disabled || btn.getAttribute('aria-disabled') === 'true' || btn.classList.contains('disabled');
+                    }, nextButton);
+                    hasNextButton = !isDisabled;
                 }
+            } catch (err) {
+                // No next button found
             }
 
-            if (!nextPage) {
+            // If no next button, we're done
+            if (!hasNextButton) {
                 console.log('✅ No more pages left. Done.');
                 break;
             }
 
-            // Click the next page
-            console.log(`➡️ Clicking page ${pageIndex + 1}`);
+            // Click the next button
+            console.log(`➡️ Clicking next button...`);
             try {
-                await this.page.evaluate((pageNum) => {
-                    const links = Array.from(document.querySelectorAll('ul.pagination li a, a[href*="page"]'));
-                    const nextLink = links.find(a => {
-                        const text = a.textContent.trim();
-                        return text === String(pageNum) || text.includes(`Page ${pageNum}`);
-                    });
-                    if (nextLink) {
-                        nextLink.click();
-                        return true;
-                    }
-                    return false;
-                }, pageIndex + 1);
+                await this.page.click('button[data-testid="next"]');
                 await this.page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 10000 });
+                pageIndex++;
+                await delay(2000);
             } catch (err) {
-                console.warn(`⚠️ Could not navigate to page ${pageIndex + 1}: ${err.message}`);
+                console.warn(`⚠️ Could not click next button: ${err.message}`);
                 break;
             }
-
-            pageIndex++;
-            await delay(2000);
         }
 
         return this.allJobLinks;
