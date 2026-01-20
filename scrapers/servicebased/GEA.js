@@ -28,10 +28,10 @@ class GEAJobsScraper {
                 waitUntil: 'networkidle2',
                 timeout: 30000
             });
-            
+
             // Wait for page to fully render
             await delay(8000);
-            
+
             // Scroll to trigger lazy loading
             for (let i = 0; i < 3; i++) {
                 await this.page.evaluate(() => {
@@ -39,13 +39,13 @@ class GEAJobsScraper {
                 });
                 await delay(2000);
             }
-            
+
             // Scroll back to top
             await this.page.evaluate(() => {
                 window.scrollTo(0, 0);
             });
             await delay(2000);
-            
+
             // Wait for job links to appear
             await this.page.waitForFunction(
                 () => {
@@ -55,7 +55,7 @@ class GEAJobsScraper {
             ).catch(() => {
                 console.warn('⚠️ Timeout waiting for dynamic content, continuing anyway...');
             });
-            
+
         } catch (err) {
             console.warn('⚠️ Navigation warning:', err.message);
             // Continue anyway, might still work
@@ -114,7 +114,7 @@ class GEAJobsScraper {
             try {
                 const nextButton = await this.page.$('button[data-testid="next"]');
                 hasNextButton = nextButton !== null;
-                
+
                 // Check if button is disabled
                 if (hasNextButton) {
                     const isDisabled = await this.page.evaluate((btn) => {
@@ -154,15 +154,80 @@ class GEAJobsScraper {
         try {
             await jobPage.goto(url, { waitUntil: 'networkidle2' });
             await delay(5000);
-            //await jobPage.waitForSelector('div.job__description.body', { timeout: 10000 });
+
+            // Wait for job content to load
+            await jobPage.waitForSelector('h1, div[data-testid="breadcrumb"]', { timeout: 10000 });
 
             const job = await jobPage.evaluate(() => {
-                const getText = sel => document.querySelector(sel)?.innerText.trim() || '';
+                const getText = sel => {
+                    const el = document.querySelector(sel);
+                    return el?.innerText?.trim() || el?.textContent?.trim() || '';
+                };
+
+                // Extract title from h1
+                const title = getText('h1.text-white.font-heading') ||
+                    getText('h1') ||
+                    getText('h1.font-semibold');
+
+                // Extract location - look for the span that contains location info
+                // It's in a div with flex gap-8 items-center, after an img (flag)
+                let location = '';
+                const locationDiv = Array.from(document.querySelectorAll('div.flex.gap-8.items-center')).find(div => {
+                    const img = div.querySelector('img[alt*="flag"], img[src*="country-flags"]');
+                    const span = div.querySelector('span.text-white');
+                    return img && span;
+                });
+
+                if (locationDiv) {
+                    const locationSpan = locationDiv.querySelector('span.text-white');
+                    location = locationSpan?.textContent?.trim() || '';
+                }
+
+                // If not found, try alternative selectors
+                if (!location) {
+                    location = getText('span.text-white.text-12') ||
+                        getText('span.text-white.text-14') ||
+                        Array.from(document.querySelectorAll('span.text-white'))
+                            .find(span => span.textContent.includes(',') || span.textContent.includes('India'))?.textContent?.trim() || '';
+                }
+
+                // Extract description from RichText sections
+                // Get all sections: "About the position", "Your responsibilities and tasks", "Your profile and qualifications"
+                const descriptionSections = [];
+
+                // Get the wrapper that contains all job description sections
+                const wrapper = document.querySelector('div[data-testid="wrapper"]');
+                if (wrapper) {
+                    // Get all RichText sections
+                    const richTextSections = wrapper.querySelectorAll('div.RichText_rich_text__IEuIi div.rich-text-link-gray');
+
+                    richTextSections.forEach(section => {
+                        const text = section.innerText?.trim() || section.textContent?.trim() || '';
+                        if (text) {
+                            descriptionSections.push(text);
+                        }
+                    });
+                }
+
+                // Combine all sections
+                let description = descriptionSections.join('\n\n');
+
+                // Fallback if no sections found
+                if (!description) {
+                    description = getText('div[class*="description"]') ||
+                        getText('div[class*="detail"]') ||
+                        getText('div[class*="content"]') ||
+                        getText('div._detail-content') ||
+                        getText('div.job__description') ||
+                        Array.from(document.querySelectorAll('div'))
+                            .find(el => el.textContent.length > 200)?.textContent?.trim() || '';
+                }
+
                 return {
-                    title: getText('h2.white-header'),
+                    title,
                     company: 'GEA',
-                    location: getText('p.green'),
-                    description: getText('div._detail-content'),
+                    location,
+                    description,
                     url: window.location.href
                 };
             });
