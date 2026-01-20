@@ -53,6 +53,7 @@ import NetSolutions from "./scrapers/servicebased/netSolutions.js"
 import Acko from "./scrapers/productBased/acko.js"
 import Adobe from "./scrapers/productBased/adobe.js"
 import ClearTax from "./scrapers/productBased/clearTax.js"
+import GEA from "./scrapers/servicebased/GEA.js"
 
 const config = {
   concurrency: 5,
@@ -122,7 +123,7 @@ ${error.stack}`;
 };
 
 const scrapers = [
-   { fn: ClearTax, headless: true },
+   { fn: GEA, headless: true },
 ];
 
 const runAllScrapers = async () => {
