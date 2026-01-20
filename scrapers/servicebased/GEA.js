@@ -191,36 +191,72 @@ class GEAJobsScraper {
                             .find(span => span.textContent.includes(',') || span.textContent.includes('India'))?.textContent?.trim() || '';
                 }
 
-                // Extract description from RichText sections
-                // Get all sections: "About the position", "Your responsibilities and tasks", "Your profile and qualifications"
-                const descriptionSections = [];
-
-                // Get the wrapper that contains all job description sections
-                const wrapper = document.querySelector('div[data-testid="wrapper"]');
-                if (wrapper) {
-                    // Get all RichText sections
-                    const richTextSections = wrapper.querySelectorAll('div.RichText_rich_text__IEuIi div.rich-text-link-gray');
-
-                    richTextSections.forEach(section => {
-                        const text = section.innerText?.trim() || section.textContent?.trim() || '';
-                        if (text) {
-                            descriptionSections.push(text);
+                // Extract description from job description sections
+                // Get all rich-text-link-gray sections but exclude "About GEA" section
+                const descriptionParts = [];
+                
+                // Find all h2 and h3 headings in the job description area
+                const allHeadings = Array.from(document.querySelectorAll('h2.text-blue-700, h3.text-black'));
+                const aboutGEAIndex = allHeadings.findIndex(h => h.textContent.trim().includes('About GEA'));
+                
+                // Process headings before "About GEA"
+                const relevantHeadings = aboutGEAIndex >= 0 ? allHeadings.slice(0, aboutGEAIndex) : allHeadings;
+                
+                relevantHeadings.forEach(heading => {
+                    // Add heading text
+                    const headingText = heading.textContent.trim();
+                    if (headingText) {
+                        descriptionParts.push(headingText);
+                    }
+                    
+                    // Find the rich-text-link-gray div that follows this heading
+                    let nextElement = heading.nextElementSibling;
+                    while (nextElement) {
+                        // Stop if we hit another heading
+                        if (nextElement.tagName === 'H2' || nextElement.tagName === 'H3') {
+                            break;
                         }
-                    });
-                }
-
-                // Combine all sections
-                let description = descriptionSections.join('\n\n');
-
-                // Fallback if no sections found
+                        
+                        // Look for rich-text-link-gray div
+                        const richTextDiv = nextElement.querySelector('div.rich-text-link-gray');
+                        if (richTextDiv) {
+                            const text = richTextDiv.innerText?.trim() || richTextDiv.textContent?.trim() || '';
+                            if (text) {
+                                descriptionParts.push(text);
+                            }
+                            break;
+                        }
+                        
+                        nextElement = nextElement.nextElementSibling;
+                    }
+                });
+                
+                let description = descriptionParts.join('\n\n');
+                
+                // Fallback: if no description found, get all rich-text-link-gray sections
                 if (!description) {
-                    description = getText('div[class*="description"]') ||
-                        getText('div[class*="detail"]') ||
-                        getText('div[class*="content"]') ||
-                        getText('div._detail-content') ||
-                        getText('div.job__description') ||
-                        Array.from(document.querySelectorAll('div'))
-                            .find(el => el.textContent.length > 200)?.textContent?.trim() || '';
+                    const allRichTextSections = Array.from(document.querySelectorAll('div.rich-text-link-gray'));
+                    const texts = allRichTextSections
+                        .map(section => {
+                            // Check if this section is before "About GEA"
+                            const aboutGEAHeading = Array.from(document.querySelectorAll('h2.text-blue-700'))
+                                .find(h => h.textContent.trim().includes('About GEA'));
+                            
+                            if (aboutGEAHeading) {
+                                // Check if section comes after "About GEA"
+                                const allElements = Array.from(document.querySelectorAll('*'));
+                                const sectionIndex = allElements.indexOf(section);
+                                const aboutGEAIndex = allElements.indexOf(aboutGEAHeading);
+                                if (sectionIndex > aboutGEAIndex) {
+                                    return null;
+                                }
+                            }
+                            
+                            return section.innerText?.trim() || section.textContent?.trim() || '';
+                        })
+                        .filter(text => text);
+                    
+                    description = texts.join('\n\n');
                 }
 
                 return {
