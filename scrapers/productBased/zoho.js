@@ -24,7 +24,7 @@ class ZohoJobsScraper {
     async navigateToJobsPage() {
         console.log('🌐 Navigating to Zoho Careers...');
         try {
-            await this.page.goto('https://careers.zoho.com/job-listing/?job_title=&country=India&workplace=', {
+            await this.page.goto('https://careers.zohocorp.com/jobs/careers', {
                 waitUntil: 'networkidle2',
                 timeout: 30000
             });
