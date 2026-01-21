@@ -23,7 +23,7 @@ class UniphoreJobsScraper {
 
     async navigateToJobsPage() {
         console.log('🌐 Navigating to Uniphore Careers...');
-        await this.page.goto('https://wd1.myworkdaysite.com/recruiting/uniphore/Uniphore?locations=a9915d38cb07100cb34d01e7ecbe0000&locations=a9915d38cb07100cb34d33ce139d0000', {
+        await this.page.goto('https://uniphore.wd503.myworkdayjobs.com/Uniphore', {
             waitUntil: 'networkidle2'
         });
         await delay(5000);
