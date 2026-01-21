@@ -27,6 +27,7 @@ import Freecharge from "../scrapers/productBased/freecharge.js"
 import Tanla from "../scrapers/servicebased/tanla.js"
 import MotivityLabs from "../scrapers/servicebased/motivityLabs.js"
 import Accelya from "../scrapers/servicebased/accelya.js"
+import Zoho from "../scrapers/productBased/zoho.js"
 
 const config = {
   concurrency: 5,
@@ -108,6 +109,7 @@ const scrapers = [
   { fn: Tanla, headless: true },
   { fn: MotivityLabs, headless: true },
   { fn: Accelya, headless: true },
+  { fn: Zoho, headless: true },
 ];
 
 const runAllScrapers = async () => {
