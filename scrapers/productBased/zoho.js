@@ -96,10 +96,10 @@ class ZohoJobsScraper {
             const job = await jobPage.evaluate(() => {
                 const getText = sel => document.querySelector(sel)?.innerText.trim() || '';
                 return {
-                    title: getText('h2.white-header'),
+                    title: getText('.cw-jobheader-info > h1'),
                     company: 'Zoho',
-                    location: getText('p.green'),
-                    description: getText('div._detail-content'),
+                    location: 'Mumbai',
+                    description: getText('.cw-jobdescription #cw-rich-description'),
                     url: window.location.href
                 };
             });
