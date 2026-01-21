@@ -23,10 +23,42 @@ class UniphoreJobsScraper {
 
     async navigateToJobsPage() {
         console.log('🌐 Navigating to Uniphore Careers...');
-        await this.page.goto('https://uniphore.wd503.myworkdayjobs.com/Uniphore', {
-            waitUntil: 'networkidle2'
-        });
-        await delay(5000);
+        try {
+            await this.page.goto('https://uniphore.wd503.myworkdayjobs.com/Uniphore', {
+                waitUntil: 'networkidle2',
+                timeout: 30000
+            });
+            
+            // Wait for page to fully render
+            await delay(8000);
+            
+            // Scroll to trigger lazy loading
+            for (let i = 0; i < 3; i++) {
+                await this.page.evaluate(() => {
+                    window.scrollTo(0, document.body.scrollHeight);
+                });
+                await delay(2000);
+            }
+            
+            // Scroll back to top
+            await this.page.evaluate(() => {
+                window.scrollTo(0, 0);
+            });
+            await delay(2000);
+            
+            // Wait for job links to appear
+            await this.page.waitForFunction(
+                () => {
+                    return document.querySelectorAll('a[data-automation-id="jobTitle"]').length > 0;
+                },
+                { timeout: 15000 }
+            ).catch(() => {
+                console.warn('⚠️ Timeout waiting for job links, continuing anyway...');
+            });
+            
+        } catch (err) {
+            console.warn('⚠️ Navigation warning:', err.message);
+        }
     }
 
     async collectAllJobCardLinks() {
@@ -34,10 +66,24 @@ class UniphoreJobsScraper {
         const existingLinks = new Set();
 
         while (true) {
+            // Wait for job links to load
+            try {
+                await this.page.waitForSelector('a[data-automation-id="jobTitle"]', { timeout: 15000 });
+            } catch (err) {
+                console.log('✅ No more job links found. Done.');
+                break;
+            }
+
             // Collect job links on current page
-            const jobLinks = await this.page.$$eval(`a[data-automation-id="jobTitle"]`, anchors =>
-                anchors.map(a => a.href)
-            );
+            let jobLinks = [];
+            try {
+                jobLinks = await this.page.$$eval('a[data-automation-id="jobTitle"]', anchors =>
+                    anchors.map(a => a.href).filter(Boolean)
+                );
+            } catch (err) {
+                console.warn('⚠️ Could not extract job links:', err.message);
+                jobLinks = [];
+            }
 
             for (const link of jobLinks) {
                 if (!existingLinks.has(link)) {
@@ -46,29 +92,52 @@ class UniphoreJobsScraper {
                 }
             }
 
-            console.log(`📄 Collected ${this.allJobLinks.length} unique job links so far...`);
+            console.log(`📄 Collected ${this.allJobLinks.length} unique job links so far (${jobLinks.length} new on this page)...`);
 
-            // Check if "Load More" button exists (fresh query every loop)
-            const loadMoreExists = await this.page.$('#load_more_jobs2');
-            if (!loadMoreExists) {
-                console.log("✅ No more pages found. Pagination finished.");
+            // If no job links found on this iteration and we're on the first page, something is wrong
+            if (jobLinks.length === 0 && this.allJobLinks.length === 0) {
+                console.warn('⚠️ No job links found on the first page. Page structure may have changed.');
                 break;
             }
 
-            // console.log("➡️ Clicking Load More...");
-            // await this.page.click('#load_more_jobs');
+            // If no new links found and we have some links already, we're done
+            if (jobLinks.length === 0 && this.allJobLinks.length > 0) {
+                console.log('✅ No more job links found. Done.');
+                break;
+            }
 
-            // ⏳ Wait for new jobs to load
-            // await this.page.waitForFunction(
-            //     (prevCount) => {
-            //         return document.querySelectorAll("h5 > a").length > prevCount;
-            //     },
-            //     {},
-            //     jobLinks.length
-            // );
+            // Check for next button using button[data-uxi-element-id="next"]
+            let hasNextButton = false;
+            try {
+                const nextButton = await this.page.$('button[data-uxi-element-id="next"]');
+                hasNextButton = nextButton !== null;
+                
+                // Check if button is disabled
+                if (hasNextButton) {
+                    const isDisabled = await this.page.evaluate((btn) => {
+                        return btn.disabled || btn.getAttribute('aria-disabled') === 'true' || btn.classList.contains('disabled');
+                    }, nextButton);
+                    hasNextButton = !isDisabled;
+                }
+            } catch (err) {
+                // No next button found
+            }
 
-            // // Optional: small delay to stabilize
-            // await delay(5000);
+            // If no next button, we're done
+            if (!hasNextButton) {
+                console.log('✅ No more pages left. Done.');
+                break;
+            }
+
+            // Click the next button
+            console.log(`➡️ Clicking next button...`);
+            try {
+                await this.page.click('button[data-uxi-element-id="next"]');
+                await delay(3000); // Wait for new jobs to load
+            } catch (err) {
+                console.warn(`⚠️ Could not click next button: ${err.message}`);
+                break;
+            }
         }
 
         return this.allJobLinks;
