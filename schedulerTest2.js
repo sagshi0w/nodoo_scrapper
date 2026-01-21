@@ -55,6 +55,7 @@ import Adobe from "./scrapers/productBased/adobe.js"
 import ClearTax from "./scrapers/productBased/clearTax.js"
 import GEA from "./scrapers/servicebased/GEA.js"
 import Securden from "./scrapers/servicebased/Securden.js"
+import Zoho from "./scrapers/productBased/zoho.js"
 
 const config = {
   concurrency: 5,
@@ -124,7 +125,7 @@ ${error.stack}`;
 };
 
 const scrapers = [
-   { fn: Securden, headless: true },
+   { fn: Zoho, headless: true },
 ];
 
 const runAllScrapers = async () => {
