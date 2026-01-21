@@ -98,7 +98,7 @@ class ZohoJobsScraper {
                 return {
                     title: getText('.cw-jobheader-info > h1'),
                     company: 'Zoho',
-                    location: 'Mumbai',
+                    location: 'Chennai',
                     description: getText('.cw-jobdescription #cw-rich-description'),
                     url: window.location.href
                 };
@@ -122,7 +122,7 @@ class ZohoJobsScraper {
             console.log(`📝 [${i + 1}/${this.allJobLinks.length}] Processing: ${url}`);
             const jobData = await this.extractJobDetailsFromLink(url);
             if (jobData && jobData.title) {
-                const enrichedJob = extractWiproData(jobData);
+                const enrichedJob = extractZohoData(jobData);
                 console.log("After enriching job=", enrichedJob);
                 this.allJobs.push(enrichedJob);
                 console.log(`✅ ${jobData.title}`);
@@ -156,7 +156,7 @@ class ZohoJobsScraper {
     }
 }
 
-const extractWiproData = (job) => {
+const extractZohoData = (job) => {
     if (!job) return job;
 
     let cleanedDescription = job.description || '';
