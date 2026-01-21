@@ -26,7 +26,7 @@ class ZohoJobsScraper {
         try {
             await this.page.goto('https://careers.zohocorp.com/jobs/careers', {
                 waitUntil: 'networkidle2',
-                timeout: 30000
+                timeout: 60000
             });
             
             // Wait for page to fully render
@@ -46,14 +46,26 @@ class ZohoJobsScraper {
             });
             await delay(2000);
             
-             // Wait for job links to appear
+             // Wait for job links to appear - try multiple selectors
              await this.page.waitForFunction(
                  () => {
-                     return document.querySelectorAll('.cw-jobheader-info, .cw-jobheader-info h1').length > 0;
+                     return document.querySelectorAll('.cw-jobheader-info, .cw-jobheader-info h1, .jobcard-container, a[href*="/jobs/"]').length > 0;
                  },
-                 { timeout: 15000 }
-             ).catch(() => {
-                 console.warn('⚠️ Timeout waiting for job links, continuing anyway...');
+                 { timeout: 20000 }
+             ).catch(async () => {
+                 // Debug: log what's actually on the page
+                 const pageInfo = await this.page.evaluate(() => {
+                     return {
+                         title: document.title,
+                         url: window.location.href,
+                         cwJobheaderInfo: document.querySelectorAll('.cw-jobheader-info').length,
+                         jobcardContainer: document.querySelectorAll('.jobcard-container').length,
+                         jobLinks: document.querySelectorAll('a[href*="/jobs/"]').length,
+                         allLinks: document.querySelectorAll('a').length,
+                         bodyText: document.body?.innerText?.substring(0, 500) || ''
+                     };
+                 });
+                 console.warn('⚠️ Timeout waiting for job links. Page info:', JSON.stringify(pageInfo, null, 2));
              });
             
         } catch (err) {
@@ -67,27 +79,106 @@ class ZohoJobsScraper {
         const existingLinks = new Set();
 
         while (true) {
-            // Wait for job links to load using .cw-jobheader-info selector
-            try {
-                await this.page.waitForSelector('.cw-jobheader-info, .cw-jobheader-info h1', { timeout: 15000 });
-            } catch (err) {
+            // Wait for job links to load - try multiple selectors
+            let found = false;
+            const selectors = [
+                '.cw-jobheader-info',
+                '.cw-jobheader-info h1',
+                '.jobcard-container',
+                'a[href*="/jobs/"]',
+                'a[href*="careers"]'
+            ];
+            
+            for (const selector of selectors) {
+                try {
+                    await this.page.waitForSelector(selector, { timeout: 10000 });
+                    const count = await this.page.$$eval(selector, els => els.length);
+                    if (count > 0) {
+                        found = true;
+                        console.log(`✅ Found ${count} elements with selector: ${selector}`);
+                        break;
+                    }
+                } catch (err) {
+                    continue;
+                }
+            }
+            
+            if (!found) {
+                // Debug: log what's actually on the page
+                const pageInfo = await this.page.evaluate(() => {
+                    return {
+                        title: document.title,
+                        url: window.location.href,
+                        cwJobheaderInfo: document.querySelectorAll('.cw-jobheader-info').length,
+                        jobcardContainer: document.querySelectorAll('.jobcard-container').length,
+                        jobLinks: document.querySelectorAll('a[href*="/jobs/"]').length,
+                        allLinks: document.querySelectorAll('a').length,
+                        sampleLinks: Array.from(document.querySelectorAll('a')).slice(0, 10).map(a => ({
+                            href: a.getAttribute('href'),
+                            text: a.textContent.trim().substring(0, 50)
+                        }))
+                    };
+                });
+                console.log('🔍 Page debug info:', JSON.stringify(pageInfo, null, 2));
                 console.log('✅ No more job links found. Done.');
                 break;
             }
 
-            // Collect new links - find links that contain .cw-jobheader-info h1
+            // Collect new links - try multiple strategies
             let jobLinks = [];
             try {
+                // Strategy 1: Find links from .cw-jobheader-info
                 jobLinks = await this.page.evaluate(() => {
-                    // Find all .cw-jobheader-info elements
                     const jobHeaders = Array.from(document.querySelectorAll('.cw-jobheader-info'));
-                    return jobHeaders.map(header => {
-                        // Find the link - could be parent a, or a inside the header
-                        const link = header.closest('a') || header.querySelector('a');
-                        if (link) {
+                    if (jobHeaders.length > 0) {
+                        return jobHeaders.map(header => {
+                            const link = header.closest('a') || header.querySelector('a');
+                            if (link) {
+                                const href = link.getAttribute('href');
+                                if (href) {
+                                    if (href.startsWith('/')) {
+                                        return window.location.origin + href;
+                                    } else if (!href.startsWith('http')) {
+                                        return window.location.origin + '/' + href;
+                                    }
+                                    return href;
+                                }
+                            }
+                            return null;
+                        }).filter(Boolean);
+                    }
+                    return [];
+                });
+                
+                // Strategy 2: If no links found, try .jobcard-container
+                if (jobLinks.length === 0) {
+                    jobLinks = await this.page.evaluate(() => {
+                        const containers = Array.from(document.querySelectorAll('.jobcard-container'));
+                        return containers.map(container => {
+                            const link = container.querySelector('a');
+                            if (link) {
+                                const href = link.getAttribute('href');
+                                if (href) {
+                                    if (href.startsWith('/')) {
+                                        return window.location.origin + href;
+                                    } else if (!href.startsWith('http')) {
+                                        return window.location.origin + '/' + href;
+                                    }
+                                    return href;
+                                }
+                            }
+                            return null;
+                        }).filter(Boolean);
+                    });
+                }
+                
+                // Strategy 3: Find all links with /jobs/ in href
+                if (jobLinks.length === 0) {
+                    jobLinks = await this.page.evaluate(() => {
+                        const links = Array.from(document.querySelectorAll('a[href*="/jobs/"]'));
+                        return links.map(link => {
                             const href = link.getAttribute('href');
                             if (href) {
-                                // Convert relative URLs to absolute
                                 if (href.startsWith('/')) {
                                     return window.location.origin + href;
                                 } else if (!href.startsWith('http')) {
@@ -95,10 +186,10 @@ class ZohoJobsScraper {
                                 }
                                 return href;
                             }
-                        }
-                        return null;
-                    }).filter(Boolean);
-                });
+                            return null;
+                        }).filter(Boolean);
+                    });
+                }
             } catch (err) {
                 console.warn('⚠️ Could not extract job links:', err.message);
                 jobLinks = [];
