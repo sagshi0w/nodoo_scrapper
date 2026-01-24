@@ -23,7 +23,7 @@ class WiproJobsScraper {
 
     async navigateToJobsPage() {
         console.log('🌐 Navigating to Wipro Careers...');
-        await this.page.goto('https://careers.wipro.com/job-listing/?job_title=&country=India&workplace=', {
+        await this.page.goto('https://careers.wipro.com/search/?q=&locationsearch=&searchResultView=LIST&markerViewed=&carouselIndex=&facetFilters=%7B%7D&pageNumber=0', {
             waitUntil: 'networkidle2'
         });
         await delay(5000);
