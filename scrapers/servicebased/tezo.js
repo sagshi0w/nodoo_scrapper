@@ -40,7 +40,7 @@ class TezoJobsScraper {
 
             // Collect new links
             const jobLinks = await this.page.$$eval(
-                'a.applu-now-btn.w-inline-block',
+                'a.kh-job-card[href]',
                 anchors => anchors.map(a => a.href)
             );
 
@@ -96,9 +96,9 @@ class TezoJobsScraper {
             const job = await jobPage.evaluate(() => {
                 const getText = sel => document.querySelector(sel)?.innerText.trim() || '';
                 return {
-                    title: getText('h1'),
+                    title: getText('h1.kch-text-heading'),
                     company: 'Tezo',
-                    location: getText('span.icon.icon-sm.ki-location.pr-2.text-white'),
+                    location: getText('span.ki-location + span'),
                     description: getText('div.job-description-container.ql-editor'),
                     url: window.location.href
                 };

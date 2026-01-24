@@ -58,6 +58,7 @@ import Securden from "./scrapers/servicebased/Securden.js"
 import Zoho from "./scrapers/productBased/zoho.js"
 import Uniphore from "./scrapers/servicebased/uniphore.js"
 import Wipro from "./scrapers/servicebased/wipro.js"
+import Tezo from "./scrapers/servicebased/tezo.js"
 
 const config = {
   concurrency: 5,
@@ -127,7 +128,7 @@ ${error.stack}`;
 };
 
 const scrapers = [
-   { fn: Wipro, headless: true },
+   { fn: Tezo, headless: true },
 ];
 
 const runAllScrapers = async () => {
