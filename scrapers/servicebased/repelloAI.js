@@ -35,7 +35,7 @@ class RepelloAIJobsScraper {
 
         while (true) {
             // Collect job links on current page
-            const jobLinks = await this.page.$$eval(`.framer-1kzw3ki-container > a.framer-N7Uzf`, anchors =>
+            const jobLinks = await this.page.$$eval(`a[href^="./careers/"]`, anchors =>
                 anchors.map(a => a.href)
             );
 
@@ -88,14 +88,44 @@ class RepelloAIJobsScraper {
                 const getText = sel => document.querySelector(sel)?.innerText.trim() || '';
 
                 // Extract and clean job title
-                let rawTitle = getText('.framer-3t80za h1.framer-text');
+                let rawTitle = getText('div[data-framer-name="Title"] h1');
                 let title = rawTitle.trim();
+                
+                // Extract description from Content container
+                let description = '';
+                const contentContainer = document.querySelector('div[data-framer-name="Content"][data-framer-component-type="RichTextContainer"]') ||
+                                        document.querySelector('div.framer-12xxyq3[data-framer-name="Content"]') ||
+                                        document.querySelector('div[data-framer-name="Content"]');
+                if (contentContainer) {
+                    description = contentContainer.innerText?.trim() || '';
+                }
+                
+                // Fallback for description
+                if (!description) {
+                    description = getText('div.framer-12xxyq3') ||
+                                  getText('div[data-framer-component-type="RichTextContainer"]') ||
+                                  '';
+                }
+                
+                // Extract location from the first h5 (usually contains location info like "📍Location: ...")
+                let location = '';
+                const locationH5 = contentContainer?.querySelector('h5');
+                if (locationH5 && locationH5.textContent.includes('Location')) {
+                    // Extract location from "📍Location: Bengaluru, India (HSR Layout)"
+                    const locationMatch = locationH5.textContent.match(/Location:\s*(.+)/i);
+                    location = locationMatch ? locationMatch[1].trim() : '';
+                }
+                
+                // Fallback for location
+                if (!location) {
+                    location = getText('div[data-framer-name="Date"] p') || 'India';
+                }
 
                 return {
                     title,
                     company: 'Repello',
-                    location: getText('.framer-2piyqb .framer-on51a4 p.framer-text'),
-                    description: getText('div.framer-12xxyq3'),
+                    location,
+                    description,
                     url: window.location.href
                 };
             });
