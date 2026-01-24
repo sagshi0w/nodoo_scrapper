@@ -57,6 +57,7 @@ import GEA from "./scrapers/servicebased/GEA.js"
 import Securden from "./scrapers/servicebased/Securden.js"
 import Zoho from "./scrapers/productBased/zoho.js"
 import Uniphore from "./scrapers/servicebased/uniphore.js"
+import Wipro from "./scrapers/servicebased/wipro.js"
 
 const config = {
   concurrency: 5,
@@ -126,7 +127,7 @@ ${error.stack}`;
 };
 
 const scrapers = [
-   { fn: Uniphore, headless: true },
+   { fn: Wipro, headless: true },
 ];
 
 const runAllScrapers = async () => {
