@@ -91,15 +91,63 @@ class WiproJobsScraper {
         try {
             await jobPage.goto(url, { waitUntil: 'networkidle2' });
             await delay(5000);
-            //await jobPage.waitForSelector('div.job__description.body', { timeout: 10000 });
 
             const job = await jobPage.evaluate(() => {
                 const getText = sel => document.querySelector(sel)?.innerText.trim() || '';
+                
+                // Get title
+                const title = getText('span[itemprop="title"]');
+                
+                // Find location by looking for "City" label and getting the next span
+                let location = '';
+                const labels = Array.from(document.querySelectorAll('span.joblayouttoken-label'));
+                for (const label of labels) {
+                    if (label.textContent.trim().toLowerCase() === 'city') {
+                        const nextSpan = label.nextElementSibling;
+                        if (nextSpan && nextSpan.tagName === 'SPAN') {
+                            location = nextSpan.innerText?.trim() || nextSpan.textContent?.trim() || '';
+                        }
+                        break;
+                    }
+                }
+                
+                // If no city found, try other location-related labels
+                if (!location) {
+                    for (const label of labels) {
+                        const labelText = label.textContent.trim().toLowerCase();
+                        if (labelText.includes('location') || labelText.includes('country')) {
+                            const nextSpan = label.nextElementSibling;
+                            if (nextSpan && nextSpan.tagName === 'SPAN') {
+                                location = nextSpan.innerText?.trim() || nextSpan.textContent?.trim() || '';
+                            }
+                            break;
+                        }
+                    }
+                }
+                
+                // Get description - collect all span.rtltextaligneligible content
+                let description = '';
+                const descSpans = document.querySelectorAll('span.rtltextaligneligible');
+                if (descSpans.length > 0) {
+                    description = Array.from(descSpans)
+                        .map(span => span.innerText?.trim() || '')
+                        .filter(Boolean)
+                        .join('\n\n');
+                }
+                
+                // Fallback for description
+                if (!description) {
+                    description = getText('div[data-automation-id="jobPostingDescription"]') ||
+                                  getText('div.job-description') ||
+                                  getText('div[class*="description"]') ||
+                                  '';
+                }
+                
                 return {
-                    title: getText('span[itemprop="title"]'),
+                    title,
                     company: 'Wipro',
-                    location: getText('span.joblayouttoken-label:contains("City") + span'),
-                    description: getText('span.joblayouttoken-label + span.rtltextaligneligible'),
+                    location,
+                    description,
                     url: window.location.href
                 };
             });
