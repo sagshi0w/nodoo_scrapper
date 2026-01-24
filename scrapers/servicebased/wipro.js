@@ -23,10 +23,29 @@ class WiproJobsScraper {
 
     async navigateToJobsPage() {
         console.log('🌐 Navigating to Wipro Careers...');
-        await this.page.goto('https://careers.wipro.com/search/?q=&locationsearch=&searchResultView=LIST&markerViewed=&carouselIndex=&facetFilters=%7B%7D&pageNumber=0', {
-            waitUntil: 'networkidle2'
-        });
-        await delay(5000);
+        try {
+            await this.page.goto('https://careers.wipro.com/search/?q=&locationsearch=&searchResultView=LIST&markerViewed=&carouselIndex=&facetFilters=%7B%7D&pageNumber=0', {
+                waitUntil: 'networkidle2',
+                timeout: 60000
+            });
+            
+            // Wait for page to fully render
+            await delay(5000);
+            
+            // Wait for job cards and pagination to appear
+            await this.page.waitForFunction(
+                () => {
+                    return document.querySelectorAll('li[data-testid="jobCard"]').length > 0 ||
+                           document.querySelectorAll('nav[data-testid="paginatorWrapper"]').length > 0;
+                },
+                { timeout: 15000 }
+            ).catch(() => {
+                console.warn('⚠️ Timeout waiting for job cards, continuing anyway...');
+            });
+            
+        } catch (err) {
+            console.warn('⚠️ Navigation warning:', err.message);
+        }
     }
 
     async collectAllJobCardLinks() {
@@ -35,15 +54,27 @@ class WiproJobsScraper {
         const existingLinks = new Set();
 
         while (true) {
-            // Wait for job links to load
-            //await this.page.waitForSelector('div.op-job-apply-bt', { timeout: 10000 });
+            // Wait for job cards to load
+            try {
+                await this.page.waitForSelector('li[data-testid="jobCard"]', { timeout: 15000 });
+            } catch (err) {
+                console.log('✅ No more job cards found. Done.');
+                break;
+            }
 
             // Collect new links
-            const jobLinks = await this.page.$$eval(
-                'li[data-testid="jobCard"] a[href^="/job/"]',
-                anchors => anchors.map(a => a.href)
-            );
+            let jobLinks = [];
+            try {
+                jobLinks = await this.page.$$eval(
+                    'li[data-testid="jobCard"] a[href^="/job/"]',
+                    anchors => anchors.map(a => a.href).filter(Boolean)
+                );
+            } catch (err) {
+                console.warn('⚠️ Could not extract job links:', err.message);
+                jobLinks = [];
+            }
 
+            const newLinksCount = jobLinks.filter(link => !existingLinks.has(link)).length;
             for (const link of jobLinks) {
                 if (!existingLinks.has(link)) {
                     existingLinks.add(link);
@@ -51,38 +82,59 @@ class WiproJobsScraper {
                 }
             }
 
-            console.log(`📄 Collected ${this.allJobLinks.length} unique job links so far...`);
+            console.log(`📄 Page ${pageIndex}: Collected ${this.allJobLinks.length} unique job links so far (${newLinksCount} new on this page)...`);
 
-            const pageNumbers = await this.page.$$eval('ul.pagination li a', links =>
-                links
-                    .map(a => ({
-                        text: a.textContent.trim(),
-                        href: a.getAttribute('href'),
-                    }))
-                    .filter(a => /^\d+$/.test(a.text)) // Only page numbers
-            );
+            // Check for "Next" button using data-testid="goToNextPageBtn"
+            let hasNextButton = false;
+            try {
+                const nextButton = await this.page.$('button[data-testid="goToNextPageBtn"]');
+                if (nextButton) {
+                    // Check if button is disabled
+                    const isDisabled = await this.page.evaluate(btn => {
+                        return btn.disabled || btn.getAttribute('aria-disabled') === 'true' || btn.classList.contains('disabled');
+                    }, nextButton);
+                    hasNextButton = !isDisabled;
+                }
+            } catch (err) {
+                // No next button found
+            }
 
-            // Try to click "See more results" button
-            // Check if "Show More Results" button exists and is visible
-            const nextPage = pageNumbers.find(p => Number(p.text) === pageIndex + 1);
-
-            if (!nextPage) {
+            // If no next button or it's disabled, we're done
+            if (!hasNextButton) {
                 console.log('✅ No more pages left. Done.');
                 break;
             }
 
-            // Click the next page
-            console.log(`➡️ Clicking page ${pageIndex + 1}`);
-            await Promise.all([
-                //this.page.click(`ul.pagination li a[title="Page ${pageIndex + 1}"]`),
-                //this.page.waitForNavigation({ waitUntil: 'networkidle2' }),
-            ]);
+            // Click the "Next" button
+            console.log(`➡️ Clicking "Next" to go to page ${pageIndex + 1}...`);
+            try {
+                // Get current page number for comparison after click
+                const currentPageNum = pageIndex;
+                
+                await this.page.click('button[data-testid="goToNextPageBtn"]');
+                
+                // Wait for page to update - wait for the new page button to become current
+                await this.page.waitForFunction(
+                    (expectedPage) => {
+                        const currentBtn = document.querySelector(`button[data-testid="goToPage${expectedPage}"]`);
+                        return currentBtn && (currentBtn.disabled || currentBtn.classList.contains('Paginator_currentBtn__6vdxQ'));
+                    },
+                    { timeout: 10000 },
+                    pageIndex + 1
+                ).catch(() => {
+                    // If the specific wait fails, just wait a bit
+                });
+                
+                await delay(2000); // Additional wait for content to load
+            } catch (err) {
+                console.warn(`⚠️ Could not click next button: ${err.message}`);
+                break;
+            }
 
             pageIndex++;
-
         }
 
-        return this.allJobLinks;;
+        return this.allJobLinks;
     }
 
 
