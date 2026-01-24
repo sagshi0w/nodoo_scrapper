@@ -3,193 +3,271 @@ import fs from 'fs';
 
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
-// 🧼 Clean Flipkart job description
-function cleanDescription(raw) {
-  const fieldLabels = [
-    "Posted On", "Open Positions", "Skills Required", "Location",
-    "Education/Qualification", "Years Of Exp"
-  ];
-  const sectionHeaders = ["About the Role", "Job Description", "Responsibilities"];
-
-  let lines = raw.split('\n');
-
-  lines = lines.filter(line =>
-    !fieldLabels.concat(sectionHeaders).some(label =>
-      line.trim().startsWith(label + ":") || line.trim() === label
-    )
-  );
-
-  lines = [...new Set(lines)].map(line => line.trim()).filter(line => line);
-  return lines.join('\n');
-}
-
-// 🧠 Enrich and clean extracted data
-const extractFlipkartData = (job) => {
-  if (!job) return null;
-
-  let { title = '', location = '', description = '' } = job;
-
-  return {
-    ...job,
-    title: title.trim(),
-    location: location.trim(),
-    description: cleanDescription(description),
-    company: 'Flipkart',
-    scrapedAt: new Date().toISOString()
-  };
-};
-
 class FlipkartJobsScraper {
-  constructor(headless = false) {
-    this.browser = null;
-    this.page = null;
-    this.allJobs = [];
-    this.headless = headless;
-  }
-
-  async initialize() {
-    this.browser = await puppeteer.launch({
-      headless: this.headless,
-      args: ['--no-sandbox', '--start-maximized'],
-      defaultViewport: null
-    });
-    this.page = await this.browser.newPage();
-    await this.page.setUserAgent(
-      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-    );
-  }
-
-  async navigateToJobsPage() {
-    console.log('🌐 Navigating to Flipkart Careers page...');
-    await this.page.goto('https://www.flipkartcareers.com/#!/joblist', {
-      waitUntil: 'networkidle2',
-      timeout: 60000
-    });
-    await delay(5000);
-  }
-
-  async loadAllJobPages() {
-    let pageCount = 1;
-
-    while (true) {
-      const nextBtn = await this.page.$('button.loadmore-btn');
-      if (!nextBtn) {
-        console.log('🚫 No more pages.');
-        break;
-      }
-
-      console.log(`➡️ Loading more jobs (Page ${pageCount + 1})...`);
-      await nextBtn.click();
-      await delay(4000);
-      pageCount++;
+    constructor(headless = true) {
+        this.headless = headless;
+        this.browser = null;
+        this.page = null;
+        this.allJobLinks = [];
+        this.allJobs = [];
     }
-  }
 
-  async getAllJobCards() {
-    const selector = 'div.block-h';
-    await this.page.waitForSelector(selector, { timeout: 10000 });
-
-    const indexes = await this.page.$$eval(selector, (els) => els.map((_, idx) => idx));
-    console.log(`🔍 Found ${indexes.length} job cards`);
-    return indexes;
-  }
-
-  async extractJobDetails(page) {
-    try {
-      const sel = {
-        title: 'h2.defThmSubHeading.align-titleJob.ng-binding:not(.job-location)',
-        location: 'h2.defThmSubHeading.align-titleJob.job-location.ng-binding',
-        description: '#content > div > section.listing-block.recent-vehicles.customJobVwSection > div:nth-child(3) > div > div > div'
-      };
-
-      await page.waitForSelector(sel.title, { timeout: 15000 });
-      await page.waitForSelector(sel.location, { timeout: 15000 });
-
-      return await page.evaluate((s) => {
-        const getText = selector => document.querySelector(selector)?.textContent.trim() || '';
-        return {
-          title: getText(s.title),
-          location: getText(s.location),
-          description: getText(s.description)
-        };
-      }, sel);
-    } catch (err) {
-      console.warn('⚠️ Failed to extract job details:', err.message);
-      return { title: '', location: '', description: '' };
+    async initialize() {
+        this.browser = await puppeteer.launch({
+            headless: this.headless,
+            args: ['--no-sandbox', ...(this.headless ? [] : ['--start-maximized'])],
+            defaultViewport: this.headless ? { width: 1920, height: 1080 } : null
+        });
+        this.page = await this.browser.newPage();
     }
-  }
 
-  async processJobCards(indexes) {
-    const cards = await this.page.$$('div.block-h');
+    async navigateToJobsPage() {
+        console.log('🌐 Navigating to Flipkart Careers...');
+        await this.page.goto('https://flipkart.turbohire.co/dashboardv2?orgId=4d757ba0-3d57-448a-b82c-238ed87ac90f&type=0', {
+            waitUntil: 'networkidle2'
+        });
+        await delay(5000);
+    }
 
-    for (let i = 0; i < indexes.length; i++) {
-      const index = indexes[i];
-      console.log(`📝 Processing job ${i + 1}/${indexes.length}`);
+    async collectAllJobCardLinks() {
+        this.allJobLinks = [];
+        let pageIndex = 1;
+        const existingLinks = new Set();
 
-      try {
-        const existingPages = await this.browser.pages();
-        await cards[index].click();
-        await delay(3000);
+        while (true) {
+            // Wait for job links to load
+            //await this.page.waitForSelector('div.op-job-apply-bt', { timeout: 10000 });
 
-        const newPage = (await this.browser.pages()).find(p => !existingPages.includes(p));
-        if (!newPage) {
-          console.warn('⚠️ No new tab detected');
-          continue;
+            // Collect new links
+            const jobLinks = await this.page.$$eval(
+                '.job-list-wrap.job_list > a',
+                anchors => anchors.map(a => a.href)
+            );
+
+            for (const link of jobLinks) {
+                if (!existingLinks.has(link)) {
+                    existingLinks.add(link);
+                    this.allJobLinks.push(link);
+                }
+            }
+
+            console.log(`📄 Collected ${this.allJobLinks.length} unique job links so far...`);
+
+            const pageNumbers = await this.page.$$eval('ul.pagination li a', links =>
+                links
+                    .map(a => ({
+                        text: a.textContent.trim(),
+                        href: a.getAttribute('href'),
+                    }))
+                    .filter(a => /^\d+$/.test(a.text)) // Only page numbers
+            );
+
+            // Try to click "See more results" button
+            // Check if "Show More Results" button exists and is visible
+            const nextPage = pageNumbers.find(p => Number(p.text) === pageIndex + 1);
+
+            if (!nextPage) {
+                console.log('✅ No more pages left. Done.');
+                break;
+            }
+
+            // Click the next page
+            console.log(`➡️ Clicking page ${pageIndex + 1}`);
+            await Promise.all([
+                //this.page.click(`ul.pagination li a[title="Page ${pageIndex + 1}"]`),
+                //this.page.waitForNavigation({ waitUntil: 'networkidle2' }),
+            ]);
+
+            pageIndex++;
+
         }
 
-        await newPage.bringToFront();
-        await newPage.waitForNetworkIdle({ timeout: 10000 });
-
-        const jobDetails = await this.extractJobDetails(newPage);
-        const enriched = extractFlipkartData({ ...jobDetails, url: newPage.url() });
-
-        this.allJobs.push(enriched);
-        await newPage.close();
-      } catch (err) {
-        console.error(`❌ Error on job ${i + 1}:`, err.message);
-      }
+        return this.allJobLinks;;
     }
-  }
 
-  async saveResults() {
-    const path = './scrappedJobs/flipkartJobs.json';
-    fs.writeFileSync(path, JSON.stringify(this.allJobs, null, 2));
-    console.log(`💾 Saved ${this.allJobs.length} jobs to ${path}`);
-  }
 
-  async close() {
-    await this.browser.close();
-  }
+    async extractJobDetailsFromLink(url) {
+        const jobPage = await this.browser.newPage();
+        try {
+            await jobPage.goto(url, { waitUntil: 'networkidle2' });
+            await delay(5000);
+            //await jobPage.waitForSelector('div.job__description.body', { timeout: 10000 });
 
-  async run() {
-    try {
-      await this.initialize();
-      await this.navigateToJobsPage();
-      await this.loadAllJobPages();
-      const indexes = await this.getAllJobCards();
-      await this.processJobCards(indexes);
-      await this.saveResults();
-    } catch (err) {
-      console.error('❌ Flipkart scraper failed:', err);
-    } finally {
-      await this.close();
+            const job = await jobPage.evaluate(() => {
+                const getText = sel => document.querySelector(sel)?.innerText.trim() || '';
+                return {
+                    title: getText('h2.white-header'),
+                    company: 'Flipkart',
+                    location: getText('p.green'),
+                    description: getText('div._detail-content'),
+                    url: window.location.href
+                };
+            });
+
+            console.log("Before enriching job=", job);
+
+            await jobPage.close();
+            return job;
+        } catch (err) {
+            await jobPage.close();
+            console.warn(`❌ Failed to scrape ${url}: ${err.message}`);
+            return null;
+        }
     }
-  }
+
+
+    async processAllJobs() {
+        for (let i = 0; i < this.allJobLinks.length; i++) {
+            const url = this.allJobLinks[i];
+            console.log(`📝 [${i + 1}/${this.allJobLinks.length}] Processing: ${url}`);
+            const jobData = await this.extractJobDetailsFromLink(url);
+            if (jobData && jobData.title) {
+                const enrichedJob = extractWiproData(jobData);
+                console.log("After enriching job=", enrichedJob);
+                this.allJobs.push(enrichedJob);
+                console.log(`✅ ${jobData.title}`);
+            }
+            await delay(1000);
+        }
+    }
+
+    async saveResults() {
+        // fs.writeFileSync('./scrappedJobs/phonepeJobs.json', JSON.stringify(this.allJobs, null, 2));
+        console.log(`💾 Saved ${this.allJobs.length} jobs to Flipkart.json`);
+    }
+
+    async close() {
+        await this.browser.close();
+    }
+
+
+    async run() {
+        try {
+            await this.initialize();
+            await this.navigateToJobsPage();
+            await this.collectAllJobCardLinks();
+            await this.processAllJobs();
+            await this.saveResults();
+        } catch (error) {
+            console.error('❌ Scraper failed:', error);
+        } finally {
+            await this.close();
+        }
+    }
 }
 
-// 🚀 Entry point
-const runFlipkartScraper = async ({ headless = false } = {}) => {
-  const scraper = new FlipkartJobsScraper(headless);
-  await scraper.run();
-  return scraper.allJobs;
+const extractWiproData = (job) => {
+    if (!job) return job;
+
+    let cleanedDescription = job.description || '';
+    let experience = null;
+    let location = null;
+
+    const expPatterns = [
+        /\b(\d{1,2})\s*\+\s*(?:years|yrs|yr)\b/i,
+        /\bminimum\s*(\d{1,2})\s*(?:years|yrs|yr)\b/i,
+        /\bmin(?:imum)?\s*(\d{1,2})\s*(?:years|yrs|yr)\b/i,
+        /\b(\d{1,2})\s*(?:to|–|-|–)\s*(\d{1,2})\s*(?:years|yrs|yr)\b/i,
+        /\b(?:at least|over)\s*(\d{1,2})\s*(?:years|yrs|yr)\b/i,
+        /\b(\d{1,2})\s*(?:years|yrs|yr)\s+experience\b/i,
+        /\bexperience\s*(?:of)?\s*(\d{1,2})\s*(?:years|yrs|yr)\b/i,
+        /\bexperience\s*(?:required)?\s*[:\-]?\s*(\d{1,2})\s*(?:[-to]+)?\s*(\d{1,2})?\s*(?:years|yrs|yr)?/i,
+    ];
+
+    // Step 1: Try job.experience field
+    if (typeof job.experience === 'number' || /^\d+$/.test(job.experience)) {
+        const minExp = parseInt(job.experience, 10);
+        const maxExp = minExp + 2;
+        experience = `${minExp} - ${maxExp} yrs`;
+    }
+
+    // Step 2: Parse experience from description
+    if (!experience && cleanedDescription) {
+        for (const pattern of expPatterns) {
+            const match = cleanedDescription.match(pattern);
+            if (match) {
+                const min = match[1];
+                const max = match[2];
+
+                if (min && max) {
+                    experience = `${min} - ${max} yrs`;
+                } else if (min && !max) {
+                    const estMax = parseInt(min) + 2;
+                    experience = `${min} - ${estMax} yrs`;
+                }
+                break;
+            }
+        }
+    }
+
+    // Step 3: Clean description
+    if (cleanedDescription) {
+        cleanedDescription = cleanedDescription.replace(
+            /(Current Openings|Job Summary)[\s\S]*?(?:Apply\.?\s*)?(?=\n{2,}|$)/gi,
+            ''
+        );
+
+        cleanedDescription = cleanedDescription
+            .replace(/(\n\s*)(\d+\.\s+)(.*?)(\n)/gi, '\n\n$1$2$3$4\n\n')
+            .replace(/(\n\s*)([•\-]\s+)(.*?)(\n)/gi, '\n\n$1$2$3$4\n\n')
+            .replace(/([.!?])\s+/g, '$1  ')
+            .replace(/[ \t]+$/gm, '')
+            .replace(/\n{3,}/g, '\n\n')
+            .replace(/(\S)\n(\S)/g, '$1\n\n$2')
+            .trim();
+
+        if (cleanedDescription && !cleanedDescription.endsWith('\n')) {
+            cleanedDescription += '\n';
+        }
+
+        if (!cleanedDescription.trim()) {
+            cleanedDescription = 'Description not available\n';
+        }
+    } else {
+        cleanedDescription = 'Description not available\n';
+    }
+
+    if (job.title && cleanedDescription.startsWith(job.title)) {
+        const match = cleanedDescription.match(/Primary Skills\s*[:\-–]?\s*/i);
+        if (match) {
+            const index = match.index;
+            if (index > 0) {
+                cleanedDescription = cleanedDescription.slice(index).trimStart();
+            }
+        }
+    }
+
+    // Step 4: Extract city from location string
+    if (job.location) {
+        const cityMatch = job.location.match(/^([^,\n]+)/);
+        if (cityMatch) {
+            location = cityMatch[1].trim();
+        }
+    }
+
+    return {
+        ...job,
+        title: job.title?.trim(),
+        experience,
+        location,
+        description: cleanedDescription,
+    };
 };
 
-export default runFlipkartScraper;
 
-// CLI support: `node flipkart.js --headless=false`
+// ✅ Exportable runner function
+const runFlipkartJobsScraper = async ({ headless = true } = {}) => {
+    const scraper = new FlipkartJobsScraper(headless);
+    await scraper.run();
+    return scraper.allJobs;
+};
+
+export default runFlipkartJobsScraper;
+
+// ✅ CLI support: node phonepe.js --headless=false
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const headless = !process.argv.includes('--headless=false');
-  (async () => {
-    await runFlipkartScraper({ headless });
-  })();
+    const headlessArg = process.argv.includes('--headless=false') ? false : true;
+    (async () => {
+        await runFlipkartJobsScraper({ headless: headlessArg });
+    })();
 }
