@@ -61,6 +61,7 @@ import Uniphore from "./scrapers/servicebased/uniphore.js"
 import Wipro from "./scrapers/servicebased/wipro.js"
 import Tezo from "./scrapers/servicebased/tezo.js"
 import Repello from "./scrapers/servicebased/repelloAI.js"
+import NetwinSolutions from "./scrapers/servicebased/netwin.js"
 
 const config = {
   concurrency: 5,
@@ -130,7 +131,7 @@ ${error.stack}`;
 };
 
 const scrapers = [
-   { fn: Repello, headless: true },
+   { fn: NetwinSolutions, headless: true },
 ];
 
 const runAllScrapers = async () => {
