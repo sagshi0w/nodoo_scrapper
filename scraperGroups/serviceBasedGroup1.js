@@ -29,6 +29,7 @@ import Cybertech from "../scrapers/servicebased/cybertech.js"
 import HclTech from "../scrapers/servicebased/hclTech.js"
 import Metaforms from "../scrapers/servicebased/metaforms.js"
 import NetSolutions from "../scrapers/servicebased/netSolutions.js"
+import NetwinSolutions from "../scrapers/servicebased/netwin.js"
 
 
 const config = {
@@ -112,6 +113,7 @@ const scrapers = [
   { fn: HclTech, headless: true },
   { fn: Metaforms, headless: true },
   { fn: NetSolutions, headless: true },
+  { fn: NetwinSolutions, headless: true },
 ];
 
 const runAllScrapers = async () => {
