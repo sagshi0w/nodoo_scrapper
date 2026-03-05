@@ -28,22 +28,6 @@ import NetSolutions from "../scrapers/servicebased/netSolutions.js"
 import WNS from "../scrapers/servicebased/WNS.js"
 import ThoughtFocus from "../scrapers/servicebased/ThoughtFocus.js"
 
-import BirlaSoft from "../scrapers/servicebased/birlaSoft.js"
-import TechMahindra from "../scrapers/servicebased/techMahindra.js";
-import Wipro from "../scrapers/servicebased/wipro.js";
-import LTIMindtree from "../scrapers/servicebased/ltiMindTree.js";
-import RamcoSystems from "../scrapers/servicebased/RamcoSystems.js"
-import Capgemini from "../scrapers/servicebased/Capgemini.js"
-import Deloitte from "../scrapers/servicebased/Deloitte.js"
-
-import Oracle from "../scrapers/productBased/oracle.js"
-import Cybage from "../scrapers/servicebased/cybage.js"
-import Cybertech from "../scrapers/servicebased/cybertech.js"
-import HclTech from "../scrapers/servicebased/hclTech.js"
-import Metaforms from "../scrapers/servicebased/metaforms.js"
-import NetSolutions from "../scrapers/servicebased/netSolutions.js"
-import NetwinSolutions from "../scrapers/servicebased/netwin.js"
-
 const config = {
   concurrency: 5,
   notification: {
@@ -124,20 +108,6 @@ const scrapers = [
   { fn: NetSolutions, headless: true },
   { fn: WNS, headless: true },
   { fn: ThoughtFocus, headless: true },
-  { fn: BirlaSoft, headless: true },
-  { fn: TechMahindra, headless: true },
-  { fn: Wipro, headless: true },
-  { fn: LTIMindtree, headless: true },
-  { fn: RamcoSystems, headless: true },
-  { fn: Capgemini, headless: true },
-  { fn: Deloitte, headless: true },
-  { fn: Oracle, headless: true },
-  { fn: Cybage, headless: true },
-  { fn: Cybertech, headless: true },
-  { fn: HclTech, headless: true },
-  { fn: Metaforms, headless: true },
-  { fn: NetSolutions, headless: true },
-  { fn: NetwinSolutions, headless: true },
 ];
 
 const runAllScrapers = async () => {
