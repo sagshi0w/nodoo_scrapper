@@ -23,6 +23,7 @@ import Cybage from "../scrapers/servicebased/cybage.js"
 import ExperionTechnologies from "../scrapers/servicebased/experionTechnologies.js"
 import Tezo from "../scrapers/servicebased/tezo.js"
 import SaviantConsulting from "../scrapers/servicebased/SaviantConsulting.js"
+import Nullplex from "../scrapers/servicebased/nullplex.js"
 
 const config = {
   concurrency: 5,
@@ -100,6 +101,7 @@ const scrapers = [
   { fn: ExperionTechnologies, headless: true },
   { fn: Tezo, headless: true },
   { fn: SaviantConsulting, headless: true },
+  { fn: Nullplex, headless: true },
 ];
 
 const runAllScrapers = async () => {
